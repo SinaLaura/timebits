@@ -1,6 +1,6 @@
 ---
 name: next
-description: Work through the countdown task list in NEXT.md, top item first, until nothing open is left. Use when the user types /next, says "continue with the list", or a /loop fires it.
+description: Work through the Timebits task list in NEXT.md, top item first, until nothing open is left. Use when the user types /next, says "continue with the list", or a /loop fires it.
 argument-hint: (optional) "one" to do only a single item
 ---
 

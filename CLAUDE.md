@@ -56,9 +56,13 @@ Neue generelle Wünsche des Users hier ergänzen. Theme-Ideen und -Stand stehen 
 ## Barrierefreiheit
 - Bei `prefers-reduced-motion` gibt es keine Dauer-Animationen (`still`).
 
+## Privatsphäre
+- Nichts Privates veröffentlichen (Commits, Code, Kommentare, Dateien im Repo, GitHub). Im Zweifel vorher fragen.
+
 ## Zusammenarbeit (mehrere Claude-Sitzungen arbeiten parallel)
 - `docs/index.html` direkt vor dem Bearbeiten frisch lesen und nie aus einem alten Stand komplett neu schreiben.
 - Nach jeder fertigen Änderung sofort committen, und zwar nur die eigenen Dateien mit expliziten Pfaden, kein `git add -A`. Ausnahme: Neue Aufgaben in `NEXT.md` (`/later`) werden nicht einzeln committet, sie gehen mit dem nächsten Commit von `NEXT.md` mit.
 - Bei Code-Änderungen den Cache-Namen in `docs/sw.js` hochzählen.
 - Wird ein Theme gebaut oder eine Idee verworfen, `THEMES.md` aktualisieren.
 - [NEXT.md](NEXT.md) ist die Aufgabenliste des Users. Wer frei ist, nimmt die oberste offene Aufgabe, trägt sie mit Sitzungsnamen unter „In progress“ ein (gleich committen, damit keine zweite Sitzung sie nimmt) und verschiebt sie nach „Done“ mit dem Commit und einem localhost-Link zum Nachschauen (z.B. `http://localhost:8765/?m=10&look=jar`). Skills dafür: `/later <Aufgabe>` trägt ein, `/next` arbeitet die Liste ab (Ablauf steht in `.claude/skills/`).
+- Wünsche des Users beim Eintragen (z.B. in `NEXT.md`) wörtlich und in der Sprache des Users übernehmen, nur offensichtliche Tippfehler korrigieren.

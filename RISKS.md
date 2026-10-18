@@ -32,6 +32,7 @@ New entries are added whenever someone notices one (rule in [CLAUDE.md](CLAUDE.m
 ### Up to 999 minutes means up to 999 items
 - **Decision:** One item per minute, shown in proportion; the minute fields accept 1 to 999.
 - **When it could bite:** The physics and path themes (jar, hourglass, marbles, ducks, orbit) get slow with several hundred items on a weak phone, and the items become very small even though they use the whole screen. Battery drain grows too, since everything animates continuously.
+- **Seen in ducks:** since the ducklings swim in one long line on a loop again (a wish, so they stay small and calm), several hundred minutes make them tiny (about 10 px at 150 min, about 1 px at 999 min in a small window); only the bigger mother stays visible. The earlier winding-path version (commit 06a740d) kept them bigger.
 - **Way out:** Lower the maximum, group minutes into bigger items above a limit (e.g. one item per 5 min), or skip the physics for long times. Test the heavy themes with `?m=999` on a real older phone.
 
 ### No way to keep a favourite look

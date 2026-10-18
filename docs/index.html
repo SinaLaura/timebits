@@ -586,64 +586,25 @@
     return { x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t), a: h0 + Math.atan2(Math.sin(h1 - h0), Math.cos(h1 - h0)) * t };
   }
 
-  // a closed winding path: back and forth over the pond like a snake, and one lane back along the edge (a conga line route)
-  // rows of lanes sp apart (stretched to fill the height), corners rounded; null if the pond is too small for it
-  function meander(w, h, m, sp) {
-    const avail = h - 2 * m;
-    let K = Math.floor(avail / sp) + 1;
-    K -= K % 2;   // an even number of rows, so the way back along the edge fits
-    if (K < 2) return null;
-    const dy = avail / (K - 1), r = dy / 2, xL = m, xR = w - m;
-    if (xR - xL < dy * 3) return null;
-    const y = j => m + j * dy, V = [[xL, y(0)]];
-    for (let j = 0; j < K; j++) {
-      if (j % 2 === 0) { V.push([xR, y(j)]); if (j < K - 1) V.push([xR, y(j + 1)]); }
-      else if (j < K - 1) { V.push([xL + dy, y(j)], [xL + dy, y(j + 1)]); }
-      else V.push([xL, y(j)]);
-    }
-    // round every corner with a quarter circle of radius r
-    const pts = [];
-    V.forEach((v, i) => {
-      const a = V[(i + V.length - 1) % V.length], b = V[(i + 1) % V.length];
-      const ix = Math.sign(v[0] - a[0]), iy = Math.sign(v[1] - a[1]), ox = Math.sign(b[0] - v[0]), oy = Math.sign(b[1] - v[1]);
-      const cx = v[0] + (ox - ix) * r, cy = v[1] + (oy - iy) * r;
-      const a0 = Math.atan2((v[1] - iy * r) - cy, (v[0] - ix * r) - cx), a1 = Math.atan2((v[1] + oy * r) - cy, (v[0] + ox * r) - cx);
-      const sw = (a1 - a0 + 3 * Math.PI) % TAU - Math.PI;
-      for (let k = 0; k <= 12; k++) pts.push({ x: cx + Math.cos(a0 + sw * k / 12) * r, y: cy + Math.sin(a0 + sw * k / 12) * r });
-    });
-    pts.push({ x: pts[0].x, y: pts[0].y });
-    const cum = [0];
-    for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y));
-    return { pts, cum, len: cum[cum.length - 1] };
-  }
-  // the winding path the long way round: rows along the longer side of the pond mean fewer turns
-  function meanderBest(w, h, m, sp) {
-    const a = meander(w, h, m, sp), t = meander(h, w, m, sp);
-    if (t) t.pts.forEach(p => { const x = p.x; p.x = p.y; p.y = x; });
-    return a && (!t || a.len >= t.len) ? a : t;
-  }
-
   // ducklings in a row behind the mother on a loop around the pond; the first one swims right behind her
-  // for many ducklings the loop turns into a winding path through the whole pond, so the ducks can stay big
+  // many ducklings stay small and swim in one long line (no winding rows); the mother is clearly bigger so the pond still looks good
+  const motherLen = d => Math.max(d * 1.7, Math.min(d * 3, 120), 44);   // at least 44 px, so she stays easy to see and tap
   function ducks(n, w, h) {
     const first = loopPath(w, h, 30), gap0 = Math.min(110, first.len / (n * 1.3 + 3));
-    let path = loopPath(w, h, Math.max(14, gap0 * 0.8)), gap = Math.min(110, path.len / (n * 1.3 + 3)), d = gap / 1.3;
-    let ds = 84, snake = null;
-    for (; ds > d * 1.25; ds -= 0.5) {
-      snake = meanderBest(w, h, Math.max(14, ds * 0.75), ds * 1.3);
-      if (snake && Math.floor(snake.len / (ds * 1.3)) - 3 >= n * 1.15 + 1) break;
-      snake = null;
-    }
-    if (snake) { path = snake; d = ds; gap = Math.min(d * 1.3 * 1.5, path.len / (n + 2.8)); }
+    let m = Math.max(14, gap0 * 0.8), path = loopPath(w, h, m), gap = Math.min(110, path.len / (n * 1.3 + 3)), d = gap / 1.3, mom = motherLen(d);
+    // room for a big mother at the edge of the pond
+    if (mom * 0.55 > m) { m = mom * 0.55; path = loopPath(w, h, m); gap = Math.min(110, path.len / (n * 1.3 + 3)); d = gap / 1.3; mom = motherLen(d); }
+    // the first duckling swims clear of her tail
+    const lead = Math.max(1.8 * gap, mom * 0.52 + d * 0.6 + gap * 0.5);
     const start = path.len * 0.3, pts = [];
     // which duckling gets lost when is random (but the same every time for this length)
     const rnd = seeded(n * 17 + 5), slot = Array.from({ length: n }, (_, i) => i);
     for (let i = n - 1; i > 0; i--) { const j = rnd() * (i + 1) | 0; [slot[i], slot[j]] = [slot[j], slot[i]]; }
     for (let i = 0; i < n; i++) {
-      const off = (slot[i] + 1.8) * gap, q = pathAt(path, start - off);
+      const off = lead + slot[i] * gap, q = pathAt(path, start - off);
       pts.push({ slot: slot[i], off, x: q.x, y: q.y });
     }
-    return { pts, d, duck: { path, gap, s: start, speed: d * 0.9, look: null, mx: 0, my: 0 } };
+    return { pts, d, duck: { path, gap, lead, mom, s: start, speed: d * 0.9, look: null, mx: 0, my: 0 } };
   }
 
   // a hedgehog facing right; spines in rows over its back, the outer row falls first
@@ -1828,7 +1789,7 @@
     }
     // the others close the gap: each one paddles up to the place right behind the duckling in front
     line.sort((a, b) => a.slot - b.slot);
-    line.forEach((p, r) => { p.off += ((r + 1.8) * D.gap - p.off) * Math.min(1, dt * 0.6); });
+    line.forEach((p, r) => { p.off += (D.lead + r * D.gap - p.off) * Math.min(1, dt * 0.6); });
     return false;
   }
   function duckPos(X, i, g, p) {
@@ -1860,11 +1821,11 @@
     const { c, P, d } = X, D = X.geo.duck, q = pathAt(D.path, D.s), k = easeBack(X.all);
     const wob = X.still ? 0 : Math.sin(X.t * 1000 / 300) * 0.08;
     D.mx = q.x; D.my = q.y;
-    if (k > 0) duckShape(c, P, q.x, q.y, q.a + Math.PI * lookBack(X) + wob, d * 1.7 * k, mix(P.fg, P.text, 0.3));
+    if (k > 0) duckShape(c, P, q.x, q.y, q.a + Math.PI * lookBack(X) + wob, D.mom * k, mix(P.fg, P.text, 0.3));
   }
   function duckTap(G, x, y) {
     const D = G.duck;
-    if (Math.hypot(x - D.mx, y - D.my) > G.d * 1.1) return false;
+    if (Math.hypot(x - D.mx, y - D.my) > D.mom * 0.65) return false;
     if (!D.look) D.look = performance.now();
     quack();
     return true;

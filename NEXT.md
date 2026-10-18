@@ -13,9 +13,10 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## In progress
 
-- [ ] [solo, quick] Update the `/later` skill so that it no longer keeps the user's wording, but describes each new task in its own words in good English (the repo is public, and CLAUDE.md already says so); the skill file itself stays untouched until this task is picked up. (night-run session, started 01:09)
 
 ## Done
+
+- [x] Update the `/later` skill so that it no longer keeps the user's wording, but describes each new task in its own words in good English (the repo is public, and CLAUDE.md already says so); the skill file itself stays untouched until this task is picked up. (b41ce8f) → no visual change
 
 - [x] Phone check of the Exit "Sure?" (Yes / No, gap above Exit) and of the small ducklings with the bigger mother at 60 and 150 minutes: both feel right on a real phone (no code change) → no visual change
 

@@ -1736,8 +1736,19 @@
     }
     return { pts, d: s, tower: { x0, y0, bw, fh, cols, rows, n, ground, roofH, lobH, w, h } };
   }
+  // now and then (about every 7 s) a floor jolts sideways for a moment, as if someone were trying to knock it down;
+  // the floors right above and below tremble along a little. Motion time, so it calms down while paused
+  function towerShake(X, row) {
+    if (X.still) return 0;
+    const T = X.geo.tower, k = Math.floor(X.t / 7);
+    if (T.qk !== k) { const r = seeded(k * 31 + 7); T.qk = k; T.qs = 1 + r() * 4; T.qh = r(); }
+    const t = X.t - k * 7 - T.qs, standing = T.to === undefined ? T.rows : Math.min(T.rows, T.to);
+    if (t < 0 || t > 0.9 || !standing) return 0;
+    const hit = Math.floor(T.qh * standing), near = row === hit ? 1 : Math.abs(row - hit) === 1 ? 0.3 : 0;
+    return near * Math.sin(t * 38) * (1 - t / 0.9) * X.d * 0.06 * X.calm;
+  }
   function aptPos(X, i, g, p) {
-    if (g <= 0) return null;
+    if (g <= 0) { const dx = towerShake(X, p.row); return dx ? { x: p.x + dx, y: p.y } : null; }
     if (g < 0.15) return { x: p.x, y: p.y, r: Math.sin(g * 120) * 0.05 * (1 - g / 0.15) };   // wiggles loose
     const lift = X.d * 0.04;
     if (g < 0.35) { const u = easeOut((g - 0.15) / 0.2); return { x: p.x, y: p.y - u * lift, s: 1 + 0.12 * u, out: 1 }; }   // pops out of the facade
@@ -1820,14 +1831,14 @@
     // the floors: wall with a slab line under each; an apartment that has gone leaves its empty frame
     const top = Math.floor(lev + 1e-6);
     for (let r = 0; r < Math.min(top, T.rows); r++) {
-      const wr = rowW(r), xr = T.w / 2 - wr / 2, yr = T.y0 - (r + 1) * fh;
+      const wr = rowW(r), xr = T.w / 2 - wr / 2 + towerShake(X, r), yr = T.y0 - (r + 1) * fh;
       c.fillStyle = C.wall; c.fillRect(xr - m, yr, wr + 2 * m, fh);
       c.fillStyle = C.edge; c.fillRect(xr - m, yr + fh - Math.max(1, fh * 0.04), wr + 2 * m, Math.max(1, fh * 0.04));
     }
     for (let i = Math.max(0, X.min); i < pts.length; i++) {
       const p = pts[i];
       if (p.row >= top || p.g < 0.15) continue;
-      const hx = p.x - d / 2 + m * 0.7, hy = p.y - fh / 2 + m * 0.7, hw = d - m * 1.4, hh = fh - m * 1.4;
+      const hx = p.x + towerShake(X, p.row) - d / 2 + m * 0.7, hy = p.y - fh / 2 + m * 0.7, hw = d - m * 1.4, hh = fh - m * 1.4;
       c.clearRect(hx, hy, hw, hh);
       c.strokeStyle = C.edge; c.lineWidth = Math.max(1, d * 0.02); c.strokeRect(hx, hy, hw, hh);
       leftover(X, p.x, p.y, d * 0.45);

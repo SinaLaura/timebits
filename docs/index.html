@@ -2338,6 +2338,7 @@
     const r = canvas.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
     const i = hitTest(x, y);
     if (i >= shownMin) return;   // past item: nothing happens
+    if (i >= 0 && pausedAt) return;   // paused: items (and bodies, below) stay quiet; only a tap on empty background still changes the look
     if (i >= 0) {
       const now = performance.now(), M = MODES[look.m];
       pulses.set(i, now);
@@ -2351,7 +2352,7 @@
       if (M.snd) tapChime(M.snd);
       if (navigator.vibrate) navigator.vibrate(8);
       kick();
-    } else if (MODES[look.m].bodyTap && MODES[look.m].bodyTap(geo, x, y)) {
+    } else if (!pausedAt && MODES[look.m].bodyTap && MODES[look.m].bodyTap(geo, x, y)) {
       if (navigator.vibrate) navigator.vibrate(8);
       kick();
     } else if (!onDrawing(x, y)) restyle();

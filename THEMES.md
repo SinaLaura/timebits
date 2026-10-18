@@ -27,7 +27,7 @@ Offline genommen (`off: true` in `ALL_MODES`, im Code erhalten, nicht mehr in de
 | 16 | chocolate | Stück bricht ab |
 | 17 | abacus | Perle rutscht nach rechts |
 | 18 | stars | Stern im Sternbild erlischt; Pause = das Sternbild zieht sich in der Mitte zusammen, danach breitet es sich wieder aus |
-| 19 | hedgehog | Stachel fällt ab, er wird rot; Körper antippen = hüpfen/schütteln; Pause = schläft (Augen zu, atmet langsam, kleine „z“ steigen auf, Fläche bleibt hell) |
+| 19 | hedgehog | Stachel fällt ab, er wird rot; Körper antippen = hüpfen/schütteln; Pause = schläft (Augen zu, atmet langsam, kleine „z“ steigen auf, Fläche bleibt hell; weder Körper noch Stacheln reagieren aufs Antippen, `sleeps: true`) |
 | 20 | cinema | Gast verlässt den Saal, die Zeit läuft auf der Leinwand |
 | 21 | spider | Bein fällt ab; Kopf antippen = federt am Faden, kneift glücklich die Augen zu; Pause = zieht die Beine ein |
 | 22 | cars | Spielzeugauto fährt aus dem Bild (Antippen = kurz Gas geben mit Auspuffwölkchen statt Ring, Pause = einparken) |

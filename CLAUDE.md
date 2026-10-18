@@ -30,6 +30,7 @@ Neue generelle Wünsche des Users hier ergänzen. Theme-Ideen und -Stand stehen 
 ## Aussehen und Tippen
 - Es gibt keine Design-Einstellungen. Das Aussehen ändert sich nur durch Tippen.
 - Pro Minute gibt es ein Item.
+- Ein Item ist ganz weg, wenn seine Minute vorbei ist (nicht erst dann im Gehen): Es fängt `goneMs` vorher an zu gehen, „N left“ springt erst auf der Minute. Das regelt `tick` zentral; `goneMs` ist also die ganze Dauer des Abgangs. Themes mit eigener Bewegung (`step`, z.B. Autos, Enten) müssen ihr Item bis dahin aus dem Bild bringen und setzen es spätestens bei `X.gone(i) >= 1` auf `p.out`; das gilt auch für künftige Themes.
 - Die Menge, die man sieht, ist proportional zur Zeit: Die Items füllen zusammen ihren Bereich (z.B. die ganze obere Hälfte der Sanduhr), und ihre Größe richtet sich danach.
 - Die Items nutzen den Platz des Browsers (nicht unbedingt ganz, aber deutlich): Kleine Zeiten ergeben große Items, nicht kleine Punkte in einer leeren Fläche. Das gilt auch für Bewegungen (ein Auto oder eine Ente fährt über den ganzen Bildschirm, Stacheln und Beine verteilen sich über die ganze Breite).
 - **Tipp auf ein aktives Item:** kurze Reaktion (Puls, manchmal eine leicht andere Farbe nahe der Palettenfarbe, ggf. themespezifisch). Sonst passiert nichts.
@@ -56,7 +57,7 @@ Neue generelle Wünsche des Users hier ergänzen. Theme-Ideen und -Stand stehen 
 ## Ende
 - Groß steht das Label in Großbuchstaben mit „!“ (ohne Label „DONE!“), dazu der Button „Exit“.
 - Der Endton ist zufällig futuristisch, kein Piepen.
-- Das letzte Item geht wie alle anderen mit seiner Animation ab, während der Endton spielt. Erst danach (je nach `goneMs`, max. 3 s) kommt der End-Bildschirm.
+- Das letzte Item geht wie alle anderen mit seiner Animation ab und ist zum Ende schon weg; dann spielt der Endton, und kurz danach (0,7 s) kommt der End-Bildschirm. Ist es ausnahmsweise noch da (z.B. ein Tab, der geschlafen hat), geht es jetzt, und der End-Bildschirm wartet darauf (je nach `goneMs`, max. 3 s).
 - Ein Theme darf eine End-Animation haben (`endArt`, z.B. Schmetterling nach der Raupe, Knall nach der Lunte).
 - Geheimnis: 10× auf die Done-Seite tippen zeigt das letzte Bild des Looks (alle Minuten weg, z.B. Igel ohne Stacheln); 3 Tipps führen zurück.
 - Im Hintergrund: ein eigener Timer genau aufs Ende, damit ein Browser-Tab im Hintergrund pünktlich endet und klingelt. Ist die Seite nicht im Vordergrund, kommt eine Benachrichtigung (Erlaubnis wird beim ersten Start gefragt; in der App über LocalNotifications). Auf dem Handy schläft eine Webseite im Hintergrund meist, dann hilft nur die App.

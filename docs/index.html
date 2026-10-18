@@ -314,7 +314,7 @@
     // toy cars pottering around, tapping one makes it zoom off a bit with a puff from the exhaust (no ring), a passed minute drives off screen
     { name: 'cars', live: true, hit: 0.6, goneScale: 1, goneDim: 0, goneMs: 3000, lay: cars, step: carStep, pos: carPos, item: car, noRing: true, after: carPuffs, tap: carTap },
     // ducklings swim in line behind their mother, the last one loses track each minute; tap the mother and she looks back
-    { name: 'ducks', live: true, playable: true, goneScale: 1, goneDim: 0, goneMs: 3500, lay: ducks, step: duckStep, pos: duckPos, item: duckling, halo: (X, p, q) => ({ rx: X.d * 0.62, ry: X.d * 0.4, rot: q ? q.r || 0 : 0 }),
+    { name: 'ducks', live: true, playable: true, goneScale: 1, goneDim: 0, goneMs: 4500, lay: ducks, step: duckStep, pos: duckPos, item: duckling, halo: (X, p, q) => ({ rx: X.d * 0.62, ry: X.d * 0.4, rot: q ? q.r || 0 : 0 }),
       tap: () => peep(), after: motherDuck, bodyTap: duckTap },
     // a thermometer that gets colder each minute; the top segment cools off and fades, the temperature replaces the headline
     { name: 'thermometer', live: true, noHead: true, noDim: true, goneScale: 1, goneDim: 0, goneMs: 1800, goneLinear: true, endArt: 'shatter',
@@ -835,7 +835,7 @@
 
   // ================= setup =================
 
-  let end = 0, total = 0, timer = 0, shownMin = -1, label = '';
+  let end = 0, total = 0, timer = 0, shownMin = -1, textMin = -1, label = '';   // shownMin: minutes still in the picture, textMin: in "N left"
   let mode = 'min', minutes = ls.get('timebits-min') || 37, audio = null, wake = null;
 
   const show = id => document.querySelectorAll('.screen').forEach(s => s.hidden = s.id !== id);
@@ -989,9 +989,10 @@
   function nextPhase() {
     clearInterval(timer);
     clearTimeout(doneTimer);
+    const wait = still ? 0 : leftWait();
     if (!$('run').hidden && !still) {
       for (let i = 0; i < shownMin; i++) goneAt.set(i, performance.now());
-      shownMin = 0;
+      shownMin = textMin = 0;
       $('count').textContent = '0 left';
       kick();
     }
@@ -1005,7 +1006,7 @@
       ls.set('timebits-look', look);
       applyPalette();
       beginPomo(pomo + 1, from + pomoLen(pomo + 1) * 60000);
-    }, still ? 0 : Math.min(3000, (MODES[look.m].goneMs || 800) + 600));
+    }, wait);
   }
 
   function begin(e, t, paused) {
@@ -1017,14 +1018,14 @@
     $('pause').textContent = pauseText();
     total = t || Math.max(1, Math.ceil((end - Date.now()) / 60000));
     saveRun();
-    shownMin = -1;
+    shownMin = textMin = -1;
     goneAt.clear(); pulses.clear(); tints.clear();
     $('sub').textContent = subText();
     show('run');
     born = performance.now();
     relayout();
     clearInterval(timer);
-    timer = setInterval(tick, 1000);
+    timer = setInterval(tick, 250);
     tick();
     keepAwake();
     scheduleAlarm();
@@ -1073,8 +1074,8 @@
     $('run').classList.remove('paused');
     $('pause').textContent = pauseText();
     $('sub').textContent = subText();
-    document.title = shownMin + ' left · ' + (label || TITLE);
-    timer = setInterval(tick, 1000);
+    document.title = textMin + ' left · ' + (label || TITLE);
+    timer = setInterval(tick, 250);
     tick();
     keepAwake();
     scheduleAlarm();
@@ -1099,11 +1100,23 @@
     const left = end - Date.now();
     if (left <= 1000) return finish();
     const min = Math.min(total, Math.ceil(left / 60000));
-    if (min === shownMin) return;
-    if (shownMin > 0) for (let i = min; i < shownMin; i++) goneAt.set(i, performance.now());
-    shownMin = min;
-    $('count').textContent = min + ' left';
-    document.title = min + ' left · ' + (label || TITLE);
+    if (min !== textMin) {
+      textMin = min;
+      $('count').textContent = min + ' left';
+      document.title = min + ' left · ' + (label || TITLE);
+    }
+    // the picture runs ahead by the look's leave time (goneMs): a leaving item is completely gone when its minute is over,
+    // so it starts leaving that long before (the last one before the end at 1 s left, when finish() comes)
+    const lead = still ? 0 : MODES[look.m].goneMs || 800, pic = left - lead;
+    const vis = pic <= 1000 ? 0 : Math.min(total, Math.ceil(pic / 60000));
+    if (vis === shownMin) return;
+    if (shownMin > 0) for (let i = vis; i < shownMin; i++) {
+      // started a little late (the timer ticks every 250 ms): it catches up, so it still ends right on time;
+      // much later (a sleeping tab, the preview's "A minute is over") it just leaves now
+      const late = (i ? i * 60000 : 1000) + lead - left;
+      goneAt.set(i, performance.now() - (late > 0 && late < lead ? late : 0));
+    }
+    shownMin = vis;
     kick();
   }
 
@@ -1140,8 +1153,10 @@
   $('again').onclick = stop;
   addEventListener('keydown', e => { if (e.key === 'Escape') askExit(false); });
 
-  // the last minute leaves like the others: its animation and the sound play first, then the end screen comes
+  // the last minute leaves like the others, so it is gone by the end; the sound plays, then the end screen comes.
+  // Only if it is still there (a tab that slept, the end came early) it leaves now and the end screen waits for it
   let doneTimer = 0;
+  const leftWait = () => shownMin > 0 ? Math.min(3000, (MODES[look.m].goneMs || 800) + 600) : 700;
   function finish(quiet) {
     clearTimeout(endTimer);
     if (pomo >= 0) return nextPhase();
@@ -1153,14 +1168,15 @@
     $('doneText').classList.toggle('long', text.length > 8);
     document.title = text;
     if (quiet || $('run').hidden || still) return showDone(quiet);
+    const wait = leftWait();
     for (let i = 0; i < shownMin; i++) goneAt.set(i, performance.now());
-    shownMin = 0;
+    shownMin = textMin = 0;
     $('count').textContent = '0 left';
     kick();
     beep();
     notify(text, 'Time is up.');
     if (navigator.vibrate) navigator.vibrate([300, 150, 300, 150, 600]);
-    doneTimer = setTimeout(() => showDone(), Math.min(3000, (MODES[look.m].goneMs || 800) + 600));
+    doneTimer = setTimeout(() => showDone(), wait);
   }
   function showDone(quiet) {
     doneTimer = 0;
@@ -1974,10 +1990,14 @@
         if (!p.leaving) {
           if (X.still || X.gone(i) >= 1) { p.out = true; continue; }
           p.leaving = true;
-          p.exit = [[p.x, Math.PI], [W - p.x, 0], [p.y, -Math.PI / 2], [H - p.y, Math.PI / 2]].sort((a, b) => a[0] - b[0])[0][1];
+          const ex = [[p.x, Math.PI], [W - p.x, 0], [p.y, -Math.PI / 2], [H - p.y, Math.PI / 2]].sort((a, b) => a[0] - b[0])[0];
+          p.exit = ex[1];
+          // tiny cars (many minutes) speed up more, so every car is off the screen well before its minute is over
+          p.vmax = Math.max(d * 8, (ex[0] + d) / 1.2);
         }
         p.a = turnTo(p.a, p.exit, 3 * dt);
-        p.v = Math.min(d * 8, p.v + d * 6 * dt);
+        p.v = Math.min(p.vmax, p.v + p.vmax * 0.75 * dt);
+        if (X.gone(i) >= 1) p.out = true;   // gone when its minute is over, at the latest
       } else if (parking && p.spot) {
         // drive to the spot (real time, so they still get there while everything else calms down), then straighten up
         const sp = p.spot, dx = sp.x - p.x, dy = sp.y - p.y, dist = Math.hypot(dx, dy), rdt = X.dt;
@@ -2096,7 +2116,7 @@
         // but slanting off at about 45 degrees instead of straight out
         const out = [[p.x, Math.PI], [W - p.x, 0], [p.y, -Math.PI / 2], [H - p.y, Math.PI / 2]].sort((a, b) => a[0] - b[0])[0];
         const slant = (Math.random() < 0.5 ? -1 : 1) * 0.8, run = (out[0] + d * 1.2) / Math.cos(slant);
-        // fast enough to be off the screen in about 3.5 s (5 s at the most, see below)
+        // fast enough to be off the screen in about 3.5 s (its leave time, goneMs, is 4.5 s)
         p.lost = { t: 0, h: q.a, turn: 0, aim: out[1] + slant, v: Math.max(d * 1.2, run / 2.4) };
       }
       // lost: for a moment it dawdles and looks around, then it paddles off the screen, turning on a gentle curve
@@ -2114,7 +2134,7 @@
       }
       p.x += Math.cos(L.h) * v * dt;
       p.y += Math.sin(L.h) * v * dt;
-      if (p.x < -d || p.x > W + d || p.y < -d || p.y > H + d || L.t > 5) p.out = true;
+      if (p.x < -d || p.x > W + d || p.y < -d || p.y > H + d || X.gone(i) >= 1) p.out = true;   // gone when its minute is over, at the latest
     }
     // the others close the gap: each one paddles up to the place right behind the duckling in front
     line.sort((a, b) => a.slot - b.slot);
@@ -3502,6 +3522,8 @@
     const d = e.data;
     if (!d || typeof d !== 'object') return;
     if (d.timebits === 'info' && e.source) e.source.postMessage({ timebits: 'info', modes: MODES.map(m => m.name), palettes: PALETTES.length }, '*');
+    // {timebits: 'state'}: minutes in the picture and in "N left", and ms left (for checking when items leave)
+    if (d.timebits === 'state' && e.source) e.source.postMessage({ timebits: 'state', pic: shownMin, text: textMin, left: end - Date.now(), leaving: [...goneAt.keys()] }, '*');
     if (d.timebits === 'minute' && end && !$('run').hidden && !doneTimer) {
       end -= 60000;
       saveRun(pausedAt ? { pausedAt } : undefined);

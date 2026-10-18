@@ -66,3 +66,4 @@ Varianten zum Vergleichen (`lab: true` in `ALL_MODES`): nur über `?look=<name>`
 
 ## Neue Ideen
 - [ ] **Gurke schneiden:** Pro Minute wird eine Scheibe von der Gurke abgeschnitten und fällt zur Seite, bis nur noch das Endstück übrig ist.
+- [ ] **Turm wie die Türme von Hanoi:** Gestapelte Scheiben bilden einen Turm. Pro Minute wird eine Scheibe herausgenommen, bei Minute 0 bricht der ganze Turm zusammen. Antippen lässt den Turm von der angetippten Stelle aus wackeln.

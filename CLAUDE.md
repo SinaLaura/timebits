@@ -44,6 +44,7 @@ Neue generelle Wünsche des Users hier ergänzen. Theme-Ideen und -Stand stehen 
 - Bewegungen kommen sanft zur Ruhe (`calm` geht gegen 0) und laufen danach weiter. Neue bewegte Themes nehmen deshalb `X.t` als Zeit, nicht `X.now`.
 - Ein Theme darf eine eigene, ruhige Pausen-Reaktion haben (z.B. der Igel schläft, die Autos parken).
 - Zeigt ein Theme die Pause selbst deutlich genug, bleibt die Fläche mit `noDim` hell (z.B. die Sanduhr mit ihrem Schieber).
+- In der Pause reagiert kein Theme auf Tippen: Items und Körper (`bodyTap`) bleiben still (kein Puls, keine Farbe, kein Ton, keine Theme-Reaktion). Das gilt zentral im Tipp-Handler für alle Themes, auch neue; nur ein Tipp auf leeren Hintergrund wechselt weiter den Look. Ausnahmen nur auf Wunsch des Users.
 
 ## Ende
 - Groß steht das Label in Großbuchstaben mit „!“ (ohne Label „DONE!“), dazu der Button „Exit“.

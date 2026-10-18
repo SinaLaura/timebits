@@ -33,7 +33,7 @@
   <button id="minute" class="big">A minute is over</button>
 </div>
 <div class="row" id="frames"></div>
-<small>Tap inside the phone to play. The yellow button lets one minute pass at once (the item of that minute goes). Everything is kept in the address, so a reload or a copied link shows the same.</small>
+<small>Tap inside the phone to play. The yellow button lets one minute pass at once (the item of that minute goes). Everything is kept in the address, so a reload or a copied link shows the same.<br><span id="ver"></span></small>
 <script>
   // This page only works on the local preview server (the app ignores these helpers online and in the store app).
   // URL: preview.html?look=flower,flowerring&m=25&gone=1&p=0   (several looks = side by side; gone = 0, 1 or 2 thirds)
@@ -46,10 +46,12 @@
   const $ = id => document.getElementById(id);
   const frames = $('frames');
 
+  // the extra &_=time makes every load a new address, so the browser never shows an old copy of the app (the local server sends no cache rules)
   const appUrl = name => {
-    if (raw) return './?' + raw + (name ? '&look=' + name + '.' + pal : '');
+    const fresh = '&_=' + Date.now();
+    if (raw) return './?' + raw + (name ? '&look=' + name + '.' + pal : '') + fresh;
     const passed = Math.floor(m * gone / 3);
-    return './?m=' + m + '&look=' + name + '.' + pal + (passed ? '&passed=' + passed : '');
+    return './?m=' + m + '&look=' + name + '.' + pal + (passed ? '&passed=' + passed : '') + fresh;
   };
   const save = () => {
     const p = new URLSearchParams({ look: looks.join(','), m, gone, p: pal });
@@ -121,6 +123,11 @@
   });
   mark();
   build();
+  // which version of the app is on the server right now (the number in sw.js), to spot an old copy in the browser
+  fetch('./sw.js', { cache: 'no-store' }).then(r => r.text()).then(t => {
+    const v = /timebits-(v\d+)/.exec(t);
+    if (v) $('ver').textContent = 'App version on the server: ' + v[1];
+  }).catch(() => {});
 </script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 ---
 name: next
-description: Work through the countdown task list in NEXT.md, with modes (solo or co, one or all, quick or long first). Use when the user types /next [modes], says "continue with the list", or a /loop fires it.
-argument-hint: (optional, any order) solo | co · one | all · quick | long   — default: solo all, in list order
+description: Work through the countdown task list in NEXT.md, with modes (solo or co, one or all, quick or big first). Use when the user types /next [modes], says "continue with the list", or a /loop fires it.
+argument-hint: (optional, any order) solo | co · one | all · quick | big   — default: solo all, in list order
 ---
 
 Work through `NEXT.md` (repo root). Follow [CLAUDE.md](../../../CLAUDE.md) for everything you build.
@@ -19,13 +19,13 @@ Read the argument `$ARGUMENTS` for these words (any order, case doesn't matter, 
 - **Order**
   - none (default): list order, top first.
   - `quick`: quick items first, i.e. small and in one place (a text, a size, a position, a flag, a one-line rule). Among equals, list order.
-  - `long`: time-consuming items first, i.e. a new theme, a redesign, several parts, a new file or page. Among equals, list order.
+  - `big`: time-consuming items first, i.e. a new theme, a redesign, several parts, a new file or page. Among equals, list order.
 
 An item whose line starts with "(Last task" (after its tags, see below) is always taken last, only when no other eligible item is left, whatever the order.
 
 **Needs the user** means: the wording is unclear; it is a matter of taste or a choice between options ("come up with something better", "which one do you like"); it needs something only they can do or see (a store or account setting, their phone, a decision about money or publishing); or the line already carries a question in parentheses that is still unanswered. Everything else is `solo`. Judge from the line and the code; when in doubt between solo and needs-user, treat it as solo and ask later in step 3 if you really get stuck.
 
-**Tags.** Every open line in `NEXT.md` carries its classification as a prefix, so the user (and the next run) can see it: `- [ ] [solo, quick] <task>`. One word per group, in this order: `solo` or `needs you`, then `quick` or `long` (same meaning as the modes above). Rules:
+**Tags.** Every open line in `NEXT.md` carries its classification as a prefix, so the user (and the next run) can see it: `- [ ] [solo, quick] <task>`. One word per group, in this order: `solo` or `needs you`, then `quick` or `big` (same meaning as the modes above). Rules:
 - Tag every untagged **To do** line at the start of a run, before picking, with exact line edits (no commit of its own; the tags go into the claim commit in step 2). Also tag lines the user adds while you work, at the next step 1.
 - A tag the user wrote or changed is never overwritten. If only one group is there, add the missing one. The user's tag wins over your own judgement.
 - Re-tag when you learn more: an item you move back with a question becomes `needs you`; once the user has answered it, it becomes `solo` again.

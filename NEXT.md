@@ -6,13 +6,17 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## To do
 
-- [ ] Das Ducks-Theme sah besser aus, als die Enten noch kleiner waren und es nicht mehr Reihen gab. Es soll wieder so werden. Damit es trotzdem gut aussieht, soll die Entenmutter größer sein als ihre Küken.
+- [ ] In themes with sound whose items sit close together (little empty space between them), tapping several items in a row should work like playing an instrument: a tap that accidentally lands in a small gap must not count as a tap on the empty background (which switches the theme). This should also apply to themes that get sound later.
+- [ ] Move the pause button a little higher (more space above "Exit"), so nobody taps "Exit" by accident.
+- [ ] Tapping "Exit" should first ask "Sure?" with the buttons "Yes" and "No", and only exit after "Yes".
 
 ## In progress
 
-- [ ] the hedgehog's spikes should also not be clickable during pause (problems-file session, started 02:25)
+- [ ] Das Ducks-Theme sah besser aus, als die Enten noch kleiner waren und es nicht mehr Reihen gab. Es soll wieder so werden. Damit es trotzdem gut aussieht, soll die Entenmutter größer sein als ihre Küken. (problems-file session, started 02:40)
 
 ## Done
+
+- [x] the hedgehog's spikes should also not be clickable during pause (124665f) → http://localhost:8765/?m=10&look=hedgehog (pause, then tap a spike: nothing; resume: spikes react again)
 
 - [x] Add a new file that collects possible (future) problems, or decisions made that may be ok now but problematic later. Example: the decision to follow the phone's silent mode and not play the sound for the boring themes; but a user might not want to be distracted by other notifications and still want to play around with the bits (the items of a theme). From then on, collect such things there by yourself whenever you notice one (add that as a rule to CLAUDE.md). (540adbc) → no visual change (new file RISKS.md with 8 entries, the rule is in CLAUDE.md under „Zusammenarbeit“)
 

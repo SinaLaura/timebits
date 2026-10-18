@@ -1917,29 +1917,21 @@
 
   // ---- ducks ----
   // while the mother looks back (1.8 s) the whole line stops; she turns around and back again
-  // the turn round: 0 = swimming ahead, 1 = looking back. The ducklings turn with her, one after another down the line
-  // (k: the duckling's place in the line, 0..1; the mother is -1, so she turns first)
-  const smooth = e => e * e * (3 - 2 * e);
-  function lookBack(X, k) {
-    const D = X.geo.duck, n = X.pts.length, front = k === undefined, stag = X.still ? 0 : Math.min(70, 700 / Math.max(1, n));
+  function lookBack(X) {
+    const D = X.geo.duck, p = 1 - X.calm;   // during a pause she turns round and keeps watching them
     let e = 0;
     if (D.look) {
-      const tail = (n + 1) * stag, delay = front ? 0 : (k * n + 1) * stag, t = (X.now - D.look - delay) / 1800;
-      if (front && X.now - D.look >= 1800 + tail) D.look = null;
-      else {
-        if (front && !X.still) X.more = true;
-        // reduced motion: they just look back for a moment, without the turn
-        if (t > 0 && t < 1) e = X.still ? 1 : t < 0.25 ? t / 0.25 : t > 0.75 ? (1 - t) / 0.25 : 1;
-      }
+      const t = (X.now - D.look) / 1800;
+      if (t >= 1) D.look = null;
+      else if (X.still) e = 1;   // reduced motion: she just looks back for a moment, without the turn
+      else { e = t < 0.25 ? t / 0.25 : t > 0.75 ? (1 - t) / 0.25 : 1; X.more = true; }
     }
-    // during a pause they all turn round and keep watching (the front of the line first)
-    const p = 1 - X.calm, pk = front ? p : clamp((p - 0.45 * k) / 0.55);
-    return Math.max(smooth(e), smooth(pk));
+    return Math.max(e * e * (3 - 2 * e), p * p * (3 - 2 * p));
   }
   function duckStep(X, dt) {
     const D = X.geo.duck, d = X.d, P = X.pts;
     if (X.min < 0) return false;
-    if (!X.still) D.s += D.speed * dt * (1 - Math.max(lookBack(X), lookBack(X, 1)));   // the line waits until the last duckling faces ahead again
+    if (!X.still) D.s += D.speed * dt * (1 - lookBack(X));
     const line = [];
     for (let i = 0; i < P.length; i++) {
       const p = P[i];
@@ -1986,7 +1978,7 @@
     const wob = X.still ? 0 : Math.sin(X.t * 1000 / 260 + i * 1.3) * 0.12;
     if (p.lost) return { x: p.x, y: p.y, r: p.lost.h + wob * 1.5 };
     const q = pathAt(D.path, D.s - p.off);
-    return { x: q.x, y: q.y, r: q.a + wob + Math.PI * lookBack(X, X.pts.length > 1 ? i / (X.pts.length - 1) : 0) };
+    return { x: q.x, y: q.y, r: q.a + wob };
   }
   // a duck seen from above: tail, body, wing, head with beak and eyes; L is its length
   function duckShape(c, P, x, y, a, L, col) {
@@ -2014,7 +2006,7 @@
   function duckTap(G, x, y) {
     const D = G.duck;
     if (Math.hypot(x - D.mx, y - D.my) > D.mom * 0.65) return false;
-    if (!D.look) { D.look = performance.now(); if (still) setTimeout(kick, 1850); }   // still mode draws no frames on its own: one more to turn them back
+    if (!D.look) { D.look = performance.now(); if (still) setTimeout(kick, 1850); }   // still mode draws no frames on its own: one more to turn her back
     quack();
     return true;
   }

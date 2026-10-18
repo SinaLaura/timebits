@@ -8,10 +8,10 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## In progress
 
-- [ ] [solo, quick] Penguins: remove the shadow of the swimming penguins in the water, because it looks odd. (Claude Sonnet 5.5, started 16:09)
-- [ ] [solo, big] Penguins: make sure the swimming penguins never pass through the ice chunks floating in the water. (Claude Sonnet 5.5, started 16:09)
-
 ## Done
+
+- [x] Penguins: remove the shadow of the swimming penguins in the water, because it looks odd. (303a3a7) → http://localhost:8765/preview.html?look=penguins&m=10&gone=1 (the small swimming heads have no ripple under them any more; also look=realpenguins)
+- [x] Penguins: make sure the swimming penguins never pass through the ice chunks floating in the water. (303a3a7) → http://localhost:8765/preview.html?look=penguins&m=10&gone=1 (swimmers glide around the loose chunks; checked over 15 simulated minutes at nine sizes with no overlap)
 
 - [x] Sound in the boring themes: the pitch should depend on where the tap lands (grid of notes, top left highest, bottom right lowest) instead of being random; tried on the snake first. (60435e4) → http://localhost:8765/?m=40&look=snake (tap along the snake: higher notes up and to the left, lower down and to the right; the same item always gives the same note; the other sound themes are still random)
 

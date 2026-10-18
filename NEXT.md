@@ -11,9 +11,10 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## In progress
 
-- [ ] [solo, quick] Sound in the boring themes: right now each tap on an item plays a random note, so tapping the same item repeatedly sounds arbitrary. Instead, the pitch should depend on where on the screen the tap lands, like a grid of notes: top left is the highest, bottom right the lowest. Try it on one theme first and show it on localhost. (Claude Sonnet 5.5, started 12:12)
 
 ## Done
+
+- [x] Sound in the boring themes: the pitch should depend on where the tap lands (grid of notes, top left highest, bottom right lowest) instead of being random; tried on the snake first. (60435e4) → http://localhost:8765/?m=40&look=snake (tap along the snake: higher notes up and to the left, lower down and to the right; the same item always gives the same note; the other sound themes are still random)
 
 - [x] Flower theme: try a variant with a single layer of petals instead of several layers, to compare with the current look and decide. Built as the hidden variant `flowerring` (one ring of petals; for many minutes the core grows like a sunflower; petals fall in a scattered order), next to the original on a comparison page. (dc88631) → http://localhost:8765/test-flower.html (both side by side, with buttons for 10 / 25 / 60 / 120 minutes and how much is already gone; single look: http://localhost:8765/?m=25&look=flowerring)
 

@@ -7,10 +7,10 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 ## To do
 
 - [ ] [needs you, big] First-time users don't seem to realise that tapping changes the look. Check whether the finger tap demo is still shown to them, and propose (and preview) a way to make sure new users understand it.
-- [ ] Ducks, feedback on 480e5ed: the leaving duckling should take longer to leave, about 3 to 5 seconds, and must not take the shortest way out (right now it heads for the nearest edge).
 
 ## In progress
 
+- [ ] [solo, quick] Ducks, feedback on 480e5ed: the leaving duckling should take longer to leave, about 3 to 5 seconds, and must not take the shortest way out (right now it heads for the nearest edge). (next-2302, started 23:48)
 
 
 ## To review

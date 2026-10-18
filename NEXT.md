@@ -6,13 +6,15 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## To do
 
-- [ ] the hedgehog's spikes should also not be clickable during pause
+- [ ] Das Ducks-Theme sah besser aus, als die Enten noch kleiner waren und es nicht mehr Reihen gab. Es soll wieder so werden. Damit es trotzdem gut aussieht, soll die Entenmutter größer sein als ihre Küken.
 
 ## In progress
 
-- [ ] Add a new file that collects possible (future) problems, or decisions made that may be ok now but problematic later. Example: the decision to follow the phone's silent mode and not play the sound for the boring themes; but a user might not want to be distracted by other notifications and still want to play around with the bits (the items of a theme). From then on, collect such things there by yourself whenever you notice one (add that as a rule to CLAUDE.md). (problems-file session, started 02:10)
+- [ ] the hedgehog's spikes should also not be clickable during pause (problems-file session, started 02:25)
 
 ## Done
+
+- [x] Add a new file that collects possible (future) problems, or decisions made that may be ok now but problematic later. Example: the decision to follow the phone's silent mode and not play the sound for the boring themes; but a user might not want to be distracted by other notifications and still want to play around with the bits (the items of a theme). From then on, collect such things there by yourself whenever you notice one (add that as a rule to CLAUDE.md). (540adbc) → no visual change (new file RISKS.md with 8 entries, the rule is in CLAUDE.md under „Zusammenarbeit“)
 
 - [x] The sound of the boring themes seems to not work on the first click, but only at the second? (9de9785) → http://localhost:8765/?m=10&look=honey (tap once: sound on the first tap; pause, tap: silent; also ducks, hedgehog)
 - [x] The boring themes that have sound should not make a sound in pause mode. That is for every theme. (9de9785) → http://localhost:8765/?m=10&look=honey (tap once: sound on the first tap; pause, tap: silent; also ducks, hedgehog)

@@ -439,10 +439,12 @@
       const fall = Array.from({ length: m }, (_, t) => t).sort((a, b) => (a * 0.6180339887) % 1 - (b * 0.6180339887) % 1);
       const slot = []; fall.forEach((t, r) => { slot[t] = r; });   // t = turn of falling (0 = first), r = place in the layer
       for (let k = 0; k < m; k++) {
-        const a = -Math.PI / 2 + (slot[m - 1 - k] + (j % 2) * 0.5) * TAU / m;
+        // every petal is a little different: length, width, how blunt the tip is, how much wider it gets towards the tip, a slight turn
+        const a = -Math.PI / 2 + (slot[m - 1 - k] + (j % 2) * 0.5 + (rnd() - 0.5) * 0.25) * TAU / m;
+        const pl = len * (0.94 + 0.06 * rnd()), pw = wid * (0.9 + 0.2 * rnd()), pm = rc * 0.5 + pl / 2;
         pts.push({
-          x: cx + Math.cos(a) * mid, y: cy + Math.sin(a) * mid, a, len, wid, hr: len * 0.45, shade,
-          lx: w * (0.08 + 0.84 * rnd()), ly: h - wid * 0.55 - rnd() * 8, la: (rnd() - 0.5) * 0.8, sway: rnd() * TAU,
+          x: cx + Math.cos(a) * pm, y: cy + Math.sin(a) * pm, a, len: pl, wid: pw, hr: pl * 0.45, shade, ex: 2.2 + 0.5 * rnd(), tp: 0.1 + 0.2 * rnd(),
+          lx: w * (0.08 + 0.84 * rnd()), ly: h - pw * 0.55 - rnd() * 8, la: (rnd() - 0.5) * 0.8, sway: rnd() * TAU,
         });
       }
     }
@@ -1228,11 +1230,19 @@
     const c = X.c;
     c.beginPath(); c.ellipse(x, y, p.len / 2 * k, p.wid / 2 * k, q ? q.r : p.a, 0, TAU); c.fill();
   }
-  // thick petals overlap a lot, so each one gets a thin, soft outline (its colour towards the background) to stay readable as a petal
+  // a rounded petal, no sharp tip: a slightly squared-off oval (p.ex: 2 = ellipse, more = blunter), wider towards the tip (p.tp).
+  // Thick petals overlap a lot, so each one gets a thin, soft outline (its colour towards the background) to stay readable as a petal
   function layerPetal(X, i, x, y, k, q, p, fill) {
-    const c = X.c;
+    const c = X.c, rot = q ? q.r : p.a, cs = Math.cos(rot), sn = Math.sin(rot), A = p.len / 2 * k, B = p.wid / 2 * k, e = 2 / p.ex;
     if (p.shade) c.fillStyle = mix(fill, X.P.bg, p.shade * (1 - p.g));
-    petal(X, i, x, y, k, q, p);
+    c.beginPath();
+    for (let s = 0; s < 32; s++) {
+      const t = s / 32 * TAU, ct = Math.cos(t), st = Math.sin(t);
+      const u = Math.sign(ct) * Math.abs(ct) ** e, v = Math.sign(st) * Math.abs(st) ** e * (1 + p.tp * u);
+      const px = x + u * A * cs - v * B * sn, py = y + u * A * sn + v * B * cs;
+      if (s) c.lineTo(px, py); else c.moveTo(px, py);
+    }
+    c.closePath(); c.fill();
     c.strokeStyle = mix(c.fillStyle, X.P.bg, 0.55); c.lineWidth = Math.max(1, p.wid * k * 0.03); c.stroke();
   }
   function stem(X) {

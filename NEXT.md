@@ -7,9 +7,6 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 ## To do
 
 - [ ] [needs you, quick] Try on a real phone with your fingers (so far only simulated taps in headless Edge): playing quickly across the items of snake, rings, diamonds, spiral, clock and ducks, including taps in the gaps (open the preview server of the PC on the phone, same Wi-Fi: `http://PC-ADDRESS:8765/?m=40&look=snake`). Is the reach right (not too small, not too large)? Tapping clearly empty background should still change the look. Tell me what feels off.
-- [ ] [needs you, big] (Last task, only when everything else is done.) The chocolate bar theme is hard to understand and feels strange. Come up with something better.
-- [ ] [solo, big] (Last task, only when everything else is done.) Pick a theme idea from my ideas in THEMES.md and implement it entirely on your own, without asking me anything. You have a free hand in how, but follow the rules in CLAUDE.md.
-- [ ] [solo, big] (Last task, only when everything else is done.) Design another cool theme entirely on your own, a new idea of yours (not one from THEMES.md). I will review it tomorrow.
 - [ ] [solo, quick] Flower theme: try a variant with a single layer of petals instead of several layers. Open it on localhost next to the current look, so I can compare the two and decide whether I like it.
 - [ ] Sound in the boring themes: right now each tap on an item plays a random note, so tapping the same item repeatedly sounds arbitrary. Instead, the pitch should depend on where on the screen the tap lands, like a grid of notes: top left is the highest, bottom right the lowest. Try it on one theme first and show it on localhost.
 
@@ -18,7 +15,14 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## Done
 
-- [x] Update the `/later` skill so that it no longer keeps the user's wording, but describes each new task in its own words in good English (the repo is public, and CLAUDE.md already says so). (74dc6c6) → no visual change (step 2 in .claude/skills/later/SKILL.md)
+- [x] (Last task, only when everything else is done.) The chocolate bar theme is hard to understand and feels strange. Come up with something better. Redesigned as one solid bar on its foil, eaten from the top. (3a38fd5) → http://localhost:8765/?m=10&look=chocolate (each minute the top piece wiggles, snaps off, gets bitten and floats away; crumbs stay on the foil; also &passed=4, &m=60)
+
+- [x] (Last task, only when everything else is done.) Design another cool theme entirely on your own, a new idea of yours (not one from THEMES.md). I will review it tomorrow. Built penguins on an ice floe. (98d596a) → http://localhost:8765/?m=10&look=penguins (one waddles to the edge and dives in each minute, then bobs in the water; tap one to make it hop and flap; pause: they fall asleep; also &m=60, &passed=6)
+
+- [x] (Last task, only when everything else is done.) Pick a theme idea from my ideas in THEMES.md and implement it entirely on your own, without asking me anything. You have a free hand in how, but follow the rules in CLAUDE.md. Built the balloons idea. (1249eda) → http://localhost:8765/?m=10&look=balloons (one pops each minute and its string dangles from the knot; tap a balloon to nudge it; also &m=60, &m=1, &passed=6)
+
+- [x] Update the `/later` skill so that it no longer keeps the user's wording, but describes each new task in its own words in good English (the repo is public, and CLAUDE.md already says so); the skill file itself stays untouched until this task is picked up. (b41ce8f) → no visual change
+
 - [x] Phone check of the Exit "Sure?" (Yes / No, gap above Exit) and of the small ducklings with the bigger mother at 60 and 150 minutes: both feel right on a real phone (no code change) → no visual change
 
 - [x] [solo, big] In themes with sound whose items sit close together (little empty space between them), tapping several items in a row should work like playing an instrument: a tap that accidentally lands in a small gap must not count as a tap on the empty background (which switches the theme). This should also apply to themes that get sound later. (848e232) → http://localhost:8765/?m=40&look=snake (tap quickly across the dots, also in the gaps: each tap plays a note and the look stays; also &look=rings, diamonds, spiral, clock, ducks)

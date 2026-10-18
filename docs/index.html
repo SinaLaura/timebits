@@ -35,11 +35,14 @@
   /* while counting down the picture uses the whole browser width; heading and buttons stay in the column */
   main:has(> #run:not([hidden])) { max-width: none; }
   #run > :not(#stage) { margin-left: max(0px, calc((100% - 600px) / 2)); }
-  #run > .foot { margin-right: max(0px, calc((100% - 600px) / 2)); }
+  #run > .foot { margin-right: max(0px, calc((100% - 600px) / 2)); margin-bottom: -12px; }   /* the buttons sit a little lower, still clear of the home bar */
   [hidden] { display: none !important; }
   button, input { font: inherit; color: inherit; background: none; border: 0; outline: none; }
   button { cursor: pointer; touch-action: manipulation; }
   input { -webkit-user-select: text; user-select: text; }
+  /* the numbers on the start screen: changeable by typing, nothing gets marked or offered for copying */
+  #minVal, .pnum { caret-color: var(--fg); -webkit-touch-callout: none; }
+  #minVal::selection, .pnum::selection { background: transparent; }
   .muted { opacity: .5; }
 
   /* setup */
@@ -63,7 +66,17 @@
   #minVal, #timeVal { text-align: center; font-size: 64px; font-weight: 700; color: var(--fg); }
   #minVal { width: 150px; -moz-appearance: textfield; }
   #minVal::-webkit-inner-spin-button, #minVal::-webkit-outer-spin-button { -webkit-appearance: none; }
-  #timeVal { display: block; margin: 0 auto; font-size: 56px; }
+  #timeVal { display: block; font-size: min(56px, 13vw); font-variant-numeric: tabular-nums; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  /* the phone's own time picker lies invisibly over the time: a tap on it opens the picker, and the time can't be selected or copied */
+  #timeBox { position: relative; display: flex; align-items: center; gap: 8px; }
+  @media (min-width: 360px) { #timeBox { padding-left: 30px; } }   /* as much room on the left as the clock takes on the right, so the time stays centred */
+  /* a small clock beside the time says "this is a clock, tap to pick" (the hidden picker's own icon doesn't show) */
+  #timeBox .clock { width: 22px; height: 22px; flex: none; fill: none; stroke: var(--fg); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; opacity: .55; }
+  #timePick { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px; cursor: pointer; -webkit-user-select: none; user-select: none; }
+  #timePick::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: auto; height: auto; opacity: 0; cursor: pointer; }
+  /* the short line under Minutes / Time: when it ends, or how long it runs */
+  .pane { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .hint { margin: 0; font-size: 15px; font-variant-numeric: tabular-nums; }
   /* pomodoro: one row per length, the same widget as Minutes, just smaller */
   #pomoPane { display: grid; grid-template-columns: auto auto; justify-content: center; align-items: center; gap: 14px 18px; }
   #pomoSum { grid-column: 1 / -1; text-align: center; font-size: 15px; line-height: 1.4; margin-bottom: 14px; }
@@ -101,8 +114,9 @@
   /* the away text stays on one line (smaller on a narrow phone), so the height never changes with "I'm back" */
   #pause, #askQ { padding: 10px 12px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: min(15px, 3.6vw); }
   /* space between pause and exit, so a tap meant for one doesn't hit the other */
-  #pause, #askQ { margin-bottom: 16px; }
+  #pause, #askQ { margin-bottom: 7px; }
   #run .foot #exit, #run .foot .askRow > .exit { padding-top: 6px; }
+  #run .foot .exit { font-size: min(15px, 3.6vw); }   /* Exit, No and Yes as big as the pause text, which shrinks on a narrow phone */
   .askRow { display: flex; }
   /* the middle of the row (where Exit was) is a dead spot, so a double tap on Exit can never land on Yes */
   #run .foot .askRow > .askGap { padding: 6px 0 12px; width: 24px; }
@@ -133,32 +147,40 @@
         <button type="button" data-mode="pomo" aria-pressed="false">Pomodoro</button>
       </div>
 
-      <div id="minPane" class="stepper">
-        <button type="button" class="step" data-d="-1" aria-label="less">−</button>
-        <input id="minVal" type="number" inputmode="numeric" min="1" max="999" value="37" aria-label="Minutes">
-        <button type="button" class="step" data-d="1" aria-label="more">+</button>
+      <div id="minPane" class="pane">
+        <div class="stepper">
+          <button type="button" class="step" data-d="-1" aria-label="less">−</button>
+          <input id="minVal" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" value="37" aria-label="Minutes">
+          <button type="button" class="step" data-d="1" aria-label="more">+</button>
+        </div>
+        <p id="minHint" class="hint muted"></p>
       </div>
-      <div id="timePane" hidden>
-        <input id="timeVal" type="time" aria-label="Time">
+      <div id="timePane" class="pane" hidden>
+        <div class="stepper">
+          <button type="button" class="step" data-for="time" data-d="-1" aria-label="earlier">−</button>
+          <div id="timeBox"><span id="timeVal" aria-hidden="true"></span><svg class="clock" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 6.5V12l3.5 2.2"/></svg><input id="timePick" type="time" aria-label="Time"></div>
+          <button type="button" class="step" data-for="time" data-d="1" aria-label="later">+</button>
+        </div>
+        <p id="timeHint" class="hint muted"></p>
       </div>
       <div id="pomoPane" hidden>
         <p id="pomoSum" class="muted"></p>
         <div class="lab muted">Focus</div>
         <div class="stepper">
           <button type="button" class="step" data-for="focus" data-d="-1" aria-label="less">−</button>
-          <input id="pomoFocus" class="pnum" type="number" inputmode="numeric" min="1" max="999" aria-label="Focus minutes">
+          <input id="pomoFocus" class="pnum" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" aria-label="Focus minutes">
           <button type="button" class="step" data-for="focus" data-d="1" aria-label="more">+</button>
         </div>
         <div class="lab muted">Break</div>
         <div class="stepper">
           <button type="button" class="step" data-for="short" data-d="-1" aria-label="less">−</button>
-          <input id="pomoShort" class="pnum" type="number" inputmode="numeric" min="1" max="999" aria-label="Break minutes">
+          <input id="pomoShort" class="pnum" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" aria-label="Break minutes">
           <button type="button" class="step" data-for="short" data-d="1" aria-label="more">+</button>
         </div>
         <div class="lab muted">Long break<small>every 4th</small></div>
         <div class="stepper">
           <button type="button" class="step" data-for="long" data-d="-1" aria-label="less">−</button>
-          <input id="pomoLong" class="pnum" type="number" inputmode="numeric" min="1" max="999" aria-label="Long break minutes">
+          <input id="pomoLong" class="pnum" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" aria-label="Long break minutes">
           <button type="button" class="step" data-for="long" data-d="1" aria-label="more">+</button>
         </div>
       </div>
@@ -178,9 +200,9 @@
       <div class="focol ask" id="ask">
         <div class="exit" id="askQ">Sure?</div>
         <div class="askRow">
-          <button class="exit muted" id="askYes" type="button">Yes</button>
-          <span class="exit askGap"></span>
           <button class="exit muted" id="askNo" type="button">No</button>
+          <span class="exit askGap"></span>
+          <button class="exit muted" id="askYes" type="button">Yes</button>
         </div>
       </div>
     </div>
@@ -224,6 +246,13 @@
     { bg: '#0a0d0a', fg: '#39ff6a', dim: '#163a20', text: '#39ff6a', dark: true },  // terminal
   ];
 
+  // real-looking penguins (on request: real colours instead of the palette, see CLAUDE.md): sea-blue water, black and white birds, orange beaks, white ice
+  const REAL = {
+    pal: { bg: '#2c79ad', fg: '#1d1f26', dim: '#5597c6', text: '#ffffff', dark: true },
+    belly: '#ffffff', beak: '#f39a2b', eye: '#1d1f26', blush: '#f6b3b8',
+    ice: { top: '#f2f8fc', side: '#b4d8ee', deep: '#4f97c9', rim: '#ffffff' },
+  };
+
   // layout: positions for n items in a w x h box, plus item size d.
   // optional per mode: live (always animating), pos (moving items), item (custom drawing),
   // before/after (extra drawing), step (physics), tap, goneScale/goneDim/goneMs (how past items look)
@@ -253,9 +282,9 @@
     { name: 'hourglass', shape: 'circle', goneScale: 1, goneDim: 0.55, goneMs: 1600, noDim: true, lay: hourglass, pos: grainPos, item: grain, before: glass, after: plug },
     // a burning fuse with sparks
     { name: 'fuse', shape: 'circle', live: true, endArt: 'bang', goneScale: 0.4, lay: fuse, step: fuseStep, before: fuseLine, after: sparks },
-    // a bar of chocolate, pieces break off and leave a dashed gap
-    { name: 'chocolate', keepHit: true, goneScale: 1, goneDim: 0, goneMs: 1100, lay: (n, w, h) => grid(n, w, h, 1.06, 0.9, { max: 52 }),
-      pos: chunkPos, item: chunk, halo: (X, p, q) => ({ rx: X.d * 0.56, ry: X.d * 0.46, rot: q ? q.r || 0 : 0, rect: true }), before: chunkHoles },
+    // a bar of chocolate on its opened foil, eaten from the top: each minute the top piece snaps off and floats away, crumbs stay on the foil
+    { name: 'chocolate', goneScale: 1, goneDim: 0, goneMs: 1500, goneLinear: true, lay: chocolateBar,
+      pos: chunkPos, item: chunk, halo: (X, p, q) => ({ rx: X.d * 0.55, ry: X.geo.choc.ph * 0.55, rot: q ? q.r || 0 : 0, rect: true }), before: chocFoil },
     // beads slide along the wires of an abacus
     { name: 'abacus', goneScale: 1, goneDim: 0.5, goneMs: 700, lay: abacus, pos: beadPos, item: bead, halo: X => ({ rx: X.d * 0.54, ry: X.geo.abacus.bh * 0.58 }), before: abacusFrame },
     // twinkling constellation, stars go out one by one
@@ -281,6 +310,16 @@
     // a marble run: each minute the gate lets one ball roll down the zigzag ramps into the tray
     { name: 'marbles', goneScale: 1, goneDim: 0, goneMs: 2400, goneLinear: true,
       lay: marbleRun, step: mbStep, pos: mbPos, item: mbBall, tap: mbTap, before: mbTrack },
+    // a bunch of balloons tied at one knot: the outermost pops each minute and its string dangles from the knot; a tap pushes one away
+    { name: 'balloons', live: true, goneScale: 1, goneDim: 0, goneMs: 1500, goneLinear: true,
+      lay: balloons, pos: balloonPos, item: balloon, tap: balloonTap, before: balloonStrings,
+      halo: (X, p, q) => ({ rx: X.d * 0.56 * p.s, ry: X.d * 0.66 * p.s, rot: q ? q.r : 0 }) },
+    // penguins on an ice floe: each minute one waddles to the edge and dives in, then bobs in the water; tap one and it honks, flaps and hops (no ring); asleep while paused
+    { name: 'penguins', live: true, playable: true, noRing: true, goneScale: 1, goneDim: 0, goneMs: 3200, goneLinear: true,
+      lay: penguins, pos: penguinPos, item: penguin, tap: penguinTap, before: iceFloe },
+    // the same penguins in their real colours, black and white on blue sea water (the user asked for real colours here)
+    { name: 'realpenguins', live: true, playable: true, noRing: true, goneScale: 1, goneDim: 0, goneMs: 3200, goneLinear: true, pal: REAL.pal,
+      lay: (n, w, h) => Object.assign(penguins(n, w, h), { real: true }), pos: penguinPos, item: penguin, tap: penguinTap, before: iceFloe },
   ];
   const MODES = ALL_MODES.filter(m => !m.off);
 
@@ -707,8 +746,10 @@
   let look = ls.get('timebits-look');
   if (!look || !MODES[look.m] || !PALETTES[look.p]) look = { m: 0, p: 0 };
 
+  // the current colours: a theme may bring its own (the real-looking penguins: sea, black and white), otherwise the palette
+  function curPal() { const M = MODES[look.m]; return (M && M.pal) || PALETTES[look.p]; }
   function applyPalette() {
-    const p = PALETTES[look.p], root = document.documentElement;
+    const p = curPal(), root = document.documentElement;
     for (const k of ['bg', 'fg', 'dim', 'text']) root.style.setProperty('--' + k, p[k]);
     root.style.colorScheme = p.dark ? 'dark' : 'light';
     document.querySelector('meta[name=theme-color]').content = p.bg;
@@ -723,11 +764,26 @@
   const show = id => document.querySelectorAll('.screen').forEach(s => s.hidden = s.id !== id);
   const fmt = ts => new Date(ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
-  const minInput = $('minVal'), timeInput = $('timeVal'), labelInput = $('label');
+  const minInput = $('minVal'), labelInput = $('label'), timeShow = $('timeVal'), timePick = $('timePick');
+  // the chosen time ("18:30"): shown as plain text, mirrored into the hidden picker
+  const timeInput = { get value() { return timeShow.textContent; }, set value(v) { timeShow.textContent = v; timePick.value = v; } };
   labelInput.value = ls.get('timebits-label') || '';
-  function setMinutes(v) { minutes = Math.max(1, Math.min(999, Math.round(v) || 1)); minInput.value = minutes; }
+  function setMinutes(v) { minutes = Math.max(1, Math.min(999, Math.round(v) || 1)); minInput.value = minutes; hints(); }
   setMinutes(minutes);
-  minInput.onchange = () => setMinutes(+minInput.value);
+  // a tap on a number keeps it and puts the cursor at its end, so it can be changed by typing; nothing ever gets marked
+  // (only digits, at most 3; left empty, the old number comes back)
+  function typeable(el, keep) {
+    let old = '';
+    const toEnd = () => { if (el.selectionStart !== el.selectionEnd || el.selectionStart !== el.value.length) { const n = el.value.length; try { el.setSelectionRange(n, n); } catch (e) {} } };
+    const unmark = () => { if (el.selectionStart !== el.selectionEnd) toEnd(); };
+    el.addEventListener('focus', () => { old = el.value; setTimeout(toEnd, 0); });
+    ['select', 'pointerup', 'mouseup', 'touchend'].forEach(ev => el.addEventListener(ev, () => setTimeout(unmark, 0)));
+    el.addEventListener('input', () => { const v = el.value.replace(/\D/g, '').slice(0, 3); if (v !== el.value) el.value = v; });
+    el.addEventListener('blur', () => { if (el.value.trim() === '') el.value = old; keep(); });
+  }
+  typeable(minInput, () => setMinutes(+minInput.value));
+  minInput.onchange = () => { if (minInput.value.trim()) setMinutes(+minInput.value); };   // left empty: the blur brings the old number back
+  minInput.oninput = () => { const v = Math.round(+minInput.value); if (v >= 1) $('minHint').textContent = 'until ' + fmt(Date.now() + Math.min(999, v) * 60000); };
 
   // +/- : tap for one, hold to run (data-for says which number: the minutes or one of the pomodoro lengths)
   const bump = { min: d => setMinutes(minutes + d) };
@@ -746,8 +802,35 @@
     $('minPane').hidden = m !== 'min';
     $('timePane').hidden = m !== 'time';
     $('pomoPane').hidden = m !== 'pomo';
-    if (m === 'time' && !timeInput.value) timeInput.value = fmt(Date.now() + minutes * 60000);
+    if (m === 'time' && !timeInput.value) setTime(Math.ceil((Date.now() + minutes * 60000) / 300000) * 300000);
+    hints();
   }
+  // Time: the same − value + as Minutes; a tap on − or + moves it 5 minutes, a tap on the time opens the phone's time picker
+  function pad2(v) { return String(v).padStart(2, '0'); }
+  function setTime(ts) { const d = new Date(ts); timeInput.value = pad2(d.getHours()) + ':' + pad2(d.getMinutes()); hints(); }
+  bump.time = dir => {
+    const [h, m] = (timeInput.value || fmt(Date.now())).split(':').map(Number), t = (h * 60 + m + 1440 + dir * 5) % 1440;
+    const r = (dir > 0 ? Math.floor(t / 5) : Math.ceil(t / 5)) * 5 % 1440;   // land on whole 5 minutes
+    timeInput.value = pad2(Math.floor(r / 60)) + ':' + pad2(r % 60);
+    hints();
+  };
+  function parseTime(str) {
+    const t = String(str).trim(), m = t.match(/^(\d{1,2})(?:[:.h ]?(\d{2}))?$/);
+    if (!m) return null;
+    const h = +m[1], mi = m[2] === undefined ? 0 : +m[2];
+    return h < 24 && mi < 60 ? pad2(h) + ':' + pad2(mi) : null;
+  }
+  timePick.oninput = timePick.onchange = () => { const t = parseTime(timePick.value.slice(0, 5)); if (t) { timeInput.value = t; hints(); } };
+  // where the browser can open its picker on request (desktop Chrome), do so; phones open it on the tap anyway
+  timePick.addEventListener('click', () => { try { if (timePick.showPicker) timePick.showPicker(); } catch (e) {} });
+  // the line under the number: "until 14:52" for Minutes, "for 47 min" for Time (kept current while the start screen shows)
+  function dur(ms) { const m = Math.max(1, Math.ceil(ms / 60000)), h = Math.floor(m / 60); return h ? h + ' h' + (m % 60 ? ' ' + (m % 60) + ' min' : '') : m + ' min'; }
+  function hints() {
+    $('minHint').textContent = 'until ' + fmt(Date.now() + minutes * 60000);
+    const t = parseTime(timeInput.value);
+    $('timeHint').textContent = t ? 'for ' + dur(endFromTime(t) - Date.now()) : '';
+  }
+  setInterval(() => { if (!$('setup').hidden) hints(); }, 5000);
   document.querySelectorAll('.seg button').forEach(b => b.onclick = () => setMode(b.dataset.mode));
 
   function endFromTime(str) {
@@ -778,9 +861,10 @@
     byTime = false;
     if (mode === 'pomo') beginPomo(0);
     else if (mode === 'time') {
-      if (!timeInput.value) return timeInput.focus();
+      const t = parseTime(timeInput.value);
+      if (!t) return;
       byTime = true;
-      begin(endFromTime(timeInput.value));
+      begin(endFromTime(t));
     } else {
       setMinutes(+minInput.value);
       ls.set('timebits-min', minutes);
@@ -807,8 +891,8 @@
       sum();
     };
     bump[k] = d => set(POMO[k] + d);
-    el.onchange = el.onblur = () => set(+el.value);
-    el.onfocus = () => el.select();
+    el.onchange = () => set(+el.value);
+    typeable(el, () => set(+el.value));
     set(POMO[k]);
   });
   // the sentence above the numbers says what they add up to
@@ -1044,7 +1128,7 @@
 
   const clamp = t => t < 0 ? 0 : t > 1 ? 1 : t;
   const easeOut = t => 1 - Math.pow(1 - t, 3);
-  const easeBack = t => { const c = 1.7; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
+  const easeBack = t => { const c = 1.7; return t <= 0 ? 0 : 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
   function mix(a, b, t) {
     const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
     const ch = s => Math.round(((pa >> s) & 255) * (1 - t) + ((pb >> s) & 255) * t);
@@ -1515,24 +1599,84 @@
   }
 
   // ---- chocolate ----
+  // one solid bar lying on its opened foil; it is eaten from the top, piece by piece: the top piece wiggles, snaps off
+  // and floats up out of view, and a few crumbs stay on the bare foil where it was
+  function chocolateBar(n, w, h) {
+    // the column count that gives the biggest pieces (pieces are a little wider than tall, like a real bar)
+    let best = null;
+    for (let cols = 1; cols <= n; cols++) {
+      const rows = Math.ceil(n / cols), s = Math.min(w * 0.84 / cols, h * 0.8 / (rows * 0.8), Math.min(w, h) * 0.5);
+      if (!best || s > best.s) best = { cols, rows, s };
+    }
+    const { cols, rows, s } = best, ph = s * 0.8, bw = cols * s, bh = rows * ph, x0 = (w - bw) / 2, y0 = (h - bh) / 2 + s * 0.12;
+    const pts = [];
+    // index 0 sits bottom left, the highest index top right: the top row goes first
+    for (let i = 0; i < n; i++) {
+      const r = Math.floor(i / cols), k = i % cols;
+      pts.push({ x: x0 + (k + 0.5) * s, y: y0 + bh - (r + 0.5) * ph, hr: s * 0.55, ph: (i * 2.39) % TAU });
+    }
+    return { pts, d: s, choc: { x0, y0, bw, bh, ph } };
+  }
   function chunkPos(X, i, g, p) {
     if (g <= 0) return null;
-    const s = i % 2 ? 1 : -1;
-    return { x: p.x + s * g * X.d * 0.8, y: p.y + g * g * (H + X.d * 2 - p.y), r: s * g * 1.6, a: g >= 1 ? 0 : 1 };
+    if (g < 0.18) return { x: p.x, y: p.y, r: Math.sin(g * 90) * 0.06 * (1 - g / 0.18) };   // wiggles loose
+    const u = (g - 0.18) / 0.82, s = p.ph < Math.PI ? 1 : -1;
+    return { x: p.x + s * u * X.d * 0.6, y: p.y - u * u * (p.y + X.d * 1.5), r: s * u * 0.9, s: 1 - 0.35 * u, a: g >= 1 ? 0 : 1 };
   }
+  // a raised segment: a dark groove around it, a lighter top-left bevel and a darker bottom-right one
   function chunk(X, i, x, y, k, q, p, col) {
-    const c = X.c, d = X.d * k, h = d * 0.82;
+    const c = X.c, P = X.P, s = X.d * k, h = X.geo.choc.ph * k;
+    const dark = mix(col, P.dark ? P.bg : P.text, 0.35), light = mix(col, P.dark ? P.text : P.bg, 0.3);
     c.save(); c.translate(x, y); if (q && q.r) c.rotate(q.r);
-    rr(c, -d / 2, -h / 2, d, h, d * 0.12); c.fill();
-    c.strokeStyle = mix(col, '#000000', 0.22); c.lineWidth = d * 0.06;
-    rr(c, -d / 2 + d * 0.16, -h / 2 + d * 0.16, d - d * 0.32, h - d * 0.32, d * 0.06); c.stroke();
+    // on its way up the piece is bitten twice
+    const u = q && p.g >= 0.18 ? (p.g - 0.18) / 0.82 : 0;
+    if (u > 0.3) {
+      c.beginPath(); c.rect(-s, -h, 2 * s, 2 * h);
+      const bite = (bx, by, r) => { c.moveTo(bx + r, by); c.arc(bx, by, r, 0, TAU); };
+      bite(s * 0.42, -h * 0.5, s * 0.3);
+      if (u > 0.55) { bite(s * 0.02, -h * 0.58, s * 0.28); bite(-s * 0.38, -h * 0.52, s * 0.24); }
+      c.clip('evenodd');
+    }
+    c.fillStyle = dark; rr(c, -s / 2, -h / 2, s, h, s * 0.015); c.fill();
+    const e = s * 0.05, b = s * 0.13;
+    c.fillStyle = col; rr(c, -s / 2 + e, -h / 2 + e, s - 2 * e, h - 2 * e, s * 0.04); c.fill();
+    c.fillStyle = light;
+    c.beginPath(); c.moveTo(-s / 2 + e, -h / 2 + e); c.lineTo(s / 2 - e, -h / 2 + e); c.lineTo(s / 2 - b, -h / 2 + b); c.lineTo(-s / 2 + b, -h / 2 + b); c.lineTo(-s / 2 + b, h / 2 - b); c.lineTo(-s / 2 + e, h / 2 - e); c.closePath(); c.fill();
+    c.fillStyle = mix(col, dark, 0.55);
+    c.beginPath(); c.moveTo(s / 2 - e, h / 2 - e); c.lineTo(-s / 2 + e, h / 2 - e); c.lineTo(-s / 2 + b, h / 2 - b); c.lineTo(s / 2 - b, h / 2 - b); c.lineTo(s / 2 - b, -h / 2 + b); c.lineTo(s / 2 - e, -h / 2 + e); c.closePath(); c.fill();
     c.restore();
   }
-  function chunkHoles(X) {
-    const { c, P, pts, d } = X;
-    c.strokeStyle = P.dim; c.lineWidth = 1.5; c.setLineDash([4, 4]);
-    for (let i = Math.max(0, X.min); i < pts.length; i++) { rr(c, pts[i].x - d / 2, pts[i].y - d * 0.41, d, d * 0.82, d * 0.12); c.stroke(); }
-    c.setLineDash([]);
+  // the opened foil under the bar (torn along the top), and the crumbs left where pieces were eaten
+  function chocFoil(X) {
+    const { c, P, d, pts } = X, C = X.geo.choc, m = d * 0.3;
+    const x0 = C.x0 - m, x1 = C.x0 + C.bw + m, y0 = C.y0 - m * 0.6, y1 = C.y0 + C.bh + m;
+    const foil = mix(P.dim, P.text, 0.2), teeth = Math.max(4, Math.round((x1 - x0) / Math.max(10, d * 0.28)));
+    c.fillStyle = foil;
+    c.beginPath(); c.moveTo(x0, y1); c.lineTo(x0, y0);
+    for (let j = 1; j <= teeth; j++) c.lineTo(x0 + (x1 - x0) * (j - 0.5) / teeth, y0 - m * (j % 2 ? 0.45 : 0.2)), c.lineTo(x0 + (x1 - x0) * j / teeth, y0);
+    c.lineTo(x1, y1); c.closePath(); c.fill();
+    // a few soft creases (kept on the foil)
+    c.save(); c.clip();
+    c.strokeStyle = mix(foil, P.text, 0.1); c.lineWidth = Math.max(1, Math.min(d * 0.02, 2));
+    c.beginPath();
+    const rnd = seeded(pts.length * 3 + 1);
+    for (let j = 0; j < 7; j++) { const x = x0 + rnd() * (x1 - x0), y = y0 + rnd() * (y1 - y0), a = rnd() * TAU, l = d * (0.3 + rnd() * 0.5); c.moveTo(x, y); c.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); }
+    c.stroke(); c.restore();
+    // crumbs drop from the piece as it snaps off, and stay
+    c.fillStyle = mix(P.fg, P.dim, 0.45);
+    for (let i = Math.max(0, X.min); i < pts.length; i++) {
+      const p = pts[i];
+      if (p.g < 0.12) continue;
+      const e = easeOut(clamp((p.g - 0.12) / 0.4)), r2 = seeded(i * 17 + 3);
+      leftover(X, p.x, p.y, d * 0.5);   // the eaten spot with its crumbs
+      c.beginPath();
+      for (let j = 0; j < 4; j++) {
+        const tx = p.x + (r2() - 0.5) * d * 0.7, ty = p.y + (r2() - 0.2) * C.ph * 0.6, sz = Math.max(1.2, d * (0.03 + r2() * 0.035));
+        const x = lerp(p.x + (tx - p.x) * 0.3, tx, e), y = lerp(p.y + C.ph * 0.35, ty, e);
+        c.moveTo(x + sz, y); c.arc(x, y, sz, 0, TAU);
+      }
+      c.fill();
+    }
   }
 
   // ---- abacus ----
@@ -1776,9 +1920,10 @@
   function lookBack(X) {
     const D = X.geo.duck, p = 1 - X.calm;   // during a pause she turns round and keeps watching them
     let e = 0;
-    if (D.look && !X.still) {
+    if (D.look) {
       const t = (X.now - D.look) / 1800;
       if (t >= 1) D.look = null;
+      else if (X.still) e = 1;   // reduced motion: she just looks back for a moment, without the turn
       else { e = t < 0.25 ? t / 0.25 : t > 0.75 ? (1 - t) / 0.25 : 1; X.more = true; }
     }
     return Math.max(e * e * (3 - 2 * e), p * p * (3 - 2 * p));
@@ -1861,7 +2006,7 @@
   function duckTap(G, x, y) {
     const D = G.duck;
     if (Math.hypot(x - D.mx, y - D.my) > D.mom * 0.65) return false;
-    if (!D.look) D.look = performance.now();
+    if (!D.look) { D.look = performance.now(); if (still) setTimeout(kick, 1850); }   // still mode draws no frames on its own: one more to turn her back
     quack();
     return true;
   }
@@ -2076,7 +2221,10 @@
     c.fillText(subText(), S.sx + S.sw / 2, S.sy + S.sh * 0.76);   // same line as the subtitle: no end time in Pomodoro or Time mode
     c.globalAlpha = X.all;
     c.fillStyle = P.dim;   // empty seats
-    for (const p of pts) { rr(c, p.x - p.s / 2, p.y + p.s * 0.12, p.s, p.s * 0.42, p.s * 0.12); c.fill(); }
+    pts.forEach((p, i) => {
+      rr(c, p.x - p.s / 2, p.y + p.s * 0.12, p.s, p.s * 0.42, p.s * 0.12); c.fill();
+      if (i >= X.min) leftover(X, p.x, p.y, p.s * 0.6);   // a seat left empty is a minute gone
+    });
   }
 
   // ---- thermometer (real temperature colours instead of the palette, see CLAUDE.md) ----
@@ -2115,6 +2263,8 @@
   }
   function thermoGlass(X) {
     const { c, P, n } = X, T = X.geo.therm, f = n ? X.min / n : 0, fl = thermoFlare(X);
+    // the empty part of the tube, where cooled segments were, is time already gone
+    for (let i = Math.max(0, X.min); i < n; i++) { const p = X.pts[i]; leftover(X, p.x, p.y, Math.max(12, Math.max(p.sw, p.sh) * 0.6)); }
     // snow falls harder the colder it gets (stands still during a pause)
     const flakes = Math.round(50 * clamp(1 - f) * X.all);
     c.fillStyle = P.text;
@@ -2174,9 +2324,392 @@
   }
 
 
+  // ---- balloons ----
+  // a bunch of balloons tied together at one knot; the outermost one pops each minute and its string drops and dangles from the knot
+  function balloons(n, w, h) {
+    const rnd = seeded(n * 11 + 7), kx = w / 2, ky = h * 0.86;
+    const bw = Math.min(w, h * 1.4), top = h * 0.02, bot = h * 0.64, cx = w / 2, cy = (top + bot) / 2;
+    // the biggest balloon size for which n balloons fit into the bunch (an ellipse above the knot), packed in offset rows
+    const fit = d => {
+      const rx = bw / 2 - d * 0.52, ry = (bot - top) / 2 - d * 0.62, sx = d * 0.96, sy = d * 1.04, out = [];
+      if (rx <= 0 || ry <= 0) return d < 20 ? [{ x: cx, y: cy, e: 0 }] : out;
+      for (let r = -Math.floor(ry / sy); r <= Math.floor(ry / sy); r++) {
+        const y = cy + r * sy, off = r % 2 ? sx / 2 : 0;
+        for (let k = -Math.ceil(rx / sx) - 1; k <= Math.ceil(rx / sx) + 1; k++) {
+          const x = cx + k * sx + off, e = Math.hypot((x - cx) / rx, (y - cy) / ry);
+          if (e <= 1) out.push({ x, y, e });
+        }
+      }
+      return out;
+    };
+    let d = Math.min(w * 0.6, (bot - top) * 0.78, 260), cand = fit(d);
+    while (cand.length < n && d > 3) { d *= 0.97; cand = fit(d); }
+    while (cand.length < n) cand.push({ x: cx, y: cy, e: 0 });
+    // keep the n closest to the middle, then centre the bunch; the outer ones pop first (a little shuffled)
+    cand.sort((a, b) => a.e - b.e);
+    cand = cand.slice(0, n);
+    const xs = cand.map(p => p.x), ys = cand.map(p => p.y);
+    const sx = cx - (Math.min(...xs) + Math.max(...xs)) / 2, sy = cy - (Math.min(...ys) + Math.max(...ys)) / 2;
+    cand.forEach(p => { p.k = p.e + rnd() * 0.25; });
+    cand.sort((a, b) => a.k - b.k);
+    const dl = Math.min(d * 0.9, h * 0.1);
+    const pts = cand.map(p => {
+      const s = 0.93 + rnd() * 0.1;
+      return { x: p.x + sx, y: p.y + sy, s, hr: d * 0.58 * s, sh: rnd() * 0.2, ph: rnd() * TAU, ph2: rnd() * TAU,
+        da: (rnd() - 0.5) * 1.1, dl: dl * (0.55 + 0.45 * rnd()) };
+    });
+    // the upper balloons are drawn first, so the lower ones sit in front of their strings
+    const order = pts.map((p, i) => i).sort((a, b) => pts[a].y - pts[b].y);
+    return { pts, d, order, bal: { kx, ky } };
+  }
+  // drifting in the wind (X.t, so a pause brings them to rest); a tap pushes one away and it swings back on its string
+  function balloonPos(X, i, g, p) {
+    const d = X.d, t = X.t, B = X.geo.bal;
+    const wind = Math.sin(t * 0.37 + 1) * 0.6 + Math.sin(t * 0.23) * 0.4, lift = clamp((B.ky - p.y) / B.ky);
+    let x = p.x + d * (0.07 * Math.sin(t * 0.9 + p.ph) + 0.14 * wind * lift), y = p.y + d * 0.05 * Math.sin(t * 1.3 + p.ph2), kick = 0;
+    if (p.tk) {
+      const s = (X.now - p.tk) / 1000;
+      if (s < 2.5) { kick = Math.exp(-s * 2) * Math.sin(s * 8); x += Math.cos(p.ta) * d * 0.35 * kick; y += Math.sin(p.ta) * d * 0.2 * kick; X.more = true; }
+      else p.tk = 0;
+    }
+    // the string pulls the balloon's bottom towards the knot
+    const r = Math.atan2(-(B.kx - x), B.ky - y) * 0.7 + Math.sin(t * 1.1 + p.ph) * 0.05 + kick * 0.25 * Math.cos(p.ta);
+    return { x, y, r, a: g >= 1 ? 0 : 1 };
+  }
+  function balloonTap(G, i) { const p = G.pts[i]; p.tk = performance.now(); p.ta = Math.random() * TAU; }
+  // where a popped balloon's string hangs: down from the knot, a little to one side
+  function danglePos(X, p) {
+    const B = X.geo.bal, a = p.da + Math.sin(X.t * 0.7 + p.ph) * 0.06;
+    return [B.kx + Math.sin(a) * p.dl, B.ky + Math.cos(a) * p.dl];
+  }
+  function balloonStrings(X) {
+    const { c, P, d, pts } = X, B = X.geo.bal, n = pts.length;
+    c.strokeStyle = mix(P.dim, P.text, 0.35); c.lineWidth = Math.max(1, d * 0.022);
+    // the gathered strings below the knot
+    c.beginPath(); c.moveTo(B.kx, B.ky);
+    c.quadraticCurveTo(B.kx + Math.sin(X.t * 0.6) * d * 0.15, (B.ky + H) / 2, B.kx + Math.sin(X.t * 0.4) * d * 0.05, H + 2); c.stroke();
+    // strings of the balloons still up (one path for all, so hundreds stay cheap; fainter when there are many, so they don't merge into a solid fan)
+    const a0 = c.globalAlpha;
+    c.globalAlpha = a0 * Math.min(1, Math.sqrt(40 / Math.max(1, X.min)));
+    c.beginPath();
+    for (let i = 0; i < n; i++) {
+      const p = pts[i];
+      if (p.g >= 0.08) continue;
+      c.moveTo(B.kx, B.ky);
+      c.quadraticCurveTo((B.kx + p.cx) / 2 + Math.sin(X.t * 0.8 + p.ph) * d * 0.08, (B.ky + p.cy) / 2, p.cx, p.cy);
+    }
+    c.stroke();
+    c.globalAlpha = a0;
+    // popped: the string falls down and dangles from the knot, with the little rubber knot left at its end
+    const ends = [];
+    c.beginPath();
+    for (let i = 0; i < n; i++) {
+      const p = pts[i];
+      if (p.g < 0.08) continue;
+      const e = easeOut(clamp((p.g - 0.08) / 0.6)), [dx, dy] = danglePos(X, p);
+      const ex = lerp(p.cx, dx, e), ey = lerp(p.cy, dy, e);
+      c.moveTo(B.kx, B.ky);
+      c.quadraticCurveTo((B.kx + ex) / 2 + (1 - e) * d * 0.3, (B.ky + ey) / 2 + (1 - e) * d * 0.4, ex, ey);
+      ends.push(ex, ey);
+      leftover(X, ex, ey, Math.max(12, d * 0.15)); leftover(X, (B.kx + ex) / 2, (B.ky + ey) / 2, Math.max(10, d * 0.12));
+    }
+    c.stroke();
+    if (ends.length) {
+      c.fillStyle = mix(P.fg, P.dim, 0.65);
+      const s = Math.max(1.5, d * 0.06);
+      c.beginPath();
+      for (let j = 0; j < ends.length; j += 2) { c.moveTo(ends[j], ends[j + 1] - s * 0.4); c.lineTo(ends[j] - s, ends[j + 1] + s); c.lineTo(ends[j] + s, ends[j + 1] + s); c.closePath(); }
+      c.fill();
+    }
+    // a small bow at the knot
+    const b = Math.min(26, Math.max(10, d * 0.22));
+    c.strokeStyle = P.fg; c.lineWidth = Math.max(1.5, b * 0.22);
+    c.beginPath(); c.ellipse(B.kx - b * 0.55, B.ky - b * 0.1, b * 0.55, b * 0.3, -0.35, 0, TAU); c.stroke();
+    c.beginPath(); c.ellipse(B.kx + b * 0.55, B.ky - b * 0.1, b * 0.55, b * 0.3, 0.35, 0, TAU); c.stroke();
+    c.fillStyle = P.fg; c.beginPath(); c.arc(B.kx, B.ky, b * 0.2, 0, TAU); c.fill();
+  }
+  // an egg-shaped balloon with a tied knot and a shine; it swells a little, then bursts into shreds that fly off and fall
+  function balloonBody(c, rw, rh, col, hl) {
+    c.fillStyle = col;
+    c.beginPath(); c.moveTo(0, rh);
+    c.bezierCurveTo(rw * 0.55, rh * 0.92, rw, rh * 0.35, rw, -rh * 0.15);
+    c.bezierCurveTo(rw, -rh * 0.72, rw * 0.55, -rh, 0, -rh);
+    c.bezierCurveTo(-rw * 0.55, -rh, -rw, -rh * 0.72, -rw, -rh * 0.15);
+    c.bezierCurveTo(-rw, rh * 0.35, -rw * 0.55, rh * 0.92, 0, rh);
+    c.fill();
+    c.beginPath(); c.moveTo(0, rh * 0.9); c.lineTo(-rw * 0.15, rh * 1.1); c.lineTo(rw * 0.15, rh * 1.1); c.closePath(); c.fill();
+    c.fillStyle = hl; c.globalAlpha *= 0.7;
+    c.beginPath(); c.ellipse(-rw * 0.45, -rh * 0.4, rw * 0.14, rh * 0.24, 0.45, 0, TAU); c.fill();
+  }
+  function balloon(X, i, x, y, k, q, p, col) {
+    const c = X.c, P = X.P, g = p.g, base = mix(col, P.bg, p.sh);
+    const hl = P.text === P.fg ? mix(base, P.bg, 0.35) : mix(base, P.dark ? P.text : P.bg, 0.55);
+    let rw = X.d * 0.5 * p.s * k, rh = X.d * 0.6 * p.s * k;
+    c.save(); c.translate(x, y); c.rotate(q ? q.r : 0);
+    if (g < 0.08) {
+      const sw = 1 + 1.6 * g;   // swells just before it pops
+      balloonBody(c, rw * sw, rh * sw, base, hl);
+      c.restore(); return;
+    }
+    const t = (g - 0.08) / 0.92, a0 = c.globalAlpha, rnd = seeded(i * 13 + 5);
+    // a quick comic burst
+    if (t < 0.4) {
+      const u = t / 0.4;
+      c.strokeStyle = base; c.lineWidth = Math.max(1.5, rw * 0.08); c.globalAlpha = a0 * (1 - u);
+      c.beginPath();
+      for (let j = 0; j < 8; j++) {
+        const a = j * TAU / 8 + 0.2;
+        c.moveTo(Math.cos(a) * rw * (0.9 + 0.8 * u), Math.sin(a) * rw * (0.9 + 0.8 * u));
+        c.lineTo(Math.cos(a) * rw * (1.25 + 1.1 * u), Math.sin(a) * rw * (1.25 + 1.1 * u));
+      }
+      c.stroke();
+    }
+    // rubber shreds fly out, spin and fall
+    c.fillStyle = base; c.globalAlpha = a0 * (1 - t);
+    const e = easeOut(Math.min(1, t * 1.6));
+    for (let j = 0; j < 7; j++) {
+      const a = j * TAU / 7 + rnd() * 0.8, v = 0.8 + rnd() * 0.9, s = rw * (0.22 + rnd() * 0.12) * (1 - 0.4 * t);
+      const px = Math.cos(a) * rw * v * (0.3 + 1.5 * e), py = Math.sin(a) * rh * v * (0.3 + 1.2 * e) + X.d * 1.6 * t * t;
+      c.save(); c.translate(px, py); c.rotate(a + t * (rnd() < 0.5 ? -6 : 6));
+      c.beginPath(); c.moveTo(-s, -s * 0.3); c.quadraticCurveTo(0, -s * 0.9, s, -s * 0.2); c.lineTo(s * 0.6, s * 0.4); c.quadraticCurveTo(0, 0, -s * 0.7, s * 0.35); c.closePath(); c.fill();
+      c.restore();
+    }
+    c.restore();
+  }
+
+  // ---- penguins ----
+  // a crowd of penguins on an ice floe; each minute one waddles to the edge, hops and dives in, then swims about as a little head in the water
+  function penguins(n, w, h) {
+    const rnd = seeded(n * 5 + 11), cx = w / 2, yf = h * 0.7, top = h * 0.03;
+    // the biggest penguin width d for which n of them fit on the floe (feet in offset rows inside an ellipse; back rows only show their heads)
+    // (room beside the floe, so a penguin diving off the side stays on screen)
+    const fit = d => {
+      const rx0 = Math.max(d, Math.min(w / 2 - d * 0.75, h * 0.8)), ry = Math.max(rx0 * 0.15, Math.min(rx0 * 0.75, (yf - top - 1.3 * d) / 2)), cy = yf - ry;
+      const ix = rx0 - d * 0.55, iy = ry - d * 0.2, sx = d * 1.04, sy = d * 0.6, out = [];
+      if (ix <= 0 || iy <= 0) return { out: d < 20 ? [{ x: cx, y: cy, e: 0 }] : out, cy, ix: Math.max(ix, 1), iy: Math.max(iy, 1) };
+      for (let r = -Math.floor(iy / sy); r <= Math.floor(iy / sy); r++) {
+        const y = cy + r * sy, off = r % 2 ? sx / 2 : 0;
+        for (let k = -Math.ceil(ix / sx) - 1; k <= Math.ceil(ix / sx) + 1; k++) {
+          const x = cx + k * sx + off, e = Math.hypot((x - cx) / ix, (y - cy) / iy);
+          if (e <= 1) out.push({ x, y, e });
+        }
+      }
+      return { out, cy, ix, iy };
+    };
+    let d = Math.min(w * 0.45, h * 0.32, 220), F = fit(d);
+    while (F.out.length < n && d > 3) { d *= 0.97; F = fit(d); }
+    while (F.out.length < n) F.out.push({ x: cx, y: F.cy, e: 0 });
+    const cand = F.out.sort((a, b) => a.e - b.e).slice(0, n);
+    // the floe fits snugly around the crowd
+    const m = Math.max(0.35, ...cand.map(p => p.e)), RX = F.ix * m + d * 0.55, RY = F.iy * m + d * 0.2, cy = F.cy;
+    const th = Math.max(6, Math.min(d * 0.38, h * 0.05)), wy0 = cy + RY + th + d * 0.4, wy1 = Math.max(wy0, h - d * 0.35);
+    // the outer ones leave first (a little shuffled)
+    cand.forEach(p => { p.k = p.e + rnd() * 0.2; });
+    cand.sort((a, b) => a.k - b.k);
+    const pts = cand.map(p => {
+      // out to the nearest edge, leaning a little towards the front, where the open water is
+      let ux = (p.x - cx) / RX, uy = (p.y - cy) / RY, e = Math.hypot(ux, uy);
+      if (e < 0.05) { ux = 0; uy = 1; e = 1; }
+      ux /= e; uy = uy / e + 0.4; e = Math.hypot(ux, uy);
+      const fx = cx + ux / e * RX * 0.96, fy = cy + uy / e * RY * 0.96;
+      let ox = ux / RX, oy = uy / RY; const ol = Math.hypot(ox, oy); ox /= ol; oy /= ol;
+      return { x: p.x, y: p.y - d * 0.65, hr: d * 0.62, ph: rnd() * TAU, ph2: rnd() * TAU,
+        ex: fx, ey: fy - d * 0.65, wx: fx + ox * d * 0.55, wy: fy + oy * d * 0.55 + th * 0.8 - d * 0.2, dir: ox < 0 ? -1 : 1,
+        sx: d * 0.5 + rnd() * Math.max(1, w - d), sy: wy0 + rnd() * (wy1 - wy0) };
+    });
+    const order = pts.map((p, i) => i).sort((a, b) => pts[a].y - pts[b].y);
+    // a jagged outline around the ellipse (only ever a little outside it, so no penguin stands over the edge)
+    const poly = [], N = 20, rp = seeded(n * 3 + 2);
+    for (let k = 0; k < N; k++) {
+      const a = (k + (rp() - 0.5) * 0.5) / N * TAU, r = 1 + rp() * 0.07 + (rp() < 0.25 ? 0.05 : 0);
+      poly.push([cx + Math.cos(a) * RX * r, cy + Math.sin(a) * RY * r]);
+    }
+    // a few small loose chunks drifting in the open water in front
+    const bits = [];
+    for (let k = 0; k < 3; k++) {
+      const sz = Math.max(6, Math.min(d * 0.45, 30)) * (0.6 + rp() * 0.6), shape = [];
+      for (let j = 0; j < 6; j++) { const a = (j + (rp() - 0.5) * 0.6) / 6 * TAU; shape.push([Math.cos(a) * sz * (0.8 + rp() * 0.4), Math.sin(a) * sz * 0.45 * (0.8 + rp() * 0.4)]); }
+      bits.push({ x: w * (0.15 + 0.7 * rp()), y: wy0 + rp() * Math.max(1, wy1 - wy0), shape, ph: rp() * TAU, th: Math.max(2, sz * 0.25) });
+    }
+    return { pts, d, order, ice: { cx, cy, rx: RX, ry: RY, th, wy0, wy1, poly, bits } };
+  }
+  function penguinPos(X, i, g, p) {
+    const d = X.d;
+    let hop = 0;
+    if (p.tk) { const s = (X.now - p.tk) / 1000; if (s < 0.45) { hop = Math.sin(Math.PI * s / 0.45) * d * 0.28; X.more = true; } }
+    if (i < X.min || g <= 0) return { x: p.x, y: p.y - hop, r: Math.sin(X.t * 1.6 + p.ph) * 0.05, a: 1 };
+    if (g >= 1) return { x: p.wx, y: p.wy, a: 0 };
+    if (g < 0.55) {
+      // waddle to the edge (real time, like every leaving item)
+      const u = g / 0.55, e = u * u * (3 - 2 * u), wob = Math.sin(X.now / 1000 * 13);
+      return { x: lerp(p.x, p.ex, e), y: lerp(p.y, p.ey, e) - Math.abs(wob) * d * 0.05, r: wob * 0.18, walk: 1 };
+    }
+    // hop off and dive in head first
+    const u = Math.min(1, (g - 0.55) / 0.2);
+    return { x: lerp(p.ex, p.wx, u), y: lerp(p.ey, p.wy, u) - Math.sin(Math.PI * u) * d * 0.6, r: p.dir * u * u * 2.3, s: 1 - 0.55 * u * u, walk: 1 };
+  }
+  function penguinTap(G, i) { G.pts[i].tk = performance.now(); penguinCall(); }
+  // a penguin's honk: two nasal calls, a short one and a longer one ("ha-haah"), a little different every time
+  function penguinCall() {
+    if (!audio || pausedAt) return;   // quiet while paused
+    const a = audio, t0 = a.currentTime + 0.01, k = 0.88 + Math.random() * 0.28;
+    const bp = a.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1300 * k; bp.Q.value = 2.5;
+    bp.connect(a.destination);
+    const honk = (t, dur, f0, f1) => {
+      const o = a.createOscillator(), g = a.createGain(), lfo = a.createOscillator(), lg = a.createGain();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(f0, t); o.frequency.linearRampToValueAtTime(f1, t + dur * 0.35); o.frequency.linearRampToValueAtTime(f0 * 0.85, t + dur);
+      lfo.frequency.value = 30; lg.gain.value = f0 * 0.05; lfo.connect(lg).connect(o.frequency);   // the rough, buzzy wobble
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.09, t + 0.02);
+      g.gain.setValueAtTime(0.09, t + dur * 0.6); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g).connect(bp);
+      o.start(t); o.stop(t + dur + 0.02); lfo.start(t); lfo.stop(t + dur + 0.02);
+    };
+    honk(t0, 0.09, 500 * k, 680 * k);
+    honk(t0 + 0.13, 0.24, 540 * k, 800 * k);
+  }
+  // belly and face mask: light against the body (the palette's light colour; if body and text are the same, the background)
+  const penguinBelly = (P, col) => P.text === P.fg ? P.bg : P.dark ? mix(P.text, col, 0.1) : P.bg;
+  function penguinFace(c, d, belly, eyeCol, beak, closed) {
+    c.fillStyle = belly;
+    c.beginPath(); c.arc(-d * 0.13, -d * 0.24, d * 0.17, 0, TAU); c.arc(d * 0.13, -d * 0.24, d * 0.17, 0, TAU); c.fill();
+    if (closed) {
+      c.strokeStyle = eyeCol; c.lineWidth = Math.max(1, d * 0.035);
+      c.beginPath(); c.arc(-d * 0.13, -d * 0.25, d * 0.055, 0.15 * Math.PI, 0.85 * Math.PI); c.stroke();
+      c.beginPath(); c.arc(d * 0.13, -d * 0.25, d * 0.055, 0.15 * Math.PI, 0.85 * Math.PI); c.stroke();
+    } else {
+      c.fillStyle = eyeCol;
+      c.beginPath(); c.arc(-d * 0.13, -d * 0.25, d * 0.06, 0, TAU); c.arc(d * 0.13, -d * 0.25, d * 0.06, 0, TAU); c.fill();
+      c.fillStyle = belly;
+      c.beginPath(); c.arc(-d * 0.11, -d * 0.27, d * 0.02, 0, TAU); c.arc(d * 0.15, -d * 0.27, d * 0.02, 0, TAU); c.fill();
+    }
+    c.fillStyle = beak;
+    c.beginPath(); c.moveTo(-d * 0.07, -d * 0.15); c.lineTo(d * 0.07, -d * 0.15); c.lineTo(0, -d * 0.05); c.closePath(); c.fill();
+  }
+  function penguin(X, i, x, y, k, q, p, col) {
+    const c = X.c, P = X.P, g = p.g, d = X.d * k;
+    if (i >= X.min && g >= 0.75) {
+      // splash: a ring on the water and a few drops
+      const u = (g - 0.75) / 0.25, D = X.d;
+      c.strokeStyle = mix(P.text, P.bg, 0.4); c.lineWidth = Math.max(1, D * 0.04); c.globalAlpha = 1 - u;
+      c.beginPath(); c.ellipse(p.wx, p.wy + D * 0.2, D * (0.15 + 0.55 * u), D * (0.05 + 0.18 * u), 0, 0, TAU); c.stroke();
+      c.fillStyle = mix(P.text, P.bg, 0.3);
+      for (let j = 0; j < 6; j++) {
+        const a = (j - 2.5) * 0.35;
+        c.beginPath(); c.arc(p.wx + Math.sin(a) * D * 0.6 * u, p.wy + D * 0.2 - Math.sin(Math.PI * u) * D * (0.5 + 0.15 * (j % 3)), Math.max(1, D * 0.05 * (1 - u * 0.5)), 0, TAU); c.fill();
+      }
+      c.globalAlpha = 1;
+      return;
+    }
+    const R = X.geo.real, belly = R ? REAL.belly : penguinBelly(P, col), beak = R ? REAL.beak : mix(P.fg, P.text, 0.45), wing = mix(col, P.bg, 0.15);
+    // flap after a tap; while walking the flippers stick out a little
+    let flap = q && q.walk ? 0.35 : 0;
+    if (p.tk) { const s = (X.now - p.tk) / 1000; if (s < 0.7) { flap += Math.abs(Math.sin(s * 26)) * 0.9 * (1 - s / 0.7); X.more = true; } else p.tk = 0; }
+    // asleep while paused, and now and then a blink
+    const closed = X.calm < 0.5 || Math.sin(X.t * 0.5 + p.ph * 3) > 0.993;
+    c.save(); c.translate(x, y + d * 0.65); c.rotate(q && q.r ? q.r : 0); c.translate(0, -d * 0.65);
+    c.fillStyle = beak;
+    c.beginPath(); c.ellipse(-d * 0.17, d * 0.63, d * 0.13, d * 0.06, 0, 0, TAU); c.ellipse(d * 0.17, d * 0.63, d * 0.13, d * 0.06, 0, 0, TAU); c.fill();
+    c.fillStyle = wing;
+    for (const s of [-1, 1]) { c.beginPath(); c.ellipse(s * d * 0.46, d * 0.08, d * 0.11, d * 0.3, s * (0.25 + flap), 0, TAU); c.fill(); }
+    c.fillStyle = col;
+    c.beginPath(); c.ellipse(0, 0, d * 0.48, d * 0.65, 0, 0, TAU); c.fill();
+    c.fillStyle = belly;
+    c.beginPath(); c.ellipse(0, d * 0.14, d * 0.34, d * 0.46, 0, 0, TAU); c.fill();
+    penguinFace(c, d, belly, R ? REAL.eye : P.dark && P.text !== P.fg ? P.bg : col, beak, closed);
+    c.fillStyle = R ? REAL.blush : mix(belly, P.fg, 0.35);
+    c.beginPath(); c.ellipse(-d * 0.27, -d * 0.1, d * 0.06, d * 0.035, 0, 0, TAU); c.ellipse(d * 0.27, -d * 0.1, d * 0.06, d * 0.035, 0, 0, TAU); c.fill();
+    c.restore();
+  }
+  // ice in palette colours: a light top, darker faceted sides, and the paler part under the water
+  function iceColors(P) {
+    return P.dark
+      ? { top: mix(P.bg, P.text, 0.3), side: mix(P.bg, P.text, 0.15), deep: mix(P.bg, P.text, 0.07), rim: mix(P.bg, P.text, 0.55) }
+      : { top: mix(P.bg, P.dim, 0.8), side: mix(P.dim, P.text, 0.3), deep: mix(P.bg, P.dim, 0.5), rim: P.bg };
+  }
+  // a slab of ice: the outline extruded downwards, each front face shaded by which way it faces, then the flat top with a frosty rim
+  function iceSlab(c, poly, th, C, under) {
+    const n = poly.length;
+    if (under) {
+      // the bigger, paler part of the floe under the water
+      const mx = poly.reduce((s, v) => s + v[0], 0) / n, my = poly.reduce((s, v) => s + v[1], 0) / n;
+      c.fillStyle = C.deep;
+      c.beginPath(); poly.forEach(([x, y]) => c.lineTo(mx + (x - mx) * 1.07, my + (y - my) * 1.1 + th * 1.6)); c.closePath(); c.fill();
+    }
+    c.fillStyle = C.side;
+    c.beginPath(); poly.forEach(([x, y]) => c.lineTo(x, y + th)); c.closePath(); c.fill();
+    for (let k = 0; k < n; k++) {
+      const a = poly[k], b = poly[(k + 1) % n], dx = b[0] - a[0], dy = b[1] - a[1];
+      if (dx >= 0) continue;   // only the faces turned towards us
+      const l = Math.hypot(dx, dy) || 1;
+      c.fillStyle = mix(C.side, C.top, dy / l < 0 ? 0.35 : 0.08 + 0.1 * (k % 2));
+      c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.lineTo(b[0], b[1] + th); c.lineTo(a[0], a[1] + th); c.closePath(); c.fill();
+    }
+    c.fillStyle = C.top;
+    c.beginPath(); poly.forEach(([x, y]) => c.lineTo(x, y)); c.closePath(); c.fill();
+    c.strokeStyle = C.rim; c.lineWidth = Math.max(1, Math.min(th * 0.18, 2.5)); c.lineJoin = 'round';
+    c.stroke();
+  }
+  // the floe, a few waves, and the penguins that already dived in, bobbing in the water in front
+  function iceFloe(X) {
+    const { c, P, d, pts } = X, I = X.geo.ice;
+    c.strokeStyle = P.dim; c.lineWidth = Math.max(1, Math.min(d * 0.03, 2.5));
+    const rnd = seeded(7);
+    c.beginPath();
+    for (let j = 0; j < 9; j++) {
+      const x = ((rnd() * W + X.t * d * 0.15 * (0.5 + rnd())) % (W + 40)) - 20, y = I.wy0 - d * 0.2 + rnd() * Math.max(10, H - I.wy0), s = Math.max(8, Math.min(d * 0.35, 26));
+      c.moveTo(x - s, y); c.quadraticCurveTo(x - s / 2, y - s * 0.35, x, y); c.quadraticCurveTo(x + s / 2, y - s * 0.35, x + s, y);
+    }
+    c.stroke();
+    const C = X.geo.real ? REAL.ice : iceColors(P);
+    iceSlab(c, I.poly, I.th, C, true);
+    // on top: cracks running in from the edge, and a few snowdrifts along the back
+    const rc = seeded(I.poly.length * 7 + Math.round(I.rx));
+    c.strokeStyle = mix(C.top, C.side, 0.6); c.lineWidth = Math.max(1, Math.min(d * 0.025, 1.8));
+    c.beginPath();
+    for (let j = 0; j < 3; j++) {
+      const v = I.poly[Math.floor(rc() * I.poly.length)];
+      let x = lerp(v[0], I.cx, 0.04), y = lerp(v[1], I.cy, 0.04), a = Math.atan2(I.cy - y, I.cx - x);
+      c.moveTo(x, y);
+      for (let k = 0; k < 4; k++) { a += (rc() - 0.5) * 1.1; x += Math.cos(a) * I.rx * 0.08; y += Math.sin(a) * I.ry * 0.08; c.lineTo(x, y); }
+    }
+    c.stroke();
+    c.fillStyle = C.rim;
+    for (let j = 0; j < 4; j++) {
+      const a = Math.PI * (1.15 + 0.7 * (j + rc() * 0.6) / 4), sx = I.cx + Math.cos(a) * I.rx * 0.82, sy = I.cy + Math.sin(a) * I.ry * 0.78, r = Math.max(4, Math.min(d * 0.3, I.rx * 0.12)) * (0.7 + rc() * 0.6);
+      c.globalAlpha = X.all * 0.7;
+      c.beginPath(); c.ellipse(sx, sy, r, r * 0.35, 0, Math.PI, 0); c.fill();
+    }
+    c.globalAlpha = X.all;
+    // loose chunks bobbing in the water
+    for (const b of I.bits) {
+      const x = Math.max(20, Math.min(W - 20, b.x + Math.sin(X.t * 0.12 + b.ph) * d * 0.5)), y = b.y + Math.sin(X.t * 0.8 + b.ph) * 1.5;
+      iceSlab(c, b.shape.map(([u, v]) => [x + u, y + v]), b.th, C, false);
+    }
+    // swimmers: small dim heads with a ripple
+    const R = X.geo.real, head = mix(P.fg, P.dim, R ? 0.35 : 0.55), belly = mix(R ? REAL.belly : penguinBelly(P, P.fg), P.dim, R ? 0.3 : 0.45), beak = mix(R ? REAL.beak : mix(P.fg, P.text, 0.45), P.dim, R ? 0.3 : 0.5);
+    const hd = d * 0.62, closed = X.calm < 0.5;
+    for (let i = Math.max(0, X.min); i < pts.length; i++) {
+      const p = pts[i];
+      if (p.g < 0.85) continue;
+      const x = Math.max(hd, Math.min(W - hd, p.sx + Math.sin(X.t * 0.15 + p.ph) * d * 1.2)), y = p.sy + Math.sin(X.t * 0.9 + p.ph2) * d * 0.06;
+      c.globalAlpha = X.all * clamp((p.g - 0.85) / 0.15);
+      leftover(X, x, y - hd * 0.1, Math.max(12, hd * 0.55));
+      c.strokeStyle = P.dim; c.lineWidth = Math.max(1, d * 0.03);
+      c.beginPath(); c.ellipse(x, y + hd * 0.22, hd * 0.55, hd * 0.12, 0, 0, TAU); c.stroke();
+      c.save(); c.translate(x, y);
+      c.fillStyle = head;
+      c.beginPath(); c.arc(0, -hd * 0.12, hd * 0.36, Math.PI * 0.95, Math.PI * 0.05); c.closePath(); c.fill();
+      penguinFace(c, hd, belly, head, beak, closed);
+      c.restore();
+    }
+    c.globalAlpha = X.all;
+  }
+
   // returns true while something is still animating
   function draw(now) {
-    const c = ctx, M = MODES[look.m], P = PALETTES[look.p], pts = geo.pts, d = geo.d, n = pts.length;
+    const c = ctx, M = MODES[look.m], P = curPal(), pts = geo.pts, d = geo.d, n = pts.length;
+    geo.left = [];   // leftovers of past minutes a theme draws itself (filled again each frame, see leftover())
     c.clearRect(0, 0, W, H);
     if (!n) return false;
     const dt = lastNow ? Math.min(0.05, (now - lastNow) / 1000) : 1 / 60;
@@ -2307,7 +2840,8 @@
     return geo.nn;
   }
 
-  function hitTest(x, y) {
+  // direct: only real hits, without the reach into the gaps (so a body like the mother duck is asked first)
+  function hitTest(x, y, direct) {
     const M = MODES[look.m], d = geo.d, playable = M.snd || M.playable;
     let hit = -1, best = Infinity, near = -1, nearD = Infinity;
     for (let i = 0; i < geo.pts.length; i++) {
@@ -2321,7 +2855,7 @@
     }
     // a theme you play like an instrument: a tap that lands in the small gap between tightly packed items still counts
     // for the nearest one and doesn't change the look (reach: 3/4 of the spacing, but at most half an item past the hit radius)
-    if (hit < 0 && near >= 0) {
+    if (hit < 0 && near >= 0 && !direct) {
       const r0 = d * (M.hit || 0.55);
       if (nearD < Math.max(r0, Math.min(0.75 * itemSpacing(), r0 + 0.5 * d))) hit = near;
     }
@@ -2337,6 +2871,11 @@
     relayout();
   }
 
+  // leftovers of past minutes that a theme draws itself, not as items (crumbs, dangling strings, swimming penguins):
+  // they stand for time already gone, so a tap on them changes the look like a past item. A theme registers each one while drawing.
+  function leftover(X, x, y, r) { X.geo.left.push({ x, y, r }); }
+  function onLeftover(x, y) { return (geo.left || []).some(o => Math.hypot(o.x - x, o.y - y) < o.r); }
+
   // is anything drawn near this point (planet, jar, stem, lines ...)? those are neutral, a tap does nothing
   function onDrawing(x, y) {
     const k = canvas.width / W, rad = 8;
@@ -2348,14 +2887,20 @@
     return false;
   }
 
-  // tap an item -> it pulses; tap on empty background -> new look; anything else -> nothing
+  // tap an item -> it pulses; tap on empty background or a past item -> new look; anything else -> nothing
   // (on the document, so the empty space beside the centered column in a wide browser counts as background too)
   document.addEventListener('pointerdown', e => {
     if (peek && !$('run').hidden) { if (++peekTaps >= 3) leavePeek(); return; }
     if ($('run').hidden || e.target.closest('.exit, #count, #sub')) return;
     const r = canvas.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
-    const i = hitTest(x, y);
-    if (i >= shownMin) return;   // past item: nothing happens
+    // a body (mother duck, hedgehog, spider ...) right under the finger wins over the reach into the gaps between items
+    let i = hitTest(x, y, true);
+    if (i < 0 && !pausedAt && MODES[look.m].bodyTap && MODES[look.m].bodyTap(geo, x, y)) {
+      if (navigator.vibrate) navigator.vibrate(8);
+      return kick();
+    }
+    if (i < 0) i = hitTest(x, y);
+    if (i >= shownMin) return restyle();   // a past item (time already gone) counts like the empty background: new look
     if (i >= 0 && pausedAt) return;   // paused: items (and bodies, below) stay quiet; only a tap on empty background still changes the look
     if (i >= 0) {
       const now = performance.now(), M = MODES[look.m];
@@ -2363,17 +2908,14 @@
       // sometimes the item also takes on a slightly different colour
       if (Math.random() < 0.45) {
         // always a neighbour of the palette colour, so repeated taps don't drift away
-        const base = PALETTES[look.p].fg, tn = tints.get(i);
+        const base = curPal().fg, tn = tints.get(i);
         tints.set(i, { from: tn ? tn.to : base, to: nudge(base), t0: now });
       }
       if (M.tap) M.tap(geo, i);
       if (M.snd) tapChime(M.snd);
       if (navigator.vibrate) navigator.vibrate(8);
       kick();
-    } else if (!pausedAt && MODES[look.m].bodyTap && MODES[look.m].bodyTap(geo, x, y)) {
-      if (navigator.vibrate) navigator.vibrate(8);
-      kick();
-    } else if (!onDrawing(x, y)) restyle();
+    } else if (onLeftover(x, y) || !onDrawing(x, y)) restyle();
   });
 
   // ---- animation on the end screen: butterfly (after the caterpillar) or a bang (after the fuse) ----
@@ -2385,7 +2927,7 @@
     cancelAnimationFrame(artRaf);
     $('doneText').classList.remove('shake');
     if (!kind) return;
-    const x = cv.getContext('2d'), t0 = performance.now(), P0 = PALETTES[look.p];
+    const x = cv.getContext('2d'), t0 = performance.now(), P0 = curPal();
     let bits = [];
     if (kind === 'bang') {
       void $('doneText').offsetWidth;   // restart the css animation
@@ -2408,7 +2950,7 @@
       if (cv.width !== Math.round(r.width * dpr)) { cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); }
       x.setTransform(dpr, 0, 0, dpr, 0, 0);
       x.clearRect(0, 0, r.width, r.height);
-      const P = PALETTES[look.p];
+      const P = curPal();
       let more = !still;
       if (kind === 'butterfly') {
         const s = Math.min(r.width, r.height) * 0.42, t = still ? 0 : now / 1000;

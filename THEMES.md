@@ -24,16 +24,19 @@ Offline genommen (`off: true` in `ALL_MODES`, im Code erhalten, nicht mehr in de
 | 13 | caterpillar | Raupe wird kürzer, am Ende Schmetterling; Antippen = sie lächelt kurz |
 | 14 | hourglass | Körner so groß, dass sie die ganze obere Hälfte füllen (proportional zur Zeit), der Hals ist so weit wie ein Korn; Sandkorn rutscht zum Hals, fällt durch und rollt auf den Haufen (oben entsteht eine Mulde, unten ein Hügel; Körner unregelmäßig); Pause = ein kurzer Schieber (gleiche Farbe und Strichstärke wie das Glas) schließt den Hals, kein Ausblenden |
 | 15 | fuse | Lunte brennt ab, am Ende Knall |
-| 16 | chocolate | Stück bricht ab |
+| 16 | chocolate | Neu gestaltet (die alte Version mit einzelnen Kacheln, herunterfallenden Stücken und gestrichelten Lücken war schwer zu verstehen): eine zusammenhängende Tafel mit Rillen und erhabenen Stücken liegt auf ihrer aufgerissenen Folie; sie wird von oben gegessen: pro Minute wackelt das oberste Stück, bricht ab, schwebt nach oben aus dem Bild und bekommt dabei zwei Bissspuren; Krümel bleiben auf der leeren Folie liegen |
 | 17 | abacus | Perle rutscht nach rechts |
 | 18 | stars | Stern im Sternbild erlischt; Pause = das Sternbild zieht sich in der Mitte zusammen, danach breitet es sich wieder aus |
 | 19 | hedgehog | Stachel fällt ab, er wird rot; Körper antippen = hüpfen/schütteln; Pause = schläft (Augen zu, atmet langsam, kleine „z“ steigen auf, Fläche bleibt hell; weder Körper noch Stacheln reagieren aufs Antippen, das gilt in der Pause für alle Themes) |
 | 20 | cinema | Gast verlässt den Saal, die Zeit läuft auf der Leinwand |
 | 21 | spider | Bein fällt ab; Kopf antippen = federt am Faden, kneift glücklich die Augen zu; Pause = zieht die Beine ein |
 | 22 | cars | Spielzeugauto fährt aus dem Bild (Antippen = kurz Gas geben mit Auspuffwölkchen statt Ring, Pause = einparken) |
-| 23 | ducks | Ein zufälliges Küken verliert langsam den Anschluss und paddelt auf Umwegen davon, auf dem längsten Weg zur gegenüberliegenden Seite, die anderen schließen auf; Mama antippen = sie dreht sich um und quakt; Pause = Reihe stoppt, Mama schaut zurück; viele Küken bleiben klein und schwimmen in einer langen Reihe auf einer Runde um den Teich (so gewünscht; der Schlängelweg über den ganzen Teich aus Commit 06a740d ist wieder raus), dafür ist Mama deutlich größer (3× ein Küken, höchstens 120 px, mindestens 44 px) |
+| 23 | ducks | Ein zufälliges Küken verliert langsam den Anschluss und paddelt auf Umwegen davon, auf dem längsten Weg zur gegenüberliegenden Seite, die anderen schließen auf; Mama antippen = sie dreht sich um und quakt, die Reihe bleibt stehen, die Küken drehen sich nicht mit um, sie wackeln nur auf der Stelle (so gewünscht); Pause = Reihe stoppt, Mama schaut zurück; viele Küken bleiben klein und schwimmen in einer langen Reihe auf einer Runde um den Teich (so gewünscht; der Schlängelweg über den ganzen Teich aus Commit 06a740d ist wieder raus), dafür ist Mama deutlich größer (3× ein Küken, höchstens 120 px, mindestens 44 px) |
 | 24 | thermometer | Oberstes Segment kühlt ab und verblasst, die Säule zeigt die vergangene Zeit (kein Frost am Glas, so gewünscht); es schneit immer stärker; Temperatur („12°“) ersetzt die Überschrift; Kugel antippen = Säule flackert auf; Pause = Strickmütze; Ende = zerspringt in Eissplitter |
 | 25 | marbles | Kugelbahn: Die Kugeln warten oben hinter einer Klappe auf den Rampen; pro Minute kippt die Klappe, eine Kugel rollt die Zickzack-Bahn hinunter (fällt von Rampe zu Rampe, dreht sich sichtbar) in die Schale unten und bleibt dort blass liegen, die Warteschlange rückt nach; Antippen = Kugel hüpft kurz |
+| 26 | balloons | Luftballon-Strauß, alle Schnüre an einem Knoten mit Schleife; der Strauß füllt die obere Fläche (Größe proportional zur Zeit), die Ballons treiben im Wind; pro Minute bläht sich ein äußerer Ballon kurz auf und platzt (Comic-Blitz, Gummifetzen fliegen und fallen), seine Schnur fällt herab und baumelt blass mit dem Gummiknoten am Knoten (vergangene Minuten bleiben als Quaste sichtbar); Antippen = Ballon wird angeschubst und schwingt an der Schnur zurück; bei vielen Ballons werden die Schnüre durchsichtiger |
+| 27 | penguins | Eigene Idee: Pinguine mit Gesicht stehen dicht an dicht auf einer Eisscholle (gezackter Rand, dicke Eiskante mit Facetten, heller Frostrand, Risse und Schneewehen oben, der hellere Teil unter Wasser schimmert durch, ein paar lose Eisstücke treiben im Wasser) (Größe proportional zur Zeit, hintere Reihen zeigen nur die Köpfe); pro Minute watschelt ein äußerer Pinguin zum Rand, hüpft und taucht kopfüber ein (Spritzer, Ring auf dem Wasser) und schwimmt danach blass als kleiner Kopf im Wasser vor der Scholle (vergangene Minuten bleiben so sichtbar); Antippen = er ruft wie ein Pinguin (zwei nasale Töne, „ha-haah“, jedes Mal etwas anders), hüpft und flattert mit den Flügeln, kein Ring (so gewünscht); spielbar wie ein Instrument; blinzelt ab und zu; Pause = alle schlafen (Augen zu) |
+| 28 | realpenguins | Dieselben Pinguine in echten Farben (so gewünscht, Ausnahme von der Palettenregel): schwarz-weiß mit orangem Schnabel und orangen Füßen, rosa Bäckchen, weiße Eisscholle, blaues Meer als Hintergrund des ganzen Bildschirms (eigene Palette `pal`) |
 
 ## Offene Ideen
 
@@ -49,7 +52,7 @@ Offline genommen (`off: true` in `ALL_MODES`, im Code erhalten, nicht mehr in de
 
 ### Physik und Spielzeug
 - [ ] **Dominosteine:** Pro Minute kippt einer um.
-- [ ] ★ **Luftballons:** Sie schweben an Schnüren und wackeln im Wind, pro Minute platzt einer. Antippen schubst einen Ballon an.
+- [x] ★ **Luftballons:** gebaut als `balloons` (#26).
 - [ ] **Pixel-Herz:** Pro Minute fällt ein Pixel heraus.
 
 ### Abstrakt

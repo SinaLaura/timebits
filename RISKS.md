@@ -61,6 +61,12 @@ New entries are added whenever someone notices one (rule in [CLAUDE.md](CLAUDE.m
 - **When it could bite:** A store reviewer or a user opens `/preview.html` and wonders what it is, or the pages grow into something that should not be public. The `DEV` check could also be too loose if the app is ever served from a local port on purpose.
 - **Way out:** Move the helper pages to a folder outside `docs/` (and serve the repo root for the preview), or exclude them in the Capacitor build and the Pages workflow.
 
+### The commit author email is public
+- **Decision:** Commits use the owner's normal git identity, so a real mailbox address appears as the author of every commit in the public repo (about 260 commits so far). It is visible to anyone who clones the repo or opens the commit list.
+- **Why it is fine now:** It is a personal project, the address is only the author field, and nothing else private is in the repo (checked: no keys, tokens, phone numbers or local paths in the tracked files).
+- **When it could bite:** Address scraping and spam, or the owner deciding she does not want the address public. Removing it afterwards is hard: it needs a history rewrite with a force-push (all hashes change, so the commit links in `NEXT.md` break), and forks and caches may keep copies.
+- **Way out:** For future commits, switch to GitHub's noreply address (GitHub: Settings, Emails, "Keep my email addresses private", then `git config user.email <id>+<username>@users.noreply.github.com`) and turn on "Block command line pushes that expose my email". Decide separately whether the old history is worth rewriting.
+
 ## Resolved
 
 Nothing yet.

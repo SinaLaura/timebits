@@ -7,10 +7,10 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 ## To do
 
 - [ ] [needs you, quick] Try on a real phone with your fingers (so far only simulated taps in headless Edge): playing quickly across the items of snake, rings, diamonds, spiral, clock and ducks, including taps in the gaps (open the preview server of the PC on the phone, same Wi-Fi: `http://PC-ADDRESS:8765/?m=40&look=snake`). Is the reach right (not too small, not too large)? Tapping clearly empty background should still change the look. Tell me what feels off.
-- [ ] [needs you, big] (Last task, only when everything else is done.) The chocolate bar theme is hard to understand and feels strange. Come up with something better.
 
 ## In progress
 
+- [ ] [solo, big] (Last task, only when everything else is done.) The chocolate bar theme is hard to understand and feels strange. Come up with something better. (night-run session, started 01:28)
 
 ## Done
 

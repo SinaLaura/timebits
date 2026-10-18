@@ -294,9 +294,9 @@
     { name: 'hourglass', shape: 'circle', goneScale: 1, goneDim: 0.55, goneMs: 1600, noDim: true, lay: hourglass, pos: grainPos, item: grain, before: glass, after: plug },
     // a burning fuse with sparks
     { name: 'fuse', shape: 'circle', live: true, endArt: 'bang', goneScale: 0.4, lay: fuse, step: fuseStep, before: fuseLine, after: sparks },
-    // a bar of chocolate on its opened foil, eaten from the top: each minute the top piece snaps off and floats away, crumbs stay on the foil
-    { name: 'chocolate', goneScale: 1, goneDim: 0, goneMs: 1500, goneLinear: true, lay: chocolateBar,
-      pos: chunkPos, item: chunk, halo: (X, p, q) => ({ rx: X.d * 0.55, ry: X.geo.choc.ph * 0.55, rot: q ? q.r || 0 : 0, rect: true }), before: chocFoil },
+    // a high-rise, one apartment per minute: each minute one on the top floor pops out and tumbles down, and once a floor is empty the roof drops onto the next; tap one and its light flicks off; paused: the lights go out
+    { name: 'tower', live: true, goneScale: 1, goneDim: 0, goneMs: 2200, goneLinear: true, lay: tower, pos: aptPos, item: apartment, tap: aptTap, before: towerBody,
+      halo: (X, p, q) => ({ rx: X.d * 0.36, ry: X.geo.tower.fh * 0.35, rot: q ? q.r || 0 : 0, rect: true }) },
     // beads slide along the wires of an abacus
     { name: 'abacus', goneScale: 1, goneDim: 0.5, goneMs: 700, lay: abacus, pos: beadPos, item: bead, halo: X => ({ rx: X.d * 0.54, ry: X.geo.abacus.bh * 0.58 }), before: abacusFrame },
     // twinkling constellation, stars go out one by one
@@ -1688,85 +1688,143 @@
     c.globalAlpha = 1;
   }
 
-  // ---- chocolate ----
-  // one solid bar lying on its opened foil; it is eaten from the top, piece by piece: the top piece wiggles, snaps off
-  // and floats up out of view, and a few crumbs stay on the bare foil where it was
-  function chocolateBar(n, w, h) {
-    // the column count that gives the biggest pieces (pieces are a little wider than tall, like a real bar)
+  // ---- tower ----
+  // a high-rise, one apartment per minute, floor on floor (a narrower penthouse on top if the last floor isn't full).
+  // Each minute an apartment of the top floor wiggles loose, pops out of the facade and tumbles off the screen; its empty
+  // concrete frame stays until the whole floor is gone, then the roof with its blinking antenna drops onto the floor below.
+  function tower(n, w, h) {
     let best = null;
-    for (let cols = 1; cols <= n; cols++) {
-      const rows = Math.ceil(n / cols), s = Math.min(w * 0.84 / cols, h * 0.8 / (rows * 0.8), Math.min(w, h) * 0.5);
-      if (!best || s > best.s) best = { cols, rows, s };
+    // few columns, so it stays a tower even in a wide window
+    for (let cols = 1; cols <= Math.min(n, Math.ceil(Math.sqrt(n) * 0.8)); cols++) {
+      const rows = Math.ceil(n / cols);
+      // floors are a little lower than wide; room for the roof above and the lobby below
+      const s = Math.min(w * 0.82 / cols, h * 0.88 / ((rows + 1.9) * 0.78), Math.min(w, h) * 0.42);
+      if (!best || s > best.s * 1.0001) best = { cols, rows, s };
     }
-    const { cols, rows, s } = best, ph = s * 0.8, bw = cols * s, bh = rows * ph, x0 = (w - bw) / 2, y0 = (h - bh) / 2 + s * 0.12;
-    const pts = [];
-    // index 0 sits bottom left, the highest index top right: the top row goes first
-    for (let i = 0; i < n; i++) {
-      const r = Math.floor(i / cols), k = i % cols;
-      pts.push({ x: x0 + (k + 0.5) * s, y: y0 + bh - (r + 0.5) * ph, hr: s * 0.55, ph: (i * 2.39) % TAU });
+    const { cols, rows, s } = best, fh = s * 0.78, bw = cols * s;
+    const roofH = fh * 0.95, lobH = fh * 0.9, total = roofH + rows * fh + lobH;
+    const x0 = (w - bw) / 2, ground = (h + total) / 2, y0 = ground - lobH;   // y0: where the first floor starts
+    const pts = [], rnd = seeded(n * 7 + cols);
+    for (let r = 0; r < rows; r++) {
+      const cnt = Math.min(cols, n - r * cols), xr = x0 + (cols - cnt) * s / 2;
+      // within a floor the apartments go in a mixed-up order, like blocks pulled out of a stack
+      const ord = [...Array(cnt).keys()];
+      for (let j = cnt - 1; j > 0; j--) { const t = Math.floor(rnd() * (j + 1)); [ord[j], ord[t]] = [ord[t], ord[j]]; }
+      for (let j = 0; j < cnt; j++) {
+        const k = ord[j];
+        pts.push({ x: xr + (k + 0.5) * s, y: y0 - (r + 0.5) * fh, hr: s * 0.5, row: r, side: 2 * k + 1 < cnt ? -1 : 1, kind: Math.floor(rnd() * 5), ph: rnd() });
+      }
     }
-    return { pts, d: s, choc: { x0, y0, bw, bh, ph } };
+    return { pts, d: s, tower: { x0, y0, bw, fh, cols, rows, n, ground, roofH, lobH, w, h } };
   }
-  function chunkPos(X, i, g, p) {
+  function aptPos(X, i, g, p) {
     if (g <= 0) return null;
-    if (g < 0.18) return { x: p.x, y: p.y, r: Math.sin(g * 90) * 0.06 * (1 - g / 0.18) };   // wiggles loose
-    const u = (g - 0.18) / 0.82, s = p.ph < Math.PI ? 1 : -1;
-    return { x: p.x + s * u * X.d * 0.6, y: p.y - u * u * (p.y + X.d * 1.5), r: s * u * 0.9, s: 1 - 0.35 * u, a: g >= 1 ? 0 : 1 };
+    if (g < 0.15) return { x: p.x, y: p.y, r: Math.sin(g * 120) * 0.05 * (1 - g / 0.15) };   // wiggles loose
+    const lift = X.d * 0.04;
+    if (g < 0.35) { const u = easeOut((g - 0.15) / 0.2); return { x: p.x, y: p.y - u * lift, s: 1 + 0.12 * u, out: 1 }; }   // pops out of the facade
+    const u = (g - 0.35) / 0.65, fall = X.geo.tower.h - p.y + X.d * 1.5;   // and tumbles down, off the screen
+    return { x: p.x + p.side * u * X.d * 0.8, y: p.y - lift + u * u * fall, r: p.side * u * u * 1.4, s: 1.12, out: 1, a: g >= 1 ? 0 : 1 };
   }
-  // a raised segment: a dark groove around it, a lighter top-left bevel and a darker bottom-right one
-  function chunk(X, i, x, y, k, q, p, col) {
-    const c = X.c, P = X.P, s = X.d * k, h = X.geo.choc.ph * k;
-    const dark = mix(col, P.dark ? P.bg : P.text, 0.35), light = mix(col, P.dark ? P.text : P.bg, 0.3);
+  const towerCols = P => { const wall = mix(P.dim, P.text, 0.18); return { wall, edge: mix(wall, P.text, 0.25), dark: mix(wall, P.dark ? P.bg : P.text, 0.35) }; };
+  // one apartment: a lit window with something inside (curtains, a plant, a lamp, a cat, blinds) and a little ledge
+  function apartment(X, i, x, y, k, q, p, col) {
+    const c = X.c, T = X.geo.tower, s = X.d * k, h = T.fh * k, C = towerCols(X.P), lw = Math.max(1, s * 0.03);
     c.save(); c.translate(x, y); if (q && q.r) c.rotate(q.r);
-    // on its way up the piece is bitten twice
-    const u = q && p.g >= 0.18 ? (p.g - 0.18) / 0.82 : 0;
-    if (u > 0.3) {
-      c.beginPath(); c.rect(-s, -h, 2 * s, 2 * h);
-      const bite = (bx, by, r) => { c.moveTo(bx + r, by); c.arc(bx, by, r, 0, TAU); };
-      bite(s * 0.42, -h * 0.5, s * 0.3);
-      if (u > 0.55) { bite(s * 0.02, -h * 0.58, s * 0.28); bite(-s * 0.38, -h * 0.52, s * 0.24); }
-      c.clip('evenodd');
+    // on its way out it is a whole box: the bit of wall around the window comes along
+    if (q && q.out) {
+      c.fillStyle = C.wall; c.fillRect(-s / 2, -h / 2, s, h);
+      c.strokeStyle = C.edge; c.lineWidth = lw; c.strokeRect(-s / 2, -h / 2, s, h);
     }
-    c.fillStyle = dark; rr(c, -s / 2, -h / 2, s, h, s * 0.015); c.fill();
-    const e = s * 0.05, b = s * 0.13;
-    c.fillStyle = col; rr(c, -s / 2 + e, -h / 2 + e, s - 2 * e, h - 2 * e, s * 0.04); c.fill();
-    c.fillStyle = light;
-    c.beginPath(); c.moveTo(-s / 2 + e, -h / 2 + e); c.lineTo(s / 2 - e, -h / 2 + e); c.lineTo(s / 2 - b, -h / 2 + b); c.lineTo(-s / 2 + b, -h / 2 + b); c.lineTo(-s / 2 + b, h / 2 - b); c.lineTo(-s / 2 + e, h / 2 - e); c.closePath(); c.fill();
-    c.fillStyle = mix(col, dark, 0.55);
-    c.beginPath(); c.moveTo(s / 2 - e, h / 2 - e); c.lineTo(-s / 2 + e, h / 2 - e); c.lineTo(-s / 2 + b, h / 2 - b); c.lineTo(s / 2 - b, h / 2 - b); c.lineTo(s / 2 - b, -h / 2 + b); c.lineTo(s / 2 - e, -h / 2 + e); c.closePath(); c.fill();
+    // the light flicks off for a moment after a tap, and goes out one by one while paused (everybody sleeps)
+    const tk = p.tk && X.now - p.tk < 700 ? 1 : 0;
+    if (tk) X.more = true;
+    const night = clamp((1 - X.calm) * 1.8 - p.ph * 0.8), lit = mix(col, C.dark, Math.max(tk * 0.75, night * 0.7));
+    const ww = s * 0.64, wh = h * 0.6, wy = -h * 0.05, L = -ww / 2, R = ww / 2, Tp = wy - wh / 2, B = wy + wh / 2;
+    c.fillStyle = lit; c.fillRect(L, Tp, ww, wh);
+    // what's inside, as a soft shadow against the light
+    c.fillStyle = c.strokeStyle = mix(lit, C.dark, 0.45); c.lineWidth = lw;
+    c.beginPath();
+    if (p.kind === 0) {   // curtains
+      c.moveTo(L, Tp); c.lineTo(L + ww * 0.26, Tp); c.quadraticCurveTo(L + ww * 0.08, wy, L + ww * 0.2, B); c.lineTo(L, B); c.closePath();
+      c.moveTo(R, Tp); c.lineTo(R - ww * 0.26, Tp); c.quadraticCurveTo(R - ww * 0.08, wy, R - ww * 0.2, B); c.lineTo(R, B); c.closePath(); c.fill();
+    } else if (p.kind === 1) {   // a plant on the sill
+      const px = ww * 0.22, pt = B - wh * 0.2, lf = wh * 0.24;
+      c.moveTo(px - ww * 0.1, pt); c.lineTo(px + ww * 0.1, pt); c.lineTo(px + ww * 0.07, B); c.lineTo(px - ww * 0.07, B); c.closePath();
+      for (const a of [-0.75, 0, 0.75]) { const ex = px + Math.sin(a) * lf * 0.55, ey = pt - Math.cos(a) * lf * 0.55; c.moveTo(ex, ey); c.ellipse(ex, ey, lf * 0.6, lf * 0.2, a - Math.PI / 2, 0, TAU); }
+      c.fill();
+    } else if (p.kind === 2) {   // a hanging lamp
+      c.moveTo(-ww * 0.1, Tp); c.lineTo(-ww * 0.1, Tp + wh * 0.3); c.stroke();
+      c.beginPath(); c.moveTo(-ww * 0.18, Tp + wh * 0.45); c.lineTo(-ww * 0.02, Tp + wh * 0.45); c.lineTo(-ww * 0.06, Tp + wh * 0.3); c.lineTo(-ww * 0.14, Tp + wh * 0.3); c.closePath(); c.fill();
+    } else if (p.kind === 3) {   // a cat on the sill
+      const hx = -ww * 0.1, hy = B - wh * 0.32, hr = wh * 0.11;
+      c.ellipse(ww * 0.08, B - wh * 0.13, ww * 0.17, wh * 0.13, 0, 0, TAU);
+      c.moveTo(hx + hr, hy); c.arc(hx, hy, hr, 0, TAU);
+      c.moveTo(hx - hr, hy - hr * 0.3); c.lineTo(hx - hr * 0.8, hy - hr * 1.6); c.lineTo(hx - hr * 0.1, hy - hr * 0.8);
+      c.moveTo(hx + hr, hy - hr * 0.3); c.lineTo(hx + hr * 0.8, hy - hr * 1.6); c.lineTo(hx + hr * 0.1, hy - hr * 0.8); c.fill();
+    } else {   // blinds, half down
+      c.rect(L, Tp, ww, wh * 0.42); c.fill();
+      c.strokeStyle = mix(lit, C.dark, 0.7); c.beginPath();
+      for (let j = 1; j < 4; j++) { const ly = Tp + wh * 0.42 * j / 4; c.moveTo(L, ly); c.lineTo(R, ly); }
+      c.stroke();
+    }
+    // the window frame and a little ledge under it
+    c.strokeStyle = C.edge; c.lineWidth = Math.max(1, s * 0.035); c.strokeRect(L, Tp, ww, wh);
+    c.fillStyle = C.edge; c.fillRect(-ww * 0.6, B, ww * 1.2, Math.max(1.5, h * 0.06));
     c.restore();
   }
-  // the opened foil under the bar (torn along the top), and the crumbs left where pieces were eaten
-  function chocFoil(X) {
-    const { c, P, d, pts } = X, C = X.geo.choc, m = d * 0.3;
-    const x0 = C.x0 - m, x1 = C.x0 + C.bw + m, y0 = C.y0 - m * 0.6, y1 = C.y0 + C.bh + m;
-    const foil = mix(P.dim, P.text, 0.2), teeth = Math.max(4, Math.round((x1 - x0) / Math.max(10, d * 0.28)));
-    c.fillStyle = foil;
-    c.beginPath(); c.moveTo(x0, y1); c.lineTo(x0, y0);
-    for (let j = 1; j <= teeth; j++) c.lineTo(x0 + (x1 - x0) * (j - 0.5) / teeth, y0 - m * (j % 2 ? 0.45 : 0.2)), c.lineTo(x0 + (x1 - x0) * j / teeth, y0);
-    c.lineTo(x1, y1); c.closePath(); c.fill();
-    // a few soft creases (kept on the foil)
-    c.save(); c.clip();
-    c.strokeStyle = mix(foil, P.text, 0.1); c.lineWidth = Math.max(1, Math.min(d * 0.02, 2));
-    c.beginPath();
-    const rnd = seeded(pts.length * 3 + 1);
-    for (let j = 0; j < 7; j++) { const x = x0 + rnd() * (x1 - x0), y = y0 + rnd() * (y1 - y0), a = rnd() * TAU, l = d * (0.3 + rnd() * 0.5); c.moveTo(x, y); c.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); }
-    c.stroke(); c.restore();
-    // crumbs drop from the piece as it snaps off, and stay
-    c.fillStyle = mix(P.fg, P.dim, 0.45);
+  function aptTap(G, i) { G.pts[i].tk = performance.now(); }
+  // the building around the apartments: ground, lobby with its door, the floors, empty frames of gone apartments, roof and antenna
+  function towerBody(X) {
+    const { c, P, d, pts } = X, T = X.geo.tower, C = towerCols(P), m = d * 0.08, fh = T.fh;
+    const rowW = r => r < 0 ? T.bw : Math.min(T.cols, T.n - r * T.cols) * d;
+    // floors still standing: up to the highest one with an apartment in place (the roof waits until the last one has popped out)
+    let stand = 0;
+    for (const p of pts) if (p.g < 0.35 && p.row + 1 > stand) stand = p.row + 1;
+    if (T.lev === undefined || X.still) { T.lev = stand; T.from = stand; T.t0 = -1e9; }
+    else if (stand !== T.to && T.to !== undefined) { T.from = T.lev; T.t0 = X.now; }
+    T.to = stand;
+    // the roof drops with a small bounce
+    const t = clamp((X.now - T.t0) / 650), e = t < 0.7 ? (t / 0.7) * (t / 0.7) : 1 - 0.07 * Math.sin((t - 0.7) / 0.3 * Math.PI);
+    if (t < 1) X.more = true;
+    T.lev = T.from + (stand - T.from) * e;
+    const lev = T.lev;
+
+    // the ground across the whole screen, the lobby with its door and two little bushes
+    c.fillStyle = C.edge; c.fillRect(0, T.ground, T.w, Math.max(2, d * 0.035));
+    c.fillStyle = C.wall; c.fillRect(T.x0 - m, T.y0, T.bw + 2 * m, T.lobH);
+    const dw = Math.min(d * 0.5, T.bw * 0.4), dh = T.lobH * 0.68;
+    c.fillStyle = C.dark; rr(c, T.w / 2 - dw / 2, T.ground - dh, dw, dh, [dw * 0.12, dw * 0.12, 0, 0]); c.fill();
+    c.fillStyle = C.edge; c.fillRect(T.w / 2 - dw * 0.7, T.ground - dh - fh * 0.08, dw * 1.4, Math.max(2, fh * 0.07));
+    c.fillStyle = mix(P.dim, P.fg, 0.25);
+    for (const sx of [-1, 1]) { const bx = T.w / 2 + sx * (T.bw / 2 + m + d * 0.22), br = d * 0.16; c.beginPath(); c.arc(bx, T.ground - br * 0.8, br, 0, TAU); c.fill(); }
+
+    // the floors: wall with a slab line under each; an apartment that has gone leaves its empty frame
+    const top = Math.floor(lev + 1e-6);
+    for (let r = 0; r < Math.min(top, T.rows); r++) {
+      const wr = rowW(r), xr = T.w / 2 - wr / 2, yr = T.y0 - (r + 1) * fh;
+      c.fillStyle = C.wall; c.fillRect(xr - m, yr, wr + 2 * m, fh);
+      c.fillStyle = C.edge; c.fillRect(xr - m, yr + fh - Math.max(1, fh * 0.04), wr + 2 * m, Math.max(1, fh * 0.04));
+    }
     for (let i = Math.max(0, X.min); i < pts.length; i++) {
       const p = pts[i];
-      if (p.g < 0.12) continue;
-      const e = easeOut(clamp((p.g - 0.12) / 0.4)), r2 = seeded(i * 17 + 3);
-      leftover(X, p.x, p.y, d * 0.5);   // the eaten spot with its crumbs
-      c.beginPath();
-      for (let j = 0; j < 4; j++) {
-        const tx = p.x + (r2() - 0.5) * d * 0.7, ty = p.y + (r2() - 0.2) * C.ph * 0.6, sz = Math.max(1.2, d * (0.03 + r2() * 0.035));
-        const x = lerp(p.x + (tx - p.x) * 0.3, tx, e), y = lerp(p.y + C.ph * 0.35, ty, e);
-        c.moveTo(x + sz, y); c.arc(x, y, sz, 0, TAU);
-      }
-      c.fill();
+      if (p.row >= top || p.g < 0.15) continue;
+      const hx = p.x - d / 2 + m * 0.7, hy = p.y - fh / 2 + m * 0.7, hw = d - m * 1.4, hh = fh - m * 1.4;
+      c.clearRect(hx, hy, hw, hh);
+      c.strokeStyle = C.edge; c.lineWidth = Math.max(1, d * 0.02); c.strokeRect(hx, hy, hw, hh);
+      leftover(X, p.x, p.y, d * 0.45);
     }
+
+    // the roof on top: a slab, a little machine room and an antenna with a blinking light
+    const wa = rowW(Math.ceil(T.from) - 1), wb = rowW(stand - 1), rw = lerp(wa, wb, clamp(e)) + 4 * m;
+    const ry = T.y0 - lev * fh, sh = Math.max(3, T.roofH * 0.2);
+    c.fillStyle = C.edge; c.fillRect(T.w / 2 - rw / 2, ry - sh, rw, sh);
+    c.fillStyle = C.wall; c.fillRect(T.w / 2 + rw * 0.12, ry - sh - T.roofH * 0.35, Math.min(rw * 0.3, d * 0.6), T.roofH * 0.35);
+    const ax = T.w / 2 - rw * 0.18, at = ry - T.roofH * 0.95;
+    c.strokeStyle = C.edge; c.lineWidth = Math.max(1.5, d * 0.03);
+    c.beginPath(); c.moveTo(ax, ry - sh); c.lineTo(ax, at); c.moveTo(ax - d * 0.08, at + T.roofH * 0.3); c.lineTo(ax + d * 0.08, at + T.roofH * 0.3); c.stroke();
+    c.fillStyle = P.fg; c.globalAlpha = X.all * (X.still || Math.sin(X.t * 3) > 0.2 ? 1 : 0.25);
+    c.beginPath(); c.arc(ax, at, Math.max(2, d * 0.04), 0, TAU); c.fill();
+    c.globalAlpha = X.all;
   }
 
   // ---- abacus ----

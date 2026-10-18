@@ -24,7 +24,7 @@ Offline genommen (`off: true` in `ALL_MODES`, im Code erhalten, nicht mehr in de
 | 13 | caterpillar | Raupe wird kürzer, am Ende Schmetterling; Antippen = sie lächelt kurz |
 | 14 | hourglass | Körner so groß, dass sie die ganze obere Hälfte füllen (proportional zur Zeit), der Hals ist so weit wie ein Korn; Sandkorn rutscht zum Hals, fällt durch und rollt auf den Haufen (oben entsteht eine Mulde, unten ein Hügel; Körner unregelmäßig); Pause = ein kurzer Schieber (gleiche Farbe und Strichstärke wie das Glas) schließt den Hals, kein Ausblenden |
 | 15 | fuse | Lunte brennt ab, am Ende Knall |
-| 16 | chocolate | Stück bricht ab |
+| 16 | chocolate | Neu gestaltet (die alte Version mit einzelnen Kacheln, herunterfallenden Stücken und gestrichelten Lücken war schwer zu verstehen): eine zusammenhängende Tafel mit Rillen und erhabenen Stücken liegt auf ihrer aufgerissenen Folie; sie wird von oben gegessen: pro Minute wackelt das oberste Stück, bricht ab, schwebt nach oben aus dem Bild und bekommt dabei zwei Bissspuren; Krümel bleiben auf der leeren Folie liegen |
 | 17 | abacus | Perle rutscht nach rechts |
 | 18 | stars | Stern im Sternbild erlischt; Pause = das Sternbild zieht sich in der Mitte zusammen, danach breitet es sich wieder aus |
 | 19 | hedgehog | Stachel fällt ab, er wird rot; Körper antippen = hüpfen/schütteln; Pause = schläft (Augen zu, atmet langsam, kleine „z“ steigen auf, Fläche bleibt hell; weder Körper noch Stacheln reagieren aufs Antippen, das gilt in der Pause für alle Themes) |

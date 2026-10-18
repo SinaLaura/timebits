@@ -6,13 +6,13 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## To do
 
-- [ ] Ducks: with many minutes the ducks swim very slowly; make them move faster.
-- [ ] Ducks: the leaving duck no longer needs the longest way out. It should take a route that is neither the shortest nor the longest and never crosses the other ducks, and it should be off the screen within 5 seconds at most.
-- [ ] All themes: a leaving item should be completely gone by the time its minute is over, not just start leaving then. Check every theme and fix those where this isn't true, and add it as a rule to CLAUDE.md so future themes follow it too.
-- [ ] First-time users don't seem to realise that tapping changes the look. Check whether the finger tap demo is still shown to them, and propose (and preview) a way to make sure new users understand it.
+- [ ] [solo, big] All themes: a leaving item should be completely gone by the time its minute is over, not just start leaving then. Check every theme and fix those where this isn't true, and add it as a rule to CLAUDE.md so future themes follow it too.
+- [ ] [needs you, big] First-time users don't seem to realise that tapping changes the look. Check whether the finger tap demo is still shown to them, and propose (and preview) a way to make sure new users understand it.
 
 ## In progress
 
+- [ ] [solo, quick] Ducks: with many minutes the ducks swim very slowly; make them move faster. (next-2302, started 23:09)
+- [ ] [solo, big] Ducks: the leaving duck no longer needs the longest way out. It should take a route that is neither the shortest nor the longest and never crosses the other ducks, and it should be off the screen within 5 seconds at most. (next-2302, started 23:09)
 
 ## To review
 

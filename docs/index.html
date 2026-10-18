@@ -301,24 +301,25 @@
     { name: 'abacus', goneScale: 1, goneDim: 0.5, goneMs: 700, lay: abacus, pos: beadPos, item: bead, halo: X => ({ rx: X.d * 0.54, ry: X.geo.abacus.bh * 0.58 }), before: abacusFrame },
     // twinkling constellation, stars go out one by one
     { name: 'stars', live: true, hit: 0.8, goneScale: 0.25, halo: X => ({ poly: starPoly(4, X.d * 0.62, X.d * 0.22) }), lay: stars, pos: twinkle, item: star, before: starLines },
-    // a cute spider, its legs drop off one by one
+    // a cute spider, its legs drop off one by one; a tap anywhere along a leg counts (no ring)
     // a shy hedgehog loses its spines and blushes more and more
     { name: 'hedgehog', live: true, noDim: true, goneScale: 0.5, goneMs: 1500, lay: hedgehog, pos: hogPos, item: spine, halo: (X, p, q) => {
         // a spike around the spike: the body covers its base, so only the edge along the tip shows
         const l = p.len * 0.5, w = Math.max(p.wid * 0.5, 2), pad = Math.max(3, w * 0.5);
         return { poly: [[-l, -w - pad], [l + pad * 1.6, 0], [-l, w + pad]], rot: p.ang + (q ? q.r || 0 : 0) };
       }, after: hogBody, bodyTap: hogTap },
-    // people in a cinema, one leaves per minute; the countdown runs on the screen instead of the headline
-    { name: 'cinema', live: true, noHead: true, goneScale: 1, goneDim: 0, goneMs: 3500, lay: cinema, pos: leave, item: person, before: cinemaScreen },
-    { name: 'spider', live: true, goneScale: 0.4, goneMs: 1600, lay: spider, pos: legPos, item: leg, before: thread, after: spiderBody, bodyTap: spiderTap },
+    // people in a cinema, one leaves per minute; the countdown runs on the screen instead of the headline; tapped, a person throws their arms up and grumbles (no ring)
+    { name: 'cinema', live: true, noHead: true, noRing: true, goneScale: 1, goneDim: 0, goneMs: 3500, lay: cinema, pos: leave, item: person, tap: cinemaTap, before: cinemaScreen },
+    { name: 'spider', live: true, noRing: true, near: legNear, goneScale: 0.4, goneMs: 1600, lay: spider, pos: legPos, item: leg, before: thread, after: spiderBody, bodyTap: spiderTap },
     // toy cars pottering around, tapping one makes it zoom off a bit with a puff from the exhaust (no ring), a passed minute drives off screen
     { name: 'cars', live: true, hit: 0.6, goneScale: 1, goneDim: 0, goneMs: 3000, lay: cars, step: carStep, pos: carPos, item: car, noRing: true, after: carPuffs, tap: carTap },
-    // ducklings swim in line behind their mother, the last one loses track each minute; tap the mother and she looks back
-    { name: 'ducks', live: true, playable: true, goneScale: 1, goneDim: 0, goneMs: 4500, lay: ducks, step: duckStep, pos: duckPos, item: duckling, halo: (X, p, q) => ({ rx: X.d * 0.62, ry: X.d * 0.4, rot: q ? q.r || 0 : 0 }),
+    // ducklings swim in line behind their mother, the last one loses track each minute; tap the mother and she looks back; a tapped duckling peeps (no ring)
+    { name: 'ducks', live: true, playable: true, noRing: true, goneScale: 1, goneDim: 0, goneMs: 4500, lay: ducks, step: duckStep, pos: duckPos, item: duckling, halo: (X, p, q) => ({ rx: X.d * 0.62, ry: X.d * 0.4, rot: q ? q.r || 0 : 0 }),
       tap: () => peep(), after: motherDuck, bodyTap: duckTap },
     // a thermometer that gets colder each minute; the top segment cools off and fades, the temperature replaces the headline
     { name: 'thermometer', live: true, noHead: true, noDim: true, goneScale: 1, goneDim: 0, goneMs: 1800, goneLinear: true, endArt: 'shatter',
-      lay: thermometer, pos: freeze, item: segment, before: thermoGlass, after: beanie, bodyTap: thermoTap },
+      lay: thermometer, pos: freeze, item: segment, before: thermoGlass, after: beanie, bodyTap: thermoTap,
+      halo: (X, p) => ({ rx: p.sw * 0.5 + 3, ry: Math.max(3, p.sh * 0.43 + 2), rect: true }) },
     // a marble run: each minute the gate lets one ball roll down the zigzag ramps into the tray; a tapped ball hops (no ring)
     { name: 'marbles', noRing: true, goneScale: 1, goneDim: 0, goneMs: 2400, goneLinear: true,
       lay: marbleRun, step: mbStep, pos: mbPos, item: mbBall, tap: mbTap, before: mbTrack },
@@ -1926,6 +1927,18 @@
     }
     return { x: lerp(p.x, p.lx, g), y: lerp(p.y + b, p.ly, g * g), r: p.spin * g };
   }
+  // a tap counts anywhere along the leg (from the body over the knee to the foot), with a finger's width of room
+  function legNear(p, x, y, d) {
+    const q = p.q || {}, r = q.r || 0, s = q.s || 1, co = Math.cos(r) * s, si = Math.sin(r) * s, kx = p.cx, ky = p.cy;
+    const at = (u, v) => [kx + u * co - v * si, ky + u * si + v * co];
+    const seg = (a, b) => {
+      const ex = b[0] - a[0], ey = b[1] - a[1], t = clamp(((x - a[0]) * ex + (y - a[1]) * ey) / (ex * ex + ey * ey || 1));
+      return Math.hypot(x - a[0] - ex * t, y - a[1] - ey * t);
+    };
+    const B = at(p.bx, p.by), K = [kx, ky], F = at(p.fx, p.fy), S = geo.spider;
+    if (S && Math.hypot(x - S.cx, y - S.cy) < S.rb) return false;   // on the body itself: that's the spider's own tap
+    return Math.min(seg(B, K), seg(K, F)) < Math.max(d * 2, 12);
+  }
   function leg(X, i, x, y, k, q, p, col) {
     const c = X.c;
     c.save(); c.translate(x, y); c.rotate(q.r); c.scale(k, k);
@@ -2399,9 +2412,42 @@
   }
   function person(X, i, x, y, k, q, p) {
     const c = X.c, s = p.s * k;
+    // tapped: the arms shoot up above the head and shake, as if annoyed, then come down again (and the head shakes along)
+    const t = p.tk && !p.g && !X.still ? (X.now - p.tk) / 1100 : 1;
+    let shake = 0;
+    if (t < 1) {
+      X.more = true;
+      const up = t < 0.15 ? easeOut(t / 0.15) : t > 0.75 ? 1 - easeOut((t - 0.75) / 0.25) : 1;
+      shake = Math.sin(t * 60) * (1 - t) * s * 0.05;
+      c.strokeStyle = c.fillStyle; c.lineWidth = s * 0.12; c.lineCap = 'round';
+      for (const sd of [-1, 1]) {
+        const hx = x + sd * lerp(s * 0.3, s * 0.34, up) + shake * sd, hy = lerp(y + s * 0.1, y - s * 0.74, up) + Math.abs(shake);
+        c.beginPath(); c.moveTo(x + sd * s * 0.26, y - s * 0.04); c.lineTo(hx, hy); c.stroke();
+        c.beginPath(); c.arc(hx, hy, s * 0.08, 0, TAU); c.fill();   // fists
+      }
+    } else if (p.tk) p.tk = 0;
+    x += shake * 0.4;
     c.beginPath(); c.arc(x, y - s * 0.32, s * 0.2, 0, TAU); c.fill();
     rr(c, x - s * 0.36, y - s * 0.12, s * 0.72, s * 0.5, s * 0.22); c.fill();
     if (!p.g) { c.fillStyle = X.P.dim; rr(c, x - s * 0.5, y + s * 0.12, s, s * 0.42, s * 0.12); c.fill(); }   // own seat hides the legs
+  }
+  function cinemaTap(G, i) { G.pts[i].tk = performance.now(); grumble(); }
+  // an annoyed "hmpf, hmpf!": two short low growls that drop in pitch
+  function grumble() {
+    if (!audio || pausedAt) return;   // quiet while paused
+    const a = audio, t0 = a.currentTime + 0.01, f0 = 190 + Math.random() * 60;
+    [0, 0.2].forEach((dt, j) => {
+      const t = t0 + dt, o = a.createOscillator(), lp = a.createBiquadFilter(), g = a.createGain();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(f0 * (j ? 1.15 : 1), t);
+      o.frequency.exponentialRampToValueAtTime(f0 * 0.6, t + 0.15);
+      lp.type = 'lowpass'; lp.frequency.value = 900; lp.Q.value = 4;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.09, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.17);
+      o.connect(lp).connect(g).connect(a.destination);
+      o.start(t); o.stop(t + 0.19);
+    });
   }
   function cinemaScreen(X) {
     const { c, P, pts } = X, S = X.geo.cinema;
@@ -3080,7 +3126,8 @@
       if (p.hidden && !M.keepHit) continue;
       const px = p.hidden || p.cx === undefined ? p.x : p.cx, py = p.hidden || p.cy === undefined ? p.y : p.cy;
       const dx = Math.abs(px - x), dy = Math.abs(py - y);
-      const inside = M.shape === 'bar' ? dx < d * 0.7 && dy < d * 1.6 : Math.hypot(dx, dy) < (p.hr || d * (M.hit || 0.55));
+      // M.near: a look whose items aren't round says itself what counts as a hit (e.g. anywhere along a spider's leg)
+      const inside = M.near ? M.near(p, x, y, d) : M.shape === 'bar' ? dx < d * 0.7 && dy < d * 1.6 : Math.hypot(dx, dy) < (p.hr || d * (M.hit || 0.55));
       if (inside) { if (dx + dy < best) { best = dx + dy; hit = i; } }
       else if (playable) { const e = Math.hypot(dx, dy); if (e < nearD) { nearD = e; near = i; } }
     }

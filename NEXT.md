@@ -6,9 +6,11 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## To do
 
+- [ ] the hedgehog's spikes should also not be clickable during pause
 
 ## In progress
 
+- [ ] Add a new file that collects possible (future) problems, or decisions made that may be ok now but problematic later. Example: the decision to follow the phone's silent mode and not play the sound for the boring themes; but a user might not want to be distracted by other notifications and still want to play around with the bits (the items of a theme). From then on, collect such things there by yourself whenever you notice one (add that as a rule to CLAUDE.md). (problems-file session, started 02:10)
 
 ## Done
 

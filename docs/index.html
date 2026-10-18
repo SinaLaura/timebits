@@ -2229,7 +2229,10 @@
     c.fillText(subText(), S.sx + S.sw / 2, S.sy + S.sh * 0.76);   // same line as the subtitle: no end time in Pomodoro or Time mode
     c.globalAlpha = X.all;
     c.fillStyle = P.dim;   // empty seats
-    for (const p of pts) { rr(c, p.x - p.s / 2, p.y + p.s * 0.12, p.s, p.s * 0.42, p.s * 0.12); c.fill(); }
+    pts.forEach((p, i) => {
+      rr(c, p.x - p.s / 2, p.y + p.s * 0.12, p.s, p.s * 0.42, p.s * 0.12); c.fill();
+      if (i >= X.min) leftover(X, p.x, p.y, p.s * 0.6);   // a seat left empty is a minute gone
+    });
   }
 
   // ---- thermometer (real temperature colours instead of the palette, see CLAUDE.md) ----
@@ -2268,6 +2271,8 @@
   }
   function thermoGlass(X) {
     const { c, P, n } = X, T = X.geo.therm, f = n ? X.min / n : 0, fl = thermoFlare(X);
+    // the empty part of the tube, where cooled segments were, is time already gone
+    for (let i = Math.max(0, X.min); i < n; i++) { const p = X.pts[i]; leftover(X, p.x, p.y, Math.max(12, Math.max(p.sw, p.sh) * 0.6)); }
     // snow falls harder the colder it gets (stands still during a pause)
     const flakes = Math.round(50 * clamp(1 - f) * X.all);
     c.fillStyle = P.text;

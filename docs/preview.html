@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timebits preview</title>
+<style>
+  body { margin: 0; background: #2a2a2e; color: #ccc; font: 14px system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 16px; }
+  h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .04em; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; }
+  .bar > span { opacity: .7; margin-right: 2px; }
+  button, select { font: inherit; padding: 6px 12px; cursor: pointer; color: inherit; background: #3a3a40; border: 1px solid #55555c; border-radius: 6px; }
+  button:hover, select:hover { background: #46464e; }
+  button.on { background: #ccc; color: #222; border-color: #ccc; }
+  button.big { background: #e8b93c; color: #222; border-color: #e8b93c; font-weight: 600; }
+  button.big:active { transform: scale(.97); }
+  .row { display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; }
+  figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .phone { width: 360px; height: 640px; border-radius: 28px; overflow: hidden; box-shadow: 0 0 0 8px #111; background: #000; }
+  iframe { width: 100%; height: 100%; border: 0; display: block; }
+  figcaption { display: flex; gap: 6px; }
+  small { opacity: .65; max-width: 560px; text-align: center; }
+</style>
+</head>
+<body>
+<h1>TIMEBITS PREVIEW</h1>
+<div class="bar" id="mins"><span>Minutes</span></div>
+<div class="bar" id="gone"><span>Already gone</span></div>
+<div class="bar">
+  <span>Palette</span><button id="pPrev">‹</button><b id="pNum">0</b><button id="pNext">›</button>
+  <button id="add">+ Compare another look</button>
+  <button id="again">Restart</button>
+  <button id="minute" class="big">A minute is over</button>
+</div>
+<div class="row" id="frames"></div>
+<small>Tap inside the phone to play. The yellow button lets one minute pass at once (the item of that minute goes). Everything is kept in the address, so a reload or a copied link shows the same.</small>
+<script>
+  // This page only works on the local preview server (the app ignores these helpers online and in the store app).
+  // URL: preview.html?look=flower,flowerring&m=25&gone=1&p=0   (several looks = side by side; gone = 0, 1 or 2 thirds)
+  // Optional raw=pomo=1: opens the app with exactly this query instead (for things that are not a look, e.g. the Pomodoro).
+  const q = new URLSearchParams(location.search);
+  const MINS = [3, 10, 25, 60, 120, 240], GONE = [[0, 'nothing'], [1, 'a third'], [2, 'two thirds']];
+  let looks = (q.get('look') || 'flower').split(',').filter(Boolean).map(s => s.split('.')[0]);
+  let m = +q.get('m') || 10, gone = +q.get('gone') || 0, pal = +q.get('p') || 0, modes = [], pals = 1;
+  const raw = q.get('raw');
+  const $ = id => document.getElementById(id);
+  const frames = $('frames');
+
+  const appUrl = name => {
+    if (raw) return './?' + raw + (name ? '&look=' + name + '.' + pal : '');
+    const passed = Math.floor(m * gone / 3);
+    return './?m=' + m + '&look=' + name + '.' + pal + (passed ? '&passed=' + passed : '');
+  };
+  const save = () => {
+    const p = new URLSearchParams({ look: looks.join(','), m, gone, p: pal });
+    if (raw) p.set('raw', raw);
+    history.replaceState(null, '', '?' + p);
+  };
+
+  function buttons(id, items, cur, set) {
+    const el = $(id);
+    items.forEach(([val, label]) => {
+      const b = document.createElement('button');
+      b.textContent = label; b.dataset.val = val;
+      b.onclick = () => { set(val); mark(); loadAll(); };
+      el.appendChild(b);
+    });
+  }
+  function mark() {
+    document.querySelectorAll('#mins button').forEach(b => b.classList.toggle('on', +b.dataset.val === m));
+    document.querySelectorAll('#gone button').forEach(b => b.classList.toggle('on', +b.dataset.val === gone));
+    $('pNum').textContent = pal;
+  }
+  buttons('mins', MINS.map(v => [v, v]), m, v => { m = v; });
+  buttons('gone', GONE, gone, v => { gone = v; });
+  $('pPrev').onclick = () => { pal = (pal + pals - 1) % pals; mark(); loadAll(); };
+  $('pNext').onclick = () => { pal = (pal + 1) % pals; mark(); loadAll(); };
+  $('add').onclick = () => { looks.push(looks[looks.length - 1] || 'flower'); build(); };
+  $('again').onclick = () => loadAll();
+  $('minute').onclick = () => document.querySelectorAll('iframe').forEach(f => f.contentWindow.postMessage({ timebits: 'minute' }, '*'));
+  if (raw) { $('mins').hidden = $('gone').hidden = true; }
+
+  function loadAll() { save(); document.querySelectorAll('iframe').forEach((f, i) => { f.src = appUrl(looks[i]); }); }
+
+  function fillSelect(sel, cur) {
+    const names = modes.length ? modes : [cur];
+    sel.innerHTML = '';
+    names.forEach(n => { const o = document.createElement('option'); o.value = o.textContent = n; sel.appendChild(o); });
+    sel.value = cur;
+  }
+  function build() {
+    frames.innerHTML = '';
+    looks.forEach((name, i) => {
+      const fig = document.createElement('figure');
+      const phone = document.createElement('div'); phone.className = 'phone';
+      const f = document.createElement('iframe');
+      f.onload = () => f.contentWindow.postMessage({ timebits: 'info' }, '*');
+      f.src = appUrl(name);
+      phone.appendChild(f);
+      const cap = document.createElement('figcaption');
+      const sel = document.createElement('select');
+      fillSelect(sel, name);
+      sel.onchange = () => { looks[i] = sel.value; save(); f.src = appUrl(sel.value); };
+      cap.appendChild(sel);
+      if (looks.length > 1) {
+        const x = document.createElement('button'); x.textContent = '×'; x.title = 'Remove';
+        x.onclick = () => { looks.splice(i, 1); build(); };
+        cap.appendChild(x);
+      }
+      fig.append(phone, cap);
+      frames.appendChild(fig);
+    });
+    save();
+  }
+  // the app answers with its list of looks, so the pickers can offer them all
+  window.addEventListener('message', e => {
+    const d = e.data;
+    if (!d || d.timebits !== 'info' || !Array.isArray(d.modes)) return;
+    modes = d.modes; pals = d.palettes || 1;
+    document.querySelectorAll('figcaption select').forEach((sel, i) => fillSelect(sel, looks[i]));
+  });
+  mark();
+  build();
+</script>
+</body>
+</html>

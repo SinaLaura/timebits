@@ -55,6 +55,12 @@ New entries are added whenever someone notices one (rule in [CLAUDE.md](CLAUDE.m
 - **When it could bite:** Browsers can clear `localStorage` (private windows, storage cleanup, "clear site data", iOS cleaning rarely used sites), so the saved Pomodoro lengths and an unfinished run may vanish. The code ignores storage errors silently, so nobody would notice why.
 - **Way out:** Mention it only if people report it; in the store app the storage is safer. Capacitor Preferences would be the sturdier place.
 
+### Preview helper pages ship with the app
+- **Decision:** `docs/preview.html` and `docs/test-finger.html` are helper pages for the local preview, and the app has a small `DEV` block in `docs/index.html` (answers `postMessage` from the preview page, `&passed=`). Because `docs/` is the web root, the pages are also published on GitHub Pages and would be copied into the Capacitor app bundle. The `DEV` code only acts on localhost with a port or a file, so online and in the store app it does nothing.
+- **Why it is fine now:** Nobody finds the pages by accident, and they only show the app itself.
+- **When it could bite:** A store reviewer or a user opens `/preview.html` and wonders what it is, or the pages grow into something that should not be public. The `DEV` check could also be too loose if the app is ever served from a local port on purpose.
+- **Way out:** Move the helper pages to a folder outside `docs/` (and serve the repo root for the preview), or exclude them in the Capacitor build and the Pages workflow.
+
 ## Resolved
 
 Nothing yet.

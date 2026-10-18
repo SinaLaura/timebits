@@ -3315,6 +3315,21 @@
 
   // ================= start: ?m=37 or ?bis=18:30 (optional &t=Lunch, &look=3 or &look=ducks, &passed=5) starts right away =================
 
+  // local preview only: localhost with a port, or a file; the online version and the store app (Capacitor: localhost without a port) ignore all of this
+  const DEV = location.protocol === 'file:' || (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && location.port !== '');
+  // helpers for preview.html (the page that shows looks side by side): {timebits: 'minute'} lets one minute pass at once,
+  // {timebits: 'info'} is answered with the list of looks and the number of palettes
+  if (DEV) window.addEventListener('message', e => {
+    const d = e.data;
+    if (!d || typeof d !== 'object') return;
+    if (d.timebits === 'info' && e.source) e.source.postMessage({ timebits: 'info', modes: MODES.map(m => m.name), palettes: PALETTES.length }, '*');
+    if (d.timebits === 'minute' && end && !$('run').hidden && !doneTimer) {
+      end -= 60000;
+      saveRun(pausedAt ? { pausedAt } : undefined);
+      if (!pausedAt) { scheduleAlarm(); tick(); }
+    }
+  });
+
   const q = new URLSearchParams(location.search);
   const saved = ls.get('timebits');
   ls.del('essen');
@@ -3333,10 +3348,8 @@
     else if (q.has('bis')) { byTime = true; begin(endFromTime(q.get('bis'))); }
     else {
       setMinutes(+q.get('m'));
-      // &passed=N (N minutes already gone) is a testing aid for the local preview only: localhost with a port, or a file;
-      // the online version and the store app (Capacitor: localhost without a port) ignore it
-      const dev = location.protocol === 'file:' || (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && location.port !== '');
-      const passed = dev ? Math.max(0, Math.min(minutes - 1, Math.round(+q.get('passed') || 0))) : 0;
+      // &passed=N (N minutes already gone) is a testing aid for the local preview only (see DEV above)
+      const passed = DEV ?Math.max(0, Math.min(minutes - 1, Math.round(+q.get('passed') || 0))) : 0;
       begin(Date.now() + (minutes - passed) * 60000, passed ? minutes : 0);
     }
   } else if (saved && saved.pomo >= 0 && (saved.pausedAt || Date.now() - saved.end < 12 * 3600000)) {

@@ -7,11 +7,13 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 ## To do
 
 - [ ] Turn the chocolate theme into a high-rise building theme, since the bar already almost looks like one: the pieces become apartments on the floors of a tower, and each minute one apartment falls down. Be creative with it.
+- [ ] Palette choice by phone setting: a light phone should also show the dark palettes (mixed in with the light ones), while a dark phone keeps showing only dark palettes.
 
 ## In progress
 
 ## Done
 
+- [x] Colour palettes: some combinations looked odd on black or white, and on a dark Android phone nearly every background was black (forced dark mode darkened the light palettes, and almost all dark palettes were near black). Now there are 17 palettes with clearly different, tinted backgrounds, and the palette group follows the phone's light or dark setting; no light or dark mode is forced. (9280bdf, 0fda237) → http://localhost:8765/preview.html?look=snake&m=25&gone=1&p=2 (use the arrows next to "Palette" to page through 0 to 16; check on a real phone is still open)
 - [x] Add a small version note to the start menu, so I can check which version of the app is running while testing. (e84301f) → http://localhost:8765/ (a faint "v108" under the Start button; it is the cache version in sw.js, so it changes with every release)
 - [x] Penguins: remove the shadow of the swimming penguins in the water, because it looks odd. (303a3a7) → http://localhost:8765/preview.html?look=penguins&m=10&gone=1 (the small swimming heads have no ripple under them any more; also look=realpenguins)
 - [x] Penguins: make sure the swimming penguins never pass through the ice chunks floating in the water. (303a3a7) → http://localhost:8765/preview.html?look=penguins&m=10&gone=1 (swimmers glide around the loose chunks; checked over 15 simulated minutes at nine sizes with no overlap)

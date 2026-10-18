@@ -2432,56 +2432,46 @@
     if (!p.g) { c.fillStyle = X.P.dim; rr(c, x - s * 0.5, y + s * 0.12, s, s * 0.42, s * 0.12); c.fill(); }   // own seat hides the legs
   }
   function cinemaTap(G, i) { G.pts[i].tk = performance.now(); grumble(); }
-  // an annoyed cinema-goer; four candidates to choose from (test-cinema-sounds.html), the rest goes once one is picked
-  let angryKind = 'shh';
+  // a viewer who hates the movie; three angry voices to choose from (test-cinema-sounds.html), the rest goes once one is picked
+  let angryKind = 'argh';
   function grumble(kind) {
     if (!audio || pausedAt) return;   // quiet while paused
     ANGRY[kind || angryKind](audio, audio.currentTime + 0.01);
-  }
-  // white noise, the raw stuff for breath and hiss
-  function noise(a, dur) {
-    const b = a.createBuffer(1, Math.ceil(a.sampleRate * dur), a.sampleRate), d = b.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-    const s = a.createBufferSource(); s.buffer = b; return s;
   }
   function env(a, t, peak, att, dur) {
     const g = a.createGain();
     g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + att); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     return g;
   }
+  // an angry voice: a buzzing vocal cord (sawtooth with a little jitter) through three vowel formants, made rough by a fast
+  // tremble (the growl) and a little distortion (the rasp), plus some breath. f0 = [[time, pitch], ...] from t
+  function angryVoice(a, t, o) {
+    const dur = o.dur, out = env(a, t, o.gain, o.att || 0.03, dur), src = a.createOscillator(), rasp = a.createWaveShaper();
+    src.type = 'sawtooth';
+    o.f0.forEach(([dt, f], k) => k ? src.frequency.linearRampToValueAtTime(f, t + dt) : src.frequency.setValueAtTime(f, t + dt));
+    const jit = a.createOscillator(), jg = a.createGain();   // a slightly unsteady voice
+    jit.frequency.value = 7; jg.gain.value = o.f0[0][1] * 0.03; jit.connect(jg).connect(src.frequency);
+    const curve = new Float32Array(256);
+    for (let i = 0; i < 256; i++) { const x = i / 128 - 1; curve[i] = Math.tanh(x * (o.rasp || 2)); }
+    rasp.curve = curve;
+    const growl = a.createGain(), lfo = a.createOscillator(), lg = a.createGain();   // the rolling growl
+    growl.gain.value = 1 - (o.growl || 0) / 2; lfo.frequency.value = o.growlHz || 32; lg.gain.value = (o.growl || 0) / 2;
+    lfo.connect(lg).connect(growl.gain);
+    src.connect(rasp).connect(growl);
+    o.form.forEach(([f, q, v]) => { const bp = a.createBiquadFilter(), g = a.createGain(); bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q; g.gain.value = v; growl.connect(bp).connect(g).connect(out); });
+    const br = noise(a, dur), bh = a.createBiquadFilter(), bg = a.createGain();   // breath
+    bh.type = 'bandpass'; bh.frequency.value = o.form[1][0]; bh.Q.value = 1; bg.gain.value = o.breath || 0.15;
+    br.connect(bh).connect(bg).connect(out);
+    out.connect(a.destination);
+    for (const n of [src, jit, lfo, br]) { n.start(t); n.stop(t + dur + 0.05); }
+  }
   const ANGRY = {
-    // "shhh!": a sharp hiss, like someone shushing the row behind
-    shh(a, t) {
-      const n = noise(a, 0.6), hp = a.createBiquadFilter(), bp = a.createBiquadFilter(), g = env(a, t, 0.22, 0.05, 0.55);
-      hp.type = 'highpass'; hp.frequency.value = 1800;
-      bp.type = 'bandpass'; bp.frequency.value = 3200; bp.Q.value = 1.2;
-      n.connect(hp).connect(bp).connect(g).connect(a.destination); n.start(t); n.stop(t + 0.6);
-    },
-    // "booo": a low voice-like moan through two vowel formants (o-u)
-    boo(a, t) {
-      const o = a.createOscillator(), f1 = a.createBiquadFilter(), f2 = a.createBiquadFilter(), g = env(a, t, 0.16, 0.08, 0.7), mix2 = a.createGain();
-      o.type = 'sawtooth';
-      o.frequency.setValueAtTime(150, t); o.frequency.linearRampToValueAtTime(118, t + 0.65);
-      f1.type = 'bandpass'; f1.frequency.value = 330; f1.Q.value = 5;
-      f2.type = 'bandpass'; f2.frequency.value = 760; f2.Q.value = 7; mix2.gain.value = 0.5;
-      o.connect(f1).connect(g); o.connect(f2).connect(mix2).connect(g); g.connect(a.destination);
-      o.start(t); o.stop(t + 0.72);
-    },
-    // "tsk tsk": two dry tongue clicks
-    tsk(a, t) {
-      [0, 0.19].forEach(dt => {
-        const n = noise(a, 0.04), bp = a.createBiquadFilter(), g = env(a, t + dt, 0.5, 0.002, 0.035);
-        bp.type = 'bandpass'; bp.frequency.value = 2600; bp.Q.value = 3;
-        n.connect(bp).connect(g).connect(a.destination); n.start(t + dt); n.stop(t + dt + 0.04);
-      });
-    },
-    // "pfff": an exasperated huff, breath that falls away
-    huff(a, t) {
-      const n = noise(a, 0.7), bp = a.createBiquadFilter(), g = env(a, t, 0.3, 0.03, 0.65);
-      bp.type = 'bandpass'; bp.Q.value = 0.9;
-      bp.frequency.setValueAtTime(1400, t); bp.frequency.exponentialRampToValueAtTime(450, t + 0.6);
-      n.connect(bp).connect(g).connect(a.destination); n.start(t); n.stop(t + 0.7);
-    },
+    // "Argh!": a shouted, rough open vowel that rises and then drops in disgust
+    argh: (a, t) => angryVoice(a, t, { dur: 0.6, gain: 0.5, att: 0.04, f0: [[0, 190], [0.12, 260], [0.6, 150]], form: [[750, 6, 1], [1250, 8, 0.6], [2600, 10, 0.25]], growl: 0.7, growlHz: 34, rasp: 3, breath: 0.2 }),
+    // "Grrr": a low growl with a rolled r
+    grrr: (a, t) => angryVoice(a, t, { dur: 0.7, gain: 0.55, att: 0.06, f0: [[0, 105], [0.35, 120], [0.7, 90]], form: [[480, 5, 1], [1300, 7, 0.5], [2400, 9, 0.2]], growl: 0.95, growlHz: 26, rasp: 4, breath: 0.1 }),
+    // "Ugh! Ugh!": two short disgusted grunts
+    ugh: (a, t) => { for (const [dt, f] of [[0, 210], [0.3, 180]]) angryVoice(a, t + dt, { dur: 0.24, gain: 0.5, att: 0.015, f0: [[0, f], [0.24, f * 0.7]], form: [[640, 6, 1], [1190, 8, 0.6], [2400, 10, 0.2]], growl: 0.5, growlHz: 40, rasp: 3, breath: 0.25 }); },
   };
   function cinemaScreen(X) {
     const { c, P, pts } = X, S = X.geo.cinema;

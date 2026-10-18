@@ -50,6 +50,12 @@ New entries are added whenever someone notices one (rule in [CLAUDE.md](CLAUDE.m
 - **When it could bite:** Merge conflicts and lost edits (a session overwriting the file from an old copy), long load of the file into every session, and hard-to-find side effects between themes sharing helpers (such as the tap chime or the pause handling).
 - **Way out:** Keep the rule "read fresh, edit with exact replacements, commit at once". If it keeps hurting, split the themes into separate script files (still no build, still local) and list them in `sw.js`.
 
+### All helpers share one scope
+- **Decision:** Every function in `docs/index.html` lives in the same script scope, and a later `function x()` silently replaces an earlier one with the same name; there is no error and no warning.
+- **Why it is fine now:** It was noticed in time: a new `voice()` for the cinema clashed with the end tone's `voice()`, and the cinema sounds broke at once.
+- **When it could bite:** Two sessions each add a small helper with a common name (`noise`, `env`, `ease`, `draw`...) and one of them changes another theme's behaviour, maybe only in a place nobody looks at right away (the end tone, a pause reaction).
+- **Way out:** Before adding a helper, grep for its name; give theme helpers a theme prefix (`angryVoice`, `towerShake`); or wrap each theme in its own block or object.
+
 ### Pomodoro state is dropped after 12 hours
 - **Decision:** A running Pomodoro survives closing the app and skips the phases that ended meanwhile, but is thrown away if more than 12 hours have passed. All settings and the running state live in `localStorage`.
 - **When it could bite:** Browsers can clear `localStorage` (private windows, storage cleanup, "clear site data", iOS cleaning rarely used sites), so the saved Pomodoro lengths and an unfinished run may vanish. The code ignores storage errors silently, so nobody would notice why.

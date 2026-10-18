@@ -19,7 +19,7 @@
 <div id="phone"><iframe id="app" src="./?m=12&look=cinema"></iframe></div>
 <script>
   // local preview only (the app ignores these messages online and in the store app)
-  const SOUNDS = [['shh', '1 · Shhh!'], ['boo', '2 · Booo'], ['tsk', '3 · Tsk tsk'], ['huff', '4 · Pfff (huff)']];
+  const SOUNDS = [['argh', '1 · Argh!'], ['grrr', '2 · Grrr'], ['ugh', '3 · Ugh! Ugh!']];
   const app = document.getElementById('app'), pick = document.getElementById('pick');
   app.src += '&_=' + Date.now();   // never an old copy of the app
   SOUNDS.forEach(([kind, label]) => {

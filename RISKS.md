@@ -67,6 +67,12 @@ New entries are added whenever someone notices one (rule in [CLAUDE.md](CLAUDE.m
 - **When it could bite:** Address scraping and spam, or the owner deciding she does not want the address public. Removing it afterwards is hard: it needs a history rewrite with a force-push (all hashes change, so the commit links in `NEXT.md` break), and forks and caches may keep copies.
 - **Way out:** For future commits, switch to GitHub's noreply address (GitHub: Settings, Emails, "Keep my email addresses private", then `git config user.email <id>+<username>@users.noreply.github.com`) and turn on "Block command line pushes that expose my email". Decide separately whether the old history is worth rewriting.
 
+### Palettes follow the phone's light or dark setting
+- **Decision:** A phone set to dark only ever shows the dark palettes, a phone set to light only the light ones (`prefers-color-scheme`). Light palettes also tell the browser `color-scheme: only light`, so forced dark modes (Chrome, Samsung Internet) do not turn them near black.
+- **Why it is fine now:** Each group has eight or nine clearly different backgrounds, and the look matches what the phone owner chose. Before this, forced dark mode made nearly every background black.
+- **When it could bite:** Someone with a dark phone wants to see the bright palettes (or the other way round) and never can. A browser that reports the setting wrongly, or a desktop with a fixed dark setting, always gets one group. Some browsers may still force their own dark mode over `only light`; that cannot be checked without the device.
+- **Way out:** Mix a few palettes of the other group into the rotation, or add a small switch for it.
+
 ## Resolved
 
 Nothing yet.

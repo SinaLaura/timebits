@@ -231,19 +231,27 @@
 
   // ================= looks: palettes x modes, shuffled on every tap =================
 
+  // The palettes follow the phone's setting: with a dark phone only the dark ones come up, with a light phone only the light ones.
+  // Each group has clearly different backgrounds (not just black / white), only one or two are near black and one is near white.
+  // Keep the backgrounds in the middle range: light ones tinted (not white), dark ones with visible colour (not black).
   const PALETTES = [
     { bg: '#17171c', fg: '#facd3c', dim: '#3a3a44', text: '#f2f2f5', dark: true },  // night
     { bg: '#f3eee4', fg: '#e0503a', dim: '#ddd4c3', text: '#2a2a2a' },             // paper
-    { bg: '#10241c', fg: '#8fe0a0', dim: '#2a4a3c', text: '#e6f4e9', dark: true },  // forest
-    { bg: '#0a2342', fg: '#4fd8e0', dim: '#1f4068', text: '#e0f7fa', dark: true },  // ocean
-    { bg: '#2b1a3b', fg: '#ff8a5c', dim: '#4a3360', text: '#ffd9b8', dark: true },  // dusk
-    { bg: '#e6f5ee', fg: '#178a6c', dim: '#c6e3d6', text: '#0e3b30' },             // mint
-    { bg: '#fff0f3', fg: '#f0507f', dim: '#f4d2db', text: '#5a2638' },             // blush
-    { bg: '#000000', fg: '#ffffff', dim: '#2e2e2e', text: '#ffffff', dark: true },  // mono
-    { bg: '#fbf5d8', fg: '#2d3ca0', dim: '#e9e0b2', text: '#2d3ca0' },             // cobalt
-    { bg: '#1a0e09', fg: '#ff5233', dim: '#3e2318', text: '#ffb39c', dark: true },  // ember
-    { bg: '#ece8ff', fg: '#6a4cf0', dim: '#d5cef7', text: '#2c2060' },             // lavender
+    { bg: '#17402f', fg: '#8fe0a0', dim: '#31634c', text: '#e6f4e9', dark: true },  // forest
+    { bg: '#123a6b', fg: '#4fd8e0', dim: '#2b5c94', text: '#e0f7fa', dark: true },  // ocean
+    { bg: '#3d2358', fg: '#ff8a5c', dim: '#5e3c80', text: '#ffd9b8', dark: true },  // dusk
+    { bg: '#d3f0e1', fg: '#157a5f', dim: '#aedbc6', text: '#0e3b30' },             // mint
+    { bg: '#ffd8e2', fg: '#e23a6f', dim: '#f5b5c7', text: '#5a2638' },             // blush
+    { bg: '#2c2d33', fg: '#ffffff', dim: '#4c4d55', text: '#ffffff', dark: true },  // graphite
+    { bg: '#fbefb0', fg: '#2d3ca0', dim: '#ead98a', text: '#2d3ca0' },             // cobalt
+    { bg: '#4d1a2c', fg: '#ff7a59', dim: '#74304a', text: '#ffc9b8', dark: true },  // wine
+    { bg: '#ddd3ff', fg: '#5a3de0', dim: '#c0b3f5', text: '#2c2060' },             // lavender
     { bg: '#0a0d0a', fg: '#39ff6a', dim: '#163a20', text: '#39ff6a', dark: true },  // terminal
+    { bg: '#0e4a50', fg: '#ffd166', dim: '#236d74', text: '#e0fbfc', dark: true },  // teal
+    { bg: '#2f3478', fg: '#ff9fc4', dim: '#4d54a0', text: '#e8eaff', dark: true },  // indigo
+    { bg: '#cfe6fa', fg: '#1763c4', dim: '#a9cdee', text: '#0f2f55' },             // sky
+    { bg: '#ffdbc0', fg: '#d2501a', dim: '#f3bf9a', text: '#4a2210' },             // peach
+    { bg: '#dce8c6', fg: '#41701a', dim: '#bfd1a0', text: '#25360f' },             // sage
   ];
 
   // real-looking penguins (on request: real colours instead of the palette, see CLAUDE.md): sea-blue water, black and white birds, orange beaks, white ice
@@ -794,17 +802,30 @@
       return q.pop();
     };
   }
-  const nextMode = bag(ROTATION), nextPal = bag(PALETTES.length);
+  const nextMode = bag(ROTATION);
+  // the palettes that fit the phone's light or dark setting (all of them where the browser can't tell)
+  const schemeMq = window.matchMedia && matchMedia('(prefers-color-scheme: dark)');
+  const palPool = () => { const l = PALETTES.map((p, i) => i).filter(i => !schemeMq || schemeMq.media === 'not all' || !!PALETTES[i].dark === schemeMq.matches); return l.length ? l : PALETTES.map((p, i) => i); };
+  let palBag = [];
+  const nextPal = cur => {
+    if (!palBag.length) {
+      palBag = palPool().filter(i => i !== cur);
+      for (let i = palBag.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [palBag[i], palBag[j]] = [palBag[j], palBag[i]]; }
+    }
+    return palBag.pop();
+  };
 
   let look = ls.get('timebits-look');
-  if (!look || !MODES[look.m] || !PALETTES[look.p]) look = { m: 0, p: 0 };
+  if (!look || !MODES[look.m] || !PALETTES[look.p]) look = { m: 0, p: palPool()[0] };
+  else if (!palPool().includes(look.p)) look.p = nextPal(look.p);   // saved while the phone was set the other way round
 
   // the current colours: a theme may bring its own (the real-looking penguins: sea, black and white), otherwise the palette
   function curPal() { const M = MODES[look.m]; return (M && M.pal) || PALETTES[look.p]; }
   function applyPalette() {
     const p = curPal(), root = document.documentElement;
     for (const k of ['bg', 'fg', 'dim', 'text']) root.style.setProperty('--' + k, p[k]);
-    root.style.colorScheme = p.dark ? 'dark' : 'light';
+    // 'only light' tells the browser not to darken a light palette by itself (Chrome's and Samsung's forced dark mode would turn it near black)
+    root.style.colorScheme = p.dark ? 'dark' : 'only light';
     document.querySelector('meta[name=theme-color]').content = p.bg;
   }
   applyPalette();
@@ -2979,6 +3000,15 @@
     pulses.clear(); tints.clear();
     relayout();
   }
+  // the phone switches between light and dark while the app is open: change to a palette that fits
+  if (schemeMq && schemeMq.addEventListener) schemeMq.addEventListener('change', () => {
+    palBag = [];
+    if (palPool().includes(look.p)) return;
+    look.p = nextPal(look.p);
+    ls.set('timebits-look', look);
+    applyPalette();
+    if (!$('run').hidden) relayout();
+  });
 
   // leftovers of past minutes that a theme draws itself, not as items (crumbs, dangling strings, swimming penguins):
   // they stand for time already gone, so a tap on them changes the look like a past item. A theme registers each one while drawing.

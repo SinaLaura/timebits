@@ -274,9 +274,9 @@
     { name: 'spiral', snd: 'spiral',   shape: 'circle',  guide: 'path', lay: spiral },
     { name: 'clock', snd: 'clock',    shape: 'circle',  guide: 'ring', lay: ring },
     { name: 'bars',     off: true, shape: 'bar',     lay: (n, w, h) => grid(n, w, h, 1.8, 3.6, { max: 65 }) },
-    { name: 'honey', snd: 'honey',    shape: 'hex',     halo: X => ({ poly: starPoly(6, X.d * 0.6, X.d * 0.6) }), lay: (n, w, h) => grid(n, w, h, 0.95, 0.82, { offset: true, max: 140 }) },
+    { name: 'honey', snd: 'honey', pitchGrid: true, shape: 'hex',     halo: X => ({ poly: starPoly(6, X.d * 0.6, X.d * 0.6) }), lay: (n, w, h) => grid(n, w, h, 0.95, 0.82, { offset: true, max: 140 }) },
     { name: 'rings', snd: 'rings',    shape: 'ring',    lay: (n, w, h) => grid(n, w, h, 1.5, 1.3, { offset: true }) },
-    { name: 'diamonds', snd: 'diamonds', shape: 'diamond', hit: 0.4, lay: (n, w, h) => grid(n, w, h, 1.1, 0.55, { offset: true, max: 170 }) },
+    { name: 'diamonds', snd: 'diamonds', pitchGrid: true, shape: 'diamond', hit: 0.4, lay: (n, w, h) => grid(n, w, h, 1.1, 0.55, { offset: true, max: 170 }) },
     { name: 'tiles',    off: true, shape: 'tri',     hit: 0.3, lay: (n, w, h) => grid(n, w, h, 0.58, 0.95, { max: 190 }) },
     // petals fall off and land on the ground
     { name: 'flower', lay: flower, reverse: true, goneScale: 0.45, goneMs: 2600, pos: petalPos, item: petal, halo: (X, p, q) => ({ rx: p.len * 0.58, ry: p.wid * 0.62, rot: q ? q.r : p.a }), before: stem, after: flowerCenter },
@@ -805,9 +805,10 @@
     };
   }
   const nextMode = bag(ROTATION);
-  // the palettes that fit the phone's light or dark setting (all of them where the browser can't tell)
+  // the palettes that fit the phone's setting: a dark phone gets only the dark ones, a light phone gets all of them (light and dark mixed);
+  // all of them where the browser can't tell
   const schemeMq = window.matchMedia && matchMedia('(prefers-color-scheme: dark)');
-  const palPool = () => { const l = PALETTES.map((p, i) => i).filter(i => !schemeMq || schemeMq.media === 'not all' || !!PALETTES[i].dark === schemeMq.matches); return l.length ? l : PALETTES.map((p, i) => i); };
+  const palPool = () => { const l = PALETTES.map((p, i) => i).filter(i => !schemeMq || schemeMq.media === 'not all' || !schemeMq.matches || PALETTES[i].dark); return l.length ? l : PALETTES.map((p, i) => i); };
   let palBag = [];
   const nextPal = cur => {
     if (!palBag.length) {

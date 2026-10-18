@@ -12,13 +12,13 @@ Varianten zum Vergleichen (`lab: true` in `ALL_MODES`): nur über `?look=<name>`
 |---|---|---|
 | 0 | dots | Punkt schrumpft zu grauem Punkt |
 | 1 | squares | Quadrat schrumpft |
-| 2 | snake | Schlange zieht den Schwanz ein; Antippen = Kopf reagiert (lächeln, traurig mit Träne oder Zunge züngeln), pro Durchlauf zufällig gewählt und dann immer gleich; Augen schauen geradeaus und beim Antippen kurz in Kopfrichtung (fernes Auge wandert mehr), Zunge kommt vorne raus, Rand lässt Platz für die Zunge; Test (`pitchGrid: true`): die Tonhöhe hängt vom Ort des Items ab statt vom Zufall, wie ein Tastenfeld aus 6 × 4 Feldern (Pentatonik A3 bis C6, oben links am höchsten, unten rechts am tiefsten, jede Reihe zwei Stufen tiefer); die übrigen Themes mit Ton spielen noch zufällige Töne, bis der User entscheidet |
+| 2 | snake | Schlange zieht den Schwanz ein; Antippen = Kopf reagiert (lächeln, traurig mit Träne oder Zunge züngeln), pro Durchlauf zufällig gewählt und dann immer gleich; Augen schauen geradeaus und beim Antippen kurz in Kopfrichtung (fernes Auge wandert mehr), Zunge kommt vorne raus, Rand lässt Platz für die Zunge; Test (`pitchGrid: true`, auch bei honey und diamonds): die Tonhöhe hängt vom Ort des Items ab statt vom Zufall, wie ein Tastenfeld aus 6 × 4 Feldern (Pentatonik A3 bis C6, oben links am höchsten, unten rechts am tiefsten, jede Reihe zwei Stufen tiefer); die übrigen Themes mit Ton (spiral, clock, rings) spielen noch zufällige Töne, bis der User entscheidet |
 | 3 | spiral | Spirale läuft von außen nach innen ab |
 | 4 | clock | Punkt im Uhr-Kreis erlischt |
 | 5 | bars | Balken schrumpft |
-| 6 | honey | Wabe schrumpft |
+| 6 | honey | Wabe schrumpft; Ton hängt vom Ort der Wabe ab (Tastenfeld wie bei der Schlange, `pitchGrid`) |
 | 7 | rings | Ring wird zum Punkt |
-| 8 | diamonds | Raute schrumpft |
+| 8 | diamonds | Raute schrumpft; Ton hängt vom Ort der Raute ab (Tastenfeld wie bei der Schlange, `pitchGrid`) |
 | 9 | tiles | Dreieck schrumpft |
 | 10 | flower | Ein einziger Blütenblattkranz wie eine Margerite (der ältere Entwurf mit mehreren Lagen ist ersetzt, so gewünscht). Die Blätter sind nicht alle gleich: Länge, Breite und Winkel variieren leicht, über den Kranz läuft eine langsame Welle (manche Seiten etwas länger), bei sehr vielen Blättern wird die Streuung kleiner, damit der Kranz nicht struppig wirkt. Bei vielen Minuten wächst der Kern etwas (Sonnenblume, höchstens 0,41 × Radius), damit die Blätter Blätter bleiben und keine Nadeln; die Blätter fallen in verstreuter Reihenfolge (Goldener Winkel), der Kranz lichtet sich gleichmäßig wie bei einer gepflückten Margerite; sie bleiben blass am Boden liegen |
 | 11 | orbit | Planet antippen = er quetscht sich und wackelt, der Ring schwingt; Mond driftet ins All; Pause = das ganze System fällt in den Planeten zusammen, danach geht es wieder auf |

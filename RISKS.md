@@ -68,10 +68,10 @@ New entries are added whenever someone notices one (rule in [CLAUDE.md](CLAUDE.m
 - **Way out:** For future commits, switch to GitHub's noreply address (GitHub: Settings, Emails, "Keep my email addresses private", then `git config user.email <id>+<username>@users.noreply.github.com`) and turn on "Block command line pushes that expose my email". Decide separately whether the old history is worth rewriting.
 
 ### Palettes follow the phone's light or dark setting
-- **Decision:** A phone set to dark only ever shows the dark palettes, a phone set to light only the light ones (`prefers-color-scheme`). No light mode is forced (no `color-scheme: only light`): a dark phone never shows a light palette, so a browser's forced dark mode has nothing to darken.
-- **Why it is fine now:** Each group has eight or nine clearly different backgrounds, and the look matches what the phone owner chose. Before this, forced dark mode made nearly every background black.
-- **When it could bite:** Someone with a dark phone wants to see the bright palettes (or the other way round) and never can. A browser that reports the setting wrongly, or a desktop with a fixed dark setting, always gets one group.
-- **Way out:** Mix a few palettes of the other group into the rotation, or add a small switch for it.
+- **Decision:** A phone set to dark only ever shows the dark palettes; a phone set to light shows all of them, light and dark mixed (`prefers-color-scheme`). No light mode is forced (no `color-scheme: only light`): a dark phone never shows a light palette, so a browser's forced dark mode has nothing to darken.
+- **Why it is fine now:** Each group has eight or nine clearly different backgrounds, and a dark phone is never blinded by a bright screen. Before this, forced dark mode made nearly every background black.
+- **When it could bite:** Someone with a dark phone wants to see the bright palettes and never can. A browser that reports the setting wrongly, or a desktop with a fixed dark setting, only gets the dark group.
+- **Way out:** Mix a few light palettes into the dark phone's rotation, or add a small switch for it.
 
 ## Resolved
 

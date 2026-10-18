@@ -6,15 +6,16 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## To do
 
-- [ ] In themes with sound whose items sit close together (little empty space between them), tapping several items in a row should work like playing an instrument: a tap that accidentally lands in a small gap must not count as a tap on the empty background (which switches the theme). This should also apply to themes that get sound later.
-- [ ] (Last task, only when everything else is done.) The chocolate bar theme is hard to understand and feels strange. Come up with something better.
+- [ ] [needs you, long] (Last task, only when everything else is done.) The chocolate bar theme is hard to understand and feels strange. Come up with something better.
 
 ## In progress
 
-- [ ] Move the pause button a little higher (more space above "Exit"), so nobody taps "Exit" by accident. (problems-file session, started 02:32)
-- [ ] Tapping "Exit" should first ask "Sure?" with the buttons "Yes" and "No", and only exit after "Yes". (problems-file session, started 02:32)
+- [ ] [solo, long] In themes with sound whose items sit close together (little empty space between them), tapping several items in a row should work like playing an instrument: a tap that accidentally lands in a small gap must not count as a tap on the empty background (which switches the theme). This should also apply to themes that get sound later. (problems-file session, started 02:50)
 
 ## Done
+
+- [x] Move the pause button a little higher (more space above "Exit"), so nobody taps "Exit" by accident. (90ab8c2) → http://localhost:8765/?m=10&look=ducks (more space between the pause text and Exit)
+- [x] Tapping "Exit" should first ask "Sure?" with the buttons "Yes" and "No", and only exit after "Yes". (90ab8c2) → http://localhost:8765/?m=10&look=ducks (tap Exit: Sure? Yes / No appear in the same place; the end page's Exit doesn't ask)
 
 - [x] Das Ducks-Theme sah besser aus, als die Enten noch kleiner waren und es nicht mehr Reihen gab. Es soll wieder so werden. Damit es trotzdem gut aussieht, soll die Entenmutter größer sein als ihre Küken. (5f02651) → http://localhost:8765/?m=60&look=ducks (kleine Küken in einer Reihe auf der Runde, Mama deutlich größer; vergleiche &m=10, &m=25, &m=150)
 

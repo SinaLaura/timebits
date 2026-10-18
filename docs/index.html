@@ -1662,6 +1662,7 @@
       const p = pts[i];
       if (p.g < 0.12) continue;
       const e = easeOut(clamp((p.g - 0.12) / 0.4)), r2 = seeded(i * 17 + 3);
+      leftover(X, p.x, p.y, d * 0.5);   // the eaten spot with its crumbs
       c.beginPath();
       for (let j = 0; j < 4; j++) {
         const tx = p.x + (r2() - 0.5) * d * 0.7, ty = p.y + (r2() - 0.2) * C.ph * 0.6, sz = Math.max(1.2, d * (0.03 + r2() * 0.035));
@@ -2398,6 +2399,7 @@
       c.moveTo(B.kx, B.ky);
       c.quadraticCurveTo((B.kx + ex) / 2 + (1 - e) * d * 0.3, (B.ky + ey) / 2 + (1 - e) * d * 0.4, ex, ey);
       ends.push(ex, ey);
+      leftover(X, ex, ey, Math.max(12, d * 0.15)); leftover(X, (B.kx + ex) / 2, (B.ky + ey) / 2, Math.max(10, d * 0.12));
     }
     c.stroke();
     if (ends.length) {
@@ -2680,6 +2682,7 @@
       if (p.g < 0.85) continue;
       const x = Math.max(hd, Math.min(W - hd, p.sx + Math.sin(X.t * 0.15 + p.ph) * d * 1.2)), y = p.sy + Math.sin(X.t * 0.9 + p.ph2) * d * 0.06;
       c.globalAlpha = X.all * clamp((p.g - 0.85) / 0.15);
+      leftover(X, x, y - hd * 0.1, Math.max(12, hd * 0.55));
       c.strokeStyle = P.dim; c.lineWidth = Math.max(1, d * 0.03);
       c.beginPath(); c.ellipse(x, y + hd * 0.22, hd * 0.55, hd * 0.12, 0, 0, TAU); c.stroke();
       c.save(); c.translate(x, y);
@@ -2694,6 +2697,7 @@
   // returns true while something is still animating
   function draw(now) {
     const c = ctx, M = MODES[look.m], P = curPal(), pts = geo.pts, d = geo.d, n = pts.length;
+    geo.left = [];   // leftovers of past minutes a theme draws itself (filled again each frame, see leftover())
     c.clearRect(0, 0, W, H);
     if (!n) return false;
     const dt = lastNow ? Math.min(0.05, (now - lastNow) / 1000) : 1 / 60;
@@ -2854,6 +2858,11 @@
     relayout();
   }
 
+  // leftovers of past minutes that a theme draws itself, not as items (crumbs, dangling strings, swimming penguins):
+  // they stand for time already gone, so a tap on them changes the look like a past item. A theme registers each one while drawing.
+  function leftover(X, x, y, r) { X.geo.left.push({ x, y, r }); }
+  function onLeftover(x, y) { return (geo.left || []).some(o => Math.hypot(o.x - x, o.y - y) < o.r); }
+
   // is anything drawn near this point (planet, jar, stem, lines ...)? those are neutral, a tap does nothing
   function onDrawing(x, y) {
     const k = canvas.width / W, rad = 8;
@@ -2890,7 +2899,7 @@
     } else if (!pausedAt && MODES[look.m].bodyTap && MODES[look.m].bodyTap(geo, x, y)) {
       if (navigator.vibrate) navigator.vibrate(8);
       kick();
-    } else if (!onDrawing(x, y)) restyle();
+    } else if (onLeftover(x, y) || !onDrawing(x, y)) restyle();
   });
 
   // ---- animation on the end screen: butterfly (after the caterpillar) or a bang (after the fuse) ----

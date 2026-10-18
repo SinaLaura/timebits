@@ -10,11 +10,11 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## In progress
 
-- [ ] [solo, quick] Cinema, feedback on 1ac87d5: none of the four candidate sounds work. A tapped person should sound angry, like a viewer who really doesn't like the movie. (next-2302, started 00:11)
 
 
 ## To review
 
+- [ ] Cinema, feedback on 1ac87d5: none of the four candidate sounds work. A tapped person should sound angry, like a viewer who really doesn't like the movie. (73c8db5) → http://localhost:8765/test-cinema-sounds.html (now three synthesized angry voices, built from a buzzing voice with vowel shapes, a rough growl and a little rasp: 1 a shouted "Argh!" that rises and drops, 2 a low growling "Grrr", 3 two disgusted grunts, "Ugh! Ugh!". Press one to hear it; tapping the people then uses it too. Argh is the default for now. Write the number you like on this line, or say if none of them works.)
 
 ## Done
 

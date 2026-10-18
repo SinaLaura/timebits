@@ -434,9 +434,12 @@
     for (let j = 0; j < L; j++) {
       const m = Math.floor(n / L) + (j < n % L ? 1 : 0);
       const tip = L === 1 ? R : R * (0.5 + 0.5 * j / (L - 1)), len = tip - rc * 0.5, mid = rc * 0.5 + len / 2;
-      const wid = Math.min(len * 0.42, TAU * mid / m * 1.1), shade = L === 1 ? 0 : 0.26 * (1 - j / (L - 1));
+      const wid = Math.min(len * 0.5, TAU * mid / m * 2), shade = L === 1 ? 0 : 0.26 * (1 - j / (L - 1));
+      // within a layer the petals fall in a scattered order (golden angle), so it thins out evenly instead of going bald on one side
+      const fall = Array.from({ length: m }, (_, t) => t).sort((a, b) => (a * 0.6180339887) % 1 - (b * 0.6180339887) % 1);
+      const slot = []; fall.forEach((t, r) => { slot[t] = r; });   // t = turn of falling (0 = first), r = place in the layer
       for (let k = 0; k < m; k++) {
-        const a = -Math.PI / 2 + (k + (j % 2) * 0.5) * TAU / m;
+        const a = -Math.PI / 2 + (slot[m - 1 - k] + (j % 2) * 0.5) * TAU / m;
         pts.push({
           x: cx + Math.cos(a) * mid, y: cy + Math.sin(a) * mid, a, len, wid, hr: len * 0.45, shade,
           lx: w * (0.08 + 0.84 * rnd()), ly: h - wid * 0.55 - rnd() * 8, la: (rnd() - 0.5) * 0.8, sway: rnd() * TAU,
@@ -1225,9 +1228,12 @@
     const c = X.c;
     c.beginPath(); c.ellipse(x, y, p.len / 2 * k, p.wid / 2 * k, q ? q.r : p.a, 0, TAU); c.fill();
   }
+  // thick petals overlap a lot, so each one gets a thin, soft outline (its colour towards the background) to stay readable as a petal
   function layerPetal(X, i, x, y, k, q, p, fill) {
-    if (p.shade) X.c.fillStyle = mix(fill, X.P.bg, p.shade * (1 - p.g));
+    const c = X.c;
+    if (p.shade) c.fillStyle = mix(fill, X.P.bg, p.shade * (1 - p.g));
     petal(X, i, x, y, k, q, p);
+    c.strokeStyle = mix(c.fillStyle, X.P.bg, 0.55); c.lineWidth = Math.max(1, p.wid * k * 0.03); c.stroke();
   }
   function stem(X) {
     const { c, P } = X, F = X.geo.flower;

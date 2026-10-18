@@ -6,15 +6,15 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## To do
 
-- [ ] [solo, quick] Test entry for the task list (no actual work needed).
-
 ## In progress
-
-- [ ] [solo, big] Turn the chocolate theme into a high-rise building theme, since the bar already almost looks like one: the pieces become apartments on the floors of a tower, and each minute one apartment falls down. Be creative with it. (next-solo, started 22:42)
 
 ## To review
 
+- [ ] Turn the chocolate theme into a high-rise building theme, since the bar already almost looks like one: the pieces become apartments on the floors of a tower, and each minute one apartment falls down. Be creative with it. (7fd3ec1) → http://localhost:8765/preview.html?look=tower&m=12&gone=1 (the look is now called `tower`. Each apartment has a lit window with something inside: curtains, a plant, a lamp, a cat or blinds. Each minute one on the top floor wiggles, pops out of the facade and tumbles off the screen, leaving its empty concrete frame. Once a floor is empty, the roof with its blinking antenna drops onto the floor below. If the last floor isn't full, it sits on top as a narrower penthouse. Tap an apartment: its light flicks off for a moment. Pause: the lights go out one by one. My own choices: it stays narrow even in a wide window, and the chocolate code is gone. Try "A minute is over" twice to see the roof drop, also m=60.)
+
 ## Done
+
+- [x] Test entry for the task list (no actual work needed). → no visual change
 
 - [x] Palette choice by phone setting: a light phone also shows the dark palettes (mixed in with the light ones), while a dark phone keeps showing only dark palettes. (31d632a) → http://localhost:8765/preview.html?look=snake&m=25&gone=1&p=2 (arrows next to "Palette" page through 0 to 16; on a real light phone, tap the background: light and dark palettes both come up)
 - [x] Pitch grid for the sound themes, only honey and diamonds for now (decided together): the tap note depends on where the item sits on the screen, top left highest, bottom right lowest, like the snake. Spiral, clock, rings and ducks keep their random notes. (31d632a) → http://localhost:8765/preview.html?look=honey,diamonds&m=40 (tap along the items: higher up and to the left, lower down and to the right; the same item always gives the same note)

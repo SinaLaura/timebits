@@ -10,9 +10,10 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## In progress
 
-- [ ] [solo, big] (Last task, only when everything else is done.) The chocolate bar theme is hard to understand and feels strange. Come up with something better. (night-run session, started 01:28)
 
 ## Done
+
+- [x] (Last task, only when everything else is done.) The chocolate bar theme is hard to understand and feels strange. Come up with something better. Redesigned as one solid bar on its foil, eaten from the top. (3a38fd5) → http://localhost:8765/?m=10&look=chocolate (each minute the top piece wiggles, snaps off, gets bitten and floats away; crumbs stay on the foil; also &passed=4, &m=60)
 
 - [x] (Last task, only when everything else is done.) Design another cool theme entirely on your own, a new idea of yours (not one from THEMES.md). I will review it tomorrow. Built penguins on an ice floe. (98d596a) → http://localhost:8765/?m=10&look=penguins (one waddles to the edge and dives in each minute, then bobs in the water; tap one to make it hop and flap; pause: they fall asleep; also &m=60, &passed=6)
 

@@ -285,6 +285,10 @@
     { name: 'balloons', live: true, goneScale: 1, goneDim: 0, goneMs: 1500, goneLinear: true,
       lay: balloons, pos: balloonPos, item: balloon, tap: balloonTap, before: balloonStrings,
       halo: (X, p, q) => ({ rx: X.d * 0.56 * p.s, ry: X.d * 0.66 * p.s, rot: q ? q.r : 0 }) },
+    // penguins on an ice floe: each minute one waddles to the edge and dives in, then bobs in the water; tap one and it flaps and hops; asleep while paused
+    { name: 'penguins', live: true, goneScale: 1, goneDim: 0, goneMs: 3200, goneLinear: true,
+      lay: penguins, pos: penguinPos, item: penguin, tap: penguinTap, before: iceFloe,
+      halo: (X, p, q) => ({ rx: X.d * 0.6, ry: X.d * 0.78, rot: q && q.r ? q.r : 0 }) },
   ];
   const MODES = ALL_MODES.filter(m => !m.off);
 
@@ -2328,6 +2332,152 @@
       c.restore();
     }
     c.restore();
+  }
+
+  // ---- penguins ----
+  // a crowd of penguins on an ice floe; each minute one waddles to the edge, hops and dives in, then swims about as a little head in the water
+  function penguins(n, w, h) {
+    const rnd = seeded(n * 5 + 11), cx = w / 2, yf = h * 0.7, top = h * 0.03;
+    // the biggest penguin width d for which n of them fit on the floe (feet in offset rows inside an ellipse; back rows only show their heads)
+    // (room beside the floe, so a penguin diving off the side stays on screen)
+    const fit = d => {
+      const rx0 = Math.max(d, Math.min(w / 2 - d * 0.75, h * 0.8)), ry = Math.max(rx0 * 0.15, Math.min(rx0 * 0.75, (yf - top - 1.3 * d) / 2)), cy = yf - ry;
+      const ix = rx0 - d * 0.55, iy = ry - d * 0.2, sx = d * 1.04, sy = d * 0.6, out = [];
+      if (ix <= 0 || iy <= 0) return { out: d < 20 ? [{ x: cx, y: cy, e: 0 }] : out, cy, ix: Math.max(ix, 1), iy: Math.max(iy, 1) };
+      for (let r = -Math.floor(iy / sy); r <= Math.floor(iy / sy); r++) {
+        const y = cy + r * sy, off = r % 2 ? sx / 2 : 0;
+        for (let k = -Math.ceil(ix / sx) - 1; k <= Math.ceil(ix / sx) + 1; k++) {
+          const x = cx + k * sx + off, e = Math.hypot((x - cx) / ix, (y - cy) / iy);
+          if (e <= 1) out.push({ x, y, e });
+        }
+      }
+      return { out, cy, ix, iy };
+    };
+    let d = Math.min(w * 0.45, h * 0.32, 220), F = fit(d);
+    while (F.out.length < n && d > 3) { d *= 0.97; F = fit(d); }
+    while (F.out.length < n) F.out.push({ x: cx, y: F.cy, e: 0 });
+    const cand = F.out.sort((a, b) => a.e - b.e).slice(0, n);
+    // the floe fits snugly around the crowd
+    const m = Math.max(0.35, ...cand.map(p => p.e)), RX = F.ix * m + d * 0.55, RY = F.iy * m + d * 0.2, cy = F.cy;
+    const th = Math.max(5, Math.min(d * 0.3, h * 0.04)), wy0 = cy + RY + th + d * 0.4, wy1 = Math.max(wy0, h - d * 0.35);
+    // the outer ones leave first (a little shuffled)
+    cand.forEach(p => { p.k = p.e + rnd() * 0.2; });
+    cand.sort((a, b) => a.k - b.k);
+    const pts = cand.map(p => {
+      // out to the nearest edge, leaning a little towards the front, where the open water is
+      let ux = (p.x - cx) / RX, uy = (p.y - cy) / RY, e = Math.hypot(ux, uy);
+      if (e < 0.05) { ux = 0; uy = 1; e = 1; }
+      ux /= e; uy = uy / e + 0.4; e = Math.hypot(ux, uy);
+      const fx = cx + ux / e * RX * 0.96, fy = cy + uy / e * RY * 0.96;
+      let ox = ux / RX, oy = uy / RY; const ol = Math.hypot(ox, oy); ox /= ol; oy /= ol;
+      return { x: p.x, y: p.y - d * 0.65, hr: d * 0.62, ph: rnd() * TAU, ph2: rnd() * TAU,
+        ex: fx, ey: fy - d * 0.65, wx: fx + ox * d * 0.55, wy: fy + oy * d * 0.55 + th * 0.8 - d * 0.2, dir: ox < 0 ? -1 : 1,
+        sx: d * 0.5 + rnd() * Math.max(1, w - d), sy: wy0 + rnd() * (wy1 - wy0) };
+    });
+    const order = pts.map((p, i) => i).sort((a, b) => pts[a].y - pts[b].y);
+    return { pts, d, order, ice: { cx, cy, rx: RX, ry: RY, th, wy0, wy1 } };
+  }
+  function penguinPos(X, i, g, p) {
+    const d = X.d;
+    let hop = 0;
+    if (p.tk) { const s = (X.now - p.tk) / 1000; if (s < 0.45) { hop = Math.sin(Math.PI * s / 0.45) * d * 0.28; X.more = true; } }
+    if (i < X.min || g <= 0) return { x: p.x, y: p.y - hop, r: Math.sin(X.t * 1.6 + p.ph) * 0.05, a: 1 };
+    if (g >= 1) return { x: p.wx, y: p.wy, a: 0 };
+    if (g < 0.55) {
+      // waddle to the edge (real time, like every leaving item)
+      const u = g / 0.55, e = u * u * (3 - 2 * u), wob = Math.sin(X.now / 1000 * 13);
+      return { x: lerp(p.x, p.ex, e), y: lerp(p.y, p.ey, e) - Math.abs(wob) * d * 0.05, r: wob * 0.18, walk: 1 };
+    }
+    // hop off and dive in head first
+    const u = Math.min(1, (g - 0.55) / 0.2);
+    return { x: lerp(p.ex, p.wx, u), y: lerp(p.ey, p.wy, u) - Math.sin(Math.PI * u) * d * 0.6, r: p.dir * u * u * 2.3, s: 1 - 0.55 * u * u, walk: 1 };
+  }
+  function penguinTap(G, i) { G.pts[i].tk = performance.now(); }
+  // belly and face mask: light against the body (the palette's light colour; if body and text are the same, the background)
+  const penguinBelly = (P, col) => P.text === P.fg ? P.bg : P.dark ? mix(P.text, col, 0.1) : P.bg;
+  function penguinFace(c, d, belly, eyeCol, beak, closed) {
+    c.fillStyle = belly;
+    c.beginPath(); c.arc(-d * 0.13, -d * 0.24, d * 0.17, 0, TAU); c.arc(d * 0.13, -d * 0.24, d * 0.17, 0, TAU); c.fill();
+    if (closed) {
+      c.strokeStyle = eyeCol; c.lineWidth = Math.max(1, d * 0.035);
+      c.beginPath(); c.arc(-d * 0.13, -d * 0.25, d * 0.055, 0.15 * Math.PI, 0.85 * Math.PI); c.stroke();
+      c.beginPath(); c.arc(d * 0.13, -d * 0.25, d * 0.055, 0.15 * Math.PI, 0.85 * Math.PI); c.stroke();
+    } else {
+      c.fillStyle = eyeCol;
+      c.beginPath(); c.arc(-d * 0.13, -d * 0.25, d * 0.06, 0, TAU); c.arc(d * 0.13, -d * 0.25, d * 0.06, 0, TAU); c.fill();
+      c.fillStyle = belly;
+      c.beginPath(); c.arc(-d * 0.11, -d * 0.27, d * 0.02, 0, TAU); c.arc(d * 0.15, -d * 0.27, d * 0.02, 0, TAU); c.fill();
+    }
+    c.fillStyle = beak;
+    c.beginPath(); c.moveTo(-d * 0.07, -d * 0.15); c.lineTo(d * 0.07, -d * 0.15); c.lineTo(0, -d * 0.05); c.closePath(); c.fill();
+  }
+  function penguin(X, i, x, y, k, q, p, col) {
+    const c = X.c, P = X.P, g = p.g, d = X.d * k;
+    if (i >= X.min && g >= 0.75) {
+      // splash: a ring on the water and a few drops
+      const u = (g - 0.75) / 0.25, D = X.d;
+      c.strokeStyle = mix(P.text, P.bg, 0.4); c.lineWidth = Math.max(1, D * 0.04); c.globalAlpha = 1 - u;
+      c.beginPath(); c.ellipse(p.wx, p.wy + D * 0.2, D * (0.15 + 0.55 * u), D * (0.05 + 0.18 * u), 0, 0, TAU); c.stroke();
+      c.fillStyle = mix(P.text, P.bg, 0.3);
+      for (let j = 0; j < 6; j++) {
+        const a = (j - 2.5) * 0.35;
+        c.beginPath(); c.arc(p.wx + Math.sin(a) * D * 0.6 * u, p.wy + D * 0.2 - Math.sin(Math.PI * u) * D * (0.5 + 0.15 * (j % 3)), Math.max(1, D * 0.05 * (1 - u * 0.5)), 0, TAU); c.fill();
+      }
+      c.globalAlpha = 1;
+      return;
+    }
+    const belly = penguinBelly(P, col), beak = mix(P.fg, P.text, 0.45), wing = mix(col, P.bg, 0.15);
+    // flap after a tap; while walking the flippers stick out a little
+    let flap = q && q.walk ? 0.35 : 0;
+    if (p.tk) { const s = (X.now - p.tk) / 1000; if (s < 0.7) { flap += Math.abs(Math.sin(s * 26)) * 0.9 * (1 - s / 0.7); X.more = true; } else p.tk = 0; }
+    // asleep while paused, and now and then a blink
+    const closed = X.calm < 0.5 || Math.sin(X.t * 0.5 + p.ph * 3) > 0.993;
+    c.save(); c.translate(x, y + d * 0.65); c.rotate(q && q.r ? q.r : 0); c.translate(0, -d * 0.65);
+    c.fillStyle = beak;
+    c.beginPath(); c.ellipse(-d * 0.17, d * 0.63, d * 0.13, d * 0.06, 0, 0, TAU); c.ellipse(d * 0.17, d * 0.63, d * 0.13, d * 0.06, 0, 0, TAU); c.fill();
+    c.fillStyle = wing;
+    for (const s of [-1, 1]) { c.beginPath(); c.ellipse(s * d * 0.46, d * 0.08, d * 0.11, d * 0.3, s * (0.25 + flap), 0, TAU); c.fill(); }
+    c.fillStyle = col;
+    c.beginPath(); c.ellipse(0, 0, d * 0.48, d * 0.65, 0, 0, TAU); c.fill();
+    c.fillStyle = belly;
+    c.beginPath(); c.ellipse(0, d * 0.14, d * 0.34, d * 0.46, 0, 0, TAU); c.fill();
+    penguinFace(c, d, belly, P.dark && P.text !== P.fg ? P.bg : col, beak, closed);
+    c.fillStyle = mix(belly, P.fg, 0.35);
+    c.beginPath(); c.ellipse(-d * 0.27, -d * 0.1, d * 0.06, d * 0.035, 0, 0, TAU); c.ellipse(d * 0.27, -d * 0.1, d * 0.06, d * 0.035, 0, 0, TAU); c.fill();
+    c.restore();
+  }
+  // the floe, a few waves, and the penguins that already dived in, bobbing in the water in front
+  function iceFloe(X) {
+    const { c, P, d, pts } = X, I = X.geo.ice;
+    c.strokeStyle = P.dim; c.lineWidth = Math.max(1, Math.min(d * 0.03, 2.5));
+    const rnd = seeded(7);
+    c.beginPath();
+    for (let j = 0; j < 9; j++) {
+      const x = ((rnd() * W + X.t * d * 0.15 * (0.5 + rnd())) % (W + 40)) - 20, y = I.wy0 - d * 0.2 + rnd() * Math.max(10, H - I.wy0), s = Math.max(8, Math.min(d * 0.35, 26));
+      c.moveTo(x - s, y); c.quadraticCurveTo(x - s / 2, y - s * 0.35, x, y); c.quadraticCurveTo(x + s / 2, y - s * 0.35, x + s, y);
+    }
+    c.stroke();
+    c.fillStyle = mix(P.bg, P.text, 0.3);
+    c.beginPath(); c.ellipse(I.cx, I.cy + I.th, I.rx, I.ry, 0, 0, TAU); c.fill();
+    c.fillStyle = mix(P.bg, P.text, 0.14);
+    c.beginPath(); c.ellipse(I.cx, I.cy, I.rx, I.ry, 0, 0, TAU); c.fill();
+    // swimmers: small dim heads with a ripple
+    const head = mix(P.fg, P.dim, 0.55), belly = mix(penguinBelly(P, P.fg), P.dim, 0.45), beak = mix(mix(P.fg, P.text, 0.45), P.dim, 0.5);
+    const hd = d * 0.62, closed = X.calm < 0.5;
+    for (let i = Math.max(0, X.min); i < pts.length; i++) {
+      const p = pts[i];
+      if (p.g < 0.85) continue;
+      const x = Math.max(hd, Math.min(W - hd, p.sx + Math.sin(X.t * 0.15 + p.ph) * d * 1.2)), y = p.sy + Math.sin(X.t * 0.9 + p.ph2) * d * 0.06;
+      c.globalAlpha = X.all * clamp((p.g - 0.85) / 0.15);
+      c.strokeStyle = P.dim; c.lineWidth = Math.max(1, d * 0.03);
+      c.beginPath(); c.ellipse(x, y + hd * 0.22, hd * 0.55, hd * 0.12, 0, 0, TAU); c.stroke();
+      c.save(); c.translate(x, y);
+      c.fillStyle = head;
+      c.beginPath(); c.arc(0, -hd * 0.12, hd * 0.36, Math.PI * 0.95, Math.PI * 0.05); c.closePath(); c.fill();
+      penguinFace(c, hd, belly, head, beak, closed);
+      c.restore();
+    }
+    c.globalAlpha = X.all;
   }
 
   // returns true while something is still animating

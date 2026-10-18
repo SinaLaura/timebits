@@ -10,11 +10,11 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## In progress
 
-- [ ] [needs you, quick] Cinema, feedback on 382192e: the arms going up when a person is tapped are great, but the annoyed sound doesn't work, it sounds more like a duck quacking. Find a better angry sound. (next-2302, started 00:09)
 
 
 ## To review
 
+- [ ] Cinema, feedback on 382192e: the arms going up when a person is tapped are great, but the annoyed sound doesn't work, it sounds more like a duck quacking. Find a better angry sound. (1ac87d5) → http://localhost:8765/test-cinema-sounds.html (four candidates: 1 a sharp "shhh!" like shushing the row behind, 2 a low voice-like "booo", 3 two dry "tsk tsk" tongue clicks, 4 an exasperated "pfff" huff. Press one to hear it; tapping the people then uses it too. Shhh is the default for now. Write the number you like on this line, and I'll keep that one and remove the others.)
 
 ## Done
 

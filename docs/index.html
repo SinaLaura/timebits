@@ -63,7 +63,11 @@
   #minVal, #timeVal { text-align: center; font-size: 64px; font-weight: 700; color: var(--fg); }
   #minVal { width: 150px; -moz-appearance: textfield; }
   #minVal::-webkit-inner-spin-button, #minVal::-webkit-outer-spin-button { -webkit-appearance: none; }
-  #timeVal { width: 190px; font-size: 56px; font-variant-numeric: tabular-nums; }
+  #timeVal { display: block; width: 190px; font-size: 56px; font-variant-numeric: tabular-nums; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  /* the phone's own time picker lies invisibly over the time: a tap on it opens the picker, and the time can't be selected or copied */
+  #timeBox { position: relative; }
+  #timePick { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px; cursor: pointer; -webkit-user-select: none; user-select: none; }
+  #timePick::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: auto; height: auto; opacity: 0; cursor: pointer; }
   /* the short line under Minutes / Time: when it ends, or how long it runs */
   .pane { display: flex; flex-direction: column; align-items: center; gap: 10px; }
   .hint { margin: 0; font-size: 15px; font-variant-numeric: tabular-nums; }
@@ -147,7 +151,7 @@
       <div id="timePane" class="pane" hidden>
         <div class="stepper">
           <button type="button" class="step" data-for="time" data-d="-1" aria-label="earlier">−</button>
-          <input id="timeVal" type="text" inputmode="numeric" maxlength="5" autocomplete="off" aria-label="Time">
+          <div id="timeBox"><span id="timeVal" aria-hidden="true"></span><input id="timePick" type="time" aria-label="Time"></div>
           <button type="button" class="step" data-for="time" data-d="1" aria-label="later">+</button>
         </div>
         <p id="timeHint" class="hint muted"></p>
@@ -753,7 +757,9 @@
   const show = id => document.querySelectorAll('.screen').forEach(s => s.hidden = s.id !== id);
   const fmt = ts => new Date(ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
-  const minInput = $('minVal'), timeInput = $('timeVal'), labelInput = $('label');
+  const minInput = $('minVal'), labelInput = $('label'), timeShow = $('timeVal'), timePick = $('timePick');
+  // the chosen time ("18:30"): shown as plain text, mirrored into the hidden picker
+  const timeInput = { get value() { return timeShow.textContent; }, set value(v) { timeShow.textContent = v; timePick.value = v; } };
   labelInput.value = ls.get('timebits-label') || '';
   function setMinutes(v) { minutes = Math.max(1, Math.min(999, Math.round(v) || 1)); minInput.value = minutes; hints(); }
   setMinutes(minutes);
@@ -779,7 +785,7 @@
     if (m === 'time' && !timeInput.value) setTime(Math.ceil((Date.now() + minutes * 60000) / 300000) * 300000);
     hints();
   }
-  // Time: the same − value + as Minutes; a tap moves it 5 minutes, and the time can still be typed (18:30, 1830, 930 or 18)
+  // Time: the same − value + as Minutes; a tap on − or + moves it 5 minutes, a tap on the time opens the phone's time picker
   function pad2(v) { return String(v).padStart(2, '0'); }
   function setTime(ts) { const d = new Date(ts); timeInput.value = pad2(d.getHours()) + ':' + pad2(d.getMinutes()); hints(); }
   bump.time = dir => {
@@ -794,9 +800,9 @@
     const h = +m[1], mi = m[2] === undefined ? 0 : +m[2];
     return h < 24 && mi < 60 ? pad2(h) + ':' + pad2(mi) : null;
   }
-  let lastTime = '';
-  timeInput.onfocus = () => { lastTime = timeInput.value; timeInput.select(); };
-  timeInput.onchange = timeInput.onblur = () => { timeInput.value = parseTime(timeInput.value) || lastTime || timeInput.value; hints(); };
+  timePick.oninput = timePick.onchange = () => { const t = parseTime(timePick.value.slice(0, 5)); if (t) { timeInput.value = t; hints(); } };
+  // where the browser can open its picker on request (desktop Chrome), do so; phones open it on the tap anyway
+  timePick.addEventListener('click', () => { try { if (timePick.showPicker) timePick.showPicker(); } catch (e) {} });
   // the line under the number: "until 14:52" for Minutes, "for 47 min" for Time (kept current while the start screen shows)
   function dur(ms) { const m = Math.max(1, Math.ceil(ms / 60000)), h = Math.floor(m / 60); return h ? h + ' h' + (m % 60 ? ' ' + (m % 60) + ' min' : '') : m + ' min'; }
   function hints() {
@@ -836,7 +842,7 @@
     if (mode === 'pomo') beginPomo(0);
     else if (mode === 'time') {
       const t = parseTime(timeInput.value);
-      if (!t) return timeInput.focus();
+      if (!t) return;
       byTime = true;
       begin(endFromTime(t));
     } else {

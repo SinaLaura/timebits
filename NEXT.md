@@ -7,9 +7,11 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 ## To do
 
 - [ ] Turn the chocolate theme into a high-rise building theme, since the bar already almost looks like one: the pieces become apartments on the floors of a tower, and each minute one apartment falls down. Be creative with it.
-- [ ] Palette choice by phone setting: a light phone should also show the dark palettes (mixed in with the light ones), while a dark phone keeps showing only dark palettes.
 
 ## In progress
+
+- [ ] [solo, quick] Palette choice by phone setting: a light phone should also show the dark palettes (mixed in with the light ones), while a dark phone keeps showing only dark palettes. (Claude Sonnet 5.5, started 17:07)
+- [ ] [solo, quick] Pitch grid for the other sound themes: make the tap notes of spiral, clock, honey, rings, diamonds and ducks depend on where the item sits on the screen (top left highest, bottom right lowest), like the snake does now, so the same item always gives the same note. (Claude Sonnet 5.5, started 17:07)
 
 ## Done
 

@@ -235,6 +235,13 @@
     { bg: '#0a0d0a', fg: '#39ff6a', dim: '#163a20', text: '#39ff6a', dark: true },  // terminal
   ];
 
+  // real-looking penguins (on request: real colours instead of the palette, see CLAUDE.md): sea-blue water, black and white birds, orange beaks, white ice
+  const REAL = {
+    pal: { bg: '#2c79ad', fg: '#1d1f26', dim: '#5597c6', text: '#ffffff', dark: true },
+    belly: '#ffffff', beak: '#f39a2b', eye: '#1d1f26', blush: '#f6b3b8',
+    ice: { top: '#f2f8fc', side: '#b4d8ee', deep: '#4f97c9', rim: '#ffffff' },
+  };
+
   // layout: positions for n items in a w x h box, plus item size d.
   // optional per mode: live (always animating), pos (moving items), item (custom drawing),
   // before/after (extra drawing), step (physics), tap, goneScale/goneDim/goneMs (how past items look)
@@ -299,6 +306,9 @@
     // penguins on an ice floe: each minute one waddles to the edge and dives in, then bobs in the water; tap one and it honks, flaps and hops (no ring); asleep while paused
     { name: 'penguins', live: true, playable: true, noRing: true, goneScale: 1, goneDim: 0, goneMs: 3200, goneLinear: true,
       lay: penguins, pos: penguinPos, item: penguin, tap: penguinTap, before: iceFloe },
+    // the same penguins in their real colours, black and white on blue sea water (the user asked for real colours here)
+    { name: 'realpenguins', live: true, playable: true, noRing: true, goneScale: 1, goneDim: 0, goneMs: 3200, goneLinear: true, pal: REAL.pal,
+      lay: (n, w, h) => Object.assign(penguins(n, w, h), { real: true }), pos: penguinPos, item: penguin, tap: penguinTap, before: iceFloe },
   ];
   const MODES = ALL_MODES.filter(m => !m.off);
 
@@ -725,8 +735,10 @@
   let look = ls.get('timebits-look');
   if (!look || !MODES[look.m] || !PALETTES[look.p]) look = { m: 0, p: 0 };
 
+  // the current colours: a theme may bring its own (the real-looking penguins: sea, black and white), otherwise the palette
+  function curPal() { const M = MODES[look.m]; return (M && M.pal) || PALETTES[look.p]; }
   function applyPalette() {
-    const p = PALETTES[look.p], root = document.documentElement;
+    const p = curPal(), root = document.documentElement;
     for (const k of ['bg', 'fg', 'dim', 'text']) root.style.setProperty('--' + k, p[k]);
     root.style.colorScheme = p.dark ? 'dark' : 'light';
     document.querySelector('meta[name=theme-color]').content = p.bg;
@@ -2555,7 +2567,7 @@
       c.globalAlpha = 1;
       return;
     }
-    const belly = penguinBelly(P, col), beak = mix(P.fg, P.text, 0.45), wing = mix(col, P.bg, 0.15);
+    const R = X.geo.real, belly = R ? REAL.belly : penguinBelly(P, col), beak = R ? REAL.beak : mix(P.fg, P.text, 0.45), wing = mix(col, P.bg, 0.15);
     // flap after a tap; while walking the flippers stick out a little
     let flap = q && q.walk ? 0.35 : 0;
     if (p.tk) { const s = (X.now - p.tk) / 1000; if (s < 0.7) { flap += Math.abs(Math.sin(s * 26)) * 0.9 * (1 - s / 0.7); X.more = true; } else p.tk = 0; }
@@ -2570,8 +2582,8 @@
     c.beginPath(); c.ellipse(0, 0, d * 0.48, d * 0.65, 0, 0, TAU); c.fill();
     c.fillStyle = belly;
     c.beginPath(); c.ellipse(0, d * 0.14, d * 0.34, d * 0.46, 0, 0, TAU); c.fill();
-    penguinFace(c, d, belly, P.dark && P.text !== P.fg ? P.bg : col, beak, closed);
-    c.fillStyle = mix(belly, P.fg, 0.35);
+    penguinFace(c, d, belly, R ? REAL.eye : P.dark && P.text !== P.fg ? P.bg : col, beak, closed);
+    c.fillStyle = R ? REAL.blush : mix(belly, P.fg, 0.35);
     c.beginPath(); c.ellipse(-d * 0.27, -d * 0.1, d * 0.06, d * 0.035, 0, 0, TAU); c.ellipse(d * 0.27, -d * 0.1, d * 0.06, d * 0.035, 0, 0, TAU); c.fill();
     c.restore();
   }
@@ -2615,7 +2627,7 @@
       c.moveTo(x - s, y); c.quadraticCurveTo(x - s / 2, y - s * 0.35, x, y); c.quadraticCurveTo(x + s / 2, y - s * 0.35, x + s, y);
     }
     c.stroke();
-    const C = iceColors(P);
+    const C = X.geo.real ? REAL.ice : iceColors(P);
     iceSlab(c, I.poly, I.th, C, true);
     // on top: cracks running in from the edge, and a few snowdrifts along the back
     const rc = seeded(I.poly.length * 7 + Math.round(I.rx));
@@ -2641,7 +2653,7 @@
       iceSlab(c, b.shape.map(([u, v]) => [x + u, y + v]), b.th, C, false);
     }
     // swimmers: small dim heads with a ripple
-    const head = mix(P.fg, P.dim, 0.55), belly = mix(penguinBelly(P, P.fg), P.dim, 0.45), beak = mix(mix(P.fg, P.text, 0.45), P.dim, 0.5);
+    const R = X.geo.real, head = mix(P.fg, P.dim, R ? 0.35 : 0.55), belly = mix(R ? REAL.belly : penguinBelly(P, P.fg), P.dim, R ? 0.3 : 0.45), beak = mix(R ? REAL.beak : mix(P.fg, P.text, 0.45), P.dim, R ? 0.3 : 0.5);
     const hd = d * 0.62, closed = X.calm < 0.5;
     for (let i = Math.max(0, X.min); i < pts.length; i++) {
       const p = pts[i];
@@ -2661,7 +2673,7 @@
 
   // returns true while something is still animating
   function draw(now) {
-    const c = ctx, M = MODES[look.m], P = PALETTES[look.p], pts = geo.pts, d = geo.d, n = pts.length;
+    const c = ctx, M = MODES[look.m], P = curPal(), pts = geo.pts, d = geo.d, n = pts.length;
     c.clearRect(0, 0, W, H);
     if (!n) return false;
     const dt = lastNow ? Math.min(0.05, (now - lastNow) / 1000) : 1 / 60;
@@ -2848,7 +2860,7 @@
       // sometimes the item also takes on a slightly different colour
       if (Math.random() < 0.45) {
         // always a neighbour of the palette colour, so repeated taps don't drift away
-        const base = PALETTES[look.p].fg, tn = tints.get(i);
+        const base = curPal().fg, tn = tints.get(i);
         tints.set(i, { from: tn ? tn.to : base, to: nudge(base), t0: now });
       }
       if (M.tap) M.tap(geo, i);
@@ -2870,7 +2882,7 @@
     cancelAnimationFrame(artRaf);
     $('doneText').classList.remove('shake');
     if (!kind) return;
-    const x = cv.getContext('2d'), t0 = performance.now(), P0 = PALETTES[look.p];
+    const x = cv.getContext('2d'), t0 = performance.now(), P0 = curPal();
     let bits = [];
     if (kind === 'bang') {
       void $('doneText').offsetWidth;   // restart the css animation
@@ -2893,7 +2905,7 @@
       if (cv.width !== Math.round(r.width * dpr)) { cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); }
       x.setTransform(dpr, 0, 0, dpr, 0, 0);
       x.clearRect(0, 0, r.width, r.height);
-      const P = PALETTES[look.p];
+      const P = curPal();
       let more = !still;
       if (kind === 'butterfly') {
         const s = Math.min(r.width, r.height) * 0.42, t = still ? 0 : now / 1000;

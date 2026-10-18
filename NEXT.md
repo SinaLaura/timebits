@@ -6,13 +6,15 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## To do
 
-- [ ] [needs you, long] (Last task, only when everything else is done.) The chocolate bar theme is hard to understand and feels strange. Come up with something better.
+- [ ] [needs you, big] (Last task, only when everything else is done.) The chocolate bar theme is hard to understand and feels strange. Come up with something better.
+- [ ] [solo, big] (Last task, only when everything else is done.) Pick a theme idea from my ideas in THEMES.md and implement it entirely on your own, without asking me anything. You have a free hand in how, but follow the rules in CLAUDE.md.
 
 ## In progress
 
-- [ ] [solo, long] In themes with sound whose items sit close together (little empty space between them), tapping several items in a row should work like playing an instrument: a tap that accidentally lands in a small gap must not count as a tap on the empty background (which switches the theme). This should also apply to themes that get sound later. (problems-file session, started 02:50)
 
 ## Done
+
+- [x] [solo, big] In themes with sound whose items sit close together (little empty space between them), tapping several items in a row should work like playing an instrument: a tap that accidentally lands in a small gap must not count as a tap on the empty background (which switches the theme). This should also apply to themes that get sound later. (848e232) → http://localhost:8765/?m=40&look=snake (tap quickly across the dots, also in the gaps: each tap plays a note and the look stays; also &look=rings, diamonds, spiral, clock, ducks)
 
 - [x] Move the pause button a little higher (more space above "Exit"), so nobody taps "Exit" by accident. (90ab8c2) → http://localhost:8765/?m=10&look=ducks (more space between the pause text and Exit)
 - [x] Tapping "Exit" should first ask "Sure?" with the buttons "Yes" and "No", and only exit after "Yes". (90ab8c2) → http://localhost:8765/?m=10&look=ducks (tap Exit: Sure? Yes / No appear in the same place; the end page's Exit doesn't ask)

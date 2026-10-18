@@ -11,9 +11,10 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## In progress
 
-- [ ] [solo, big] (Last task, only when everything else is done.) Design another cool theme entirely on your own, a new idea of yours (not one from THEMES.md). I will review it tomorrow. (night-run session, started 01:20)
 
 ## Done
+
+- [x] (Last task, only when everything else is done.) Design another cool theme entirely on your own, a new idea of yours (not one from THEMES.md). I will review it tomorrow. Built penguins on an ice floe. (98d596a) → http://localhost:8765/?m=10&look=penguins (one waddles to the edge and dives in each minute, then bobs in the water; tap one to make it hop and flap; pause: they fall asleep; also &m=60, &passed=6)
 
 - [x] (Last task, only when everything else is done.) Pick a theme idea from my ideas in THEMES.md and implement it entirely on your own, without asking me anything. You have a free hand in how, but follow the rules in CLAUDE.md. Built the balloons idea. (1249eda) → http://localhost:8765/?m=10&look=balloons (one pops each minute and its string dangles from the knot; tap a balloon to nudge it; also &m=60, &m=1, &passed=6)
 

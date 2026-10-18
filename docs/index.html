@@ -430,7 +430,7 @@
   // and every layer gets its own shade, fading towards the colour of the core on the inside
   function flowerLayers(n, w, h) {
     const cx = w / 2, cy = h * 0.38, R = Math.min(w * 0.46, h * 0.34), rc = R * 0.2, rnd = seeded(n);
-    const L = Math.max(1, Math.min(n, 6, Math.max(2, Math.ceil(n / 14)))), pts = [];
+    const L = Math.max(1, Math.min(n, 6, Math.ceil(n / 40))), pts = [];
     for (let j = 0; j < L; j++) {
       const m = Math.floor(n / L) + (j < n % L ? 1 : 0);
       const tip = L === 1 ? R : R * (0.5 + 0.5 * j / (L - 1)), len = tip - rc * 0.5, mid = rc * 0.5 + len / 2;

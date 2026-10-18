@@ -1692,17 +1692,18 @@
   // a high-rise, one apartment per minute, floor on floor (a narrower penthouse on top if the last floor isn't full).
   // Each minute an apartment of the top floor wiggles loose, pops out of the facade and tumbles off the screen; its empty
   // concrete frame stays until the whole floor is gone, then the roof with its blinking antenna drops onto the floor below.
+  const TOWER_FH = 1.2;   // floor height : apartment width
   function tower(n, w, h) {
     let best = null;
     // few columns, so it stays a tower even in a wide window
-    for (let cols = 1; cols <= Math.min(n, Math.ceil(Math.sqrt(n) * 0.8)); cols++) {
+    for (let cols = 1; cols <= Math.min(n, Math.ceil(Math.sqrt(n) * 0.7)); cols++) {
       const rows = Math.ceil(n / cols);
-      // floors are a little lower than wide; room for the roof above and the lobby below
-      const s = Math.min(w * 0.82 / cols, h * 0.88 / ((rows + 1.9) * 0.78), Math.min(w, h) * 0.42);
+      // tall floors, a little higher than wide, like a skyscraper; room for the roof above and the lobby below
+      const s = Math.min(w * 0.82 / cols, h * 0.88 / (rows * TOWER_FH + 1.45), Math.min(w, h) * 0.36);
       if (!best || s > best.s * 1.0001) best = { cols, rows, s };
     }
-    const { cols, rows, s } = best, fh = s * 0.78, bw = cols * s;
-    const roofH = fh * 0.95, lobH = fh * 0.9, total = roofH + rows * fh + lobH;
+    const { cols, rows, s } = best, fh = s * TOWER_FH, bw = cols * s;
+    const roofH = s * 0.75, lobH = s * 0.7, total = roofH + rows * fh + lobH;
     const x0 = (w - bw) / 2, ground = (h + total) / 2, y0 = ground - lobH;   // y0: where the first floor starts
     const pts = [], rnd = seeded(n * 7 + cols);
     for (let r = 0; r < rows; r++) {
@@ -1739,7 +1740,7 @@
     const tk = p.tk && X.now - p.tk < 700 ? 1 : 0;
     if (tk) X.more = true;
     const night = clamp((1 - X.calm) * 1.8 - p.ph * 0.8), lit = mix(col, C.dark, Math.max(tk * 0.75, night * 0.7));
-    const ww = s * 0.64, wh = h * 0.6, wy = -h * 0.05, L = -ww / 2, R = ww / 2, Tp = wy - wh / 2, B = wy + wh / 2;
+    const ww = s * 0.62, wh = h * 0.62, wy = -h * 0.04, L = -ww / 2, R = ww / 2, Tp = wy - wh / 2, B = wy + wh / 2;
     c.fillStyle = lit; c.fillRect(L, Tp, ww, wh);
     // what's inside, as a soft shadow against the light
     c.fillStyle = c.strokeStyle = mix(lit, C.dark, 0.45); c.lineWidth = lw;

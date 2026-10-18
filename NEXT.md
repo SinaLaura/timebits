@@ -14,10 +14,10 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## In progress
 
-- [ ] [solo, quick] Update the `/later` skill so that it no longer keeps the user's wording, but describes each new task in its own words in good English (the repo is public, and CLAUDE.md already says so); the skill file itself stays untouched until this task is picked up. (Claude Sonnet 5.5, started 11:56)
 
 ## Done
 
+- [x] Update the `/later` skill so that it no longer keeps the user's wording, but describes each new task in its own words in good English (the repo is public, and CLAUDE.md already says so). (74dc6c6) → no visual change (step 2 in .claude/skills/later/SKILL.md)
 - [x] Phone check of the Exit "Sure?" (Yes / No, gap above Exit) and of the small ducklings with the bigger mother at 60 and 150 minutes: both feel right on a real phone (no code change) → no visual change
 
 - [x] [solo, big] In themes with sound whose items sit close together (little empty space between them), tapping several items in a row should work like playing an instrument: a tap that accidentally lands in a small gap must not count as a tap on the empty background (which switches the theme). This should also apply to themes that get sound later. (848e232) → http://localhost:8765/?m=40&look=snake (tap quickly across the dots, also in the gaps: each tap plays a note and the look stays; also &look=rings, diamonds, spiral, clock, ducks)

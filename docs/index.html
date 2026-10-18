@@ -40,7 +40,7 @@
   button, input { font: inherit; color: inherit; background: none; border: 0; outline: none; }
   button { cursor: pointer; touch-action: manipulation; }
   input { -webkit-user-select: text; user-select: text; }
-  /* the numbers on the start screen: a tap empties them for typing a new one, nothing gets marked or offered for copying */
+  /* the numbers on the start screen: changeable by typing, nothing gets marked or offered for copying */
   #minVal, .pnum { caret-color: var(--fg); -webkit-touch-callout: none; }
   #minVal::selection, .pnum::selection { background: transparent; }
   .muted { opacity: .5; }
@@ -116,6 +116,7 @@
   /* space between pause and exit, so a tap meant for one doesn't hit the other */
   #pause, #askQ { margin-bottom: 7px; }
   #run .foot #exit, #run .foot .askRow > .exit { padding-top: 6px; }
+  #run .foot .exit { font-size: min(15px, 3.6vw); }   /* Exit, No and Yes as big as the pause text, which shrinks on a narrow phone */
   .askRow { display: flex; }
   /* the middle of the row (where Exit was) is a dead spot, so a double tap on Exit can never land on Yes */
   #run .foot .askRow > .askGap { padding: 6px 0 12px; width: 24px; }
@@ -149,7 +150,7 @@
       <div id="minPane" class="pane">
         <div class="stepper">
           <button type="button" class="step" data-d="-1" aria-label="less">−</button>
-          <input id="minVal" type="number" inputmode="numeric" min="1" max="999" value="37" aria-label="Minutes">
+          <input id="minVal" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" value="37" aria-label="Minutes">
           <button type="button" class="step" data-d="1" aria-label="more">+</button>
         </div>
         <p id="minHint" class="hint muted"></p>
@@ -167,19 +168,19 @@
         <div class="lab muted">Focus</div>
         <div class="stepper">
           <button type="button" class="step" data-for="focus" data-d="-1" aria-label="less">−</button>
-          <input id="pomoFocus" class="pnum" type="number" inputmode="numeric" min="1" max="999" aria-label="Focus minutes">
+          <input id="pomoFocus" class="pnum" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" aria-label="Focus minutes">
           <button type="button" class="step" data-for="focus" data-d="1" aria-label="more">+</button>
         </div>
         <div class="lab muted">Break</div>
         <div class="stepper">
           <button type="button" class="step" data-for="short" data-d="-1" aria-label="less">−</button>
-          <input id="pomoShort" class="pnum" type="number" inputmode="numeric" min="1" max="999" aria-label="Break minutes">
+          <input id="pomoShort" class="pnum" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" aria-label="Break minutes">
           <button type="button" class="step" data-for="short" data-d="1" aria-label="more">+</button>
         </div>
         <div class="lab muted">Long break<small>every 4th</small></div>
         <div class="stepper">
           <button type="button" class="step" data-for="long" data-d="-1" aria-label="less">−</button>
-          <input id="pomoLong" class="pnum" type="number" inputmode="numeric" min="1" max="999" aria-label="Long break minutes">
+          <input id="pomoLong" class="pnum" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" aria-label="Long break minutes">
           <button type="button" class="step" data-for="long" data-d="1" aria-label="more">+</button>
         </div>
       </div>
@@ -769,14 +770,19 @@
   labelInput.value = ls.get('timebits-label') || '';
   function setMinutes(v) { minutes = Math.max(1, Math.min(999, Math.round(v) || 1)); minInput.value = minutes; hints(); }
   setMinutes(minutes);
-  // a tap on a number empties it, so a new one can be typed right away (no marked text); typing nothing keeps the old one
+  // a tap on a number keeps it and puts the cursor at its end, so it can be changed by typing; nothing ever gets marked
+  // (only digits, at most 3; left empty, the old number comes back)
   function typeable(el, keep) {
     let old = '';
-    el.addEventListener('focus', () => { old = el.value; el.value = ''; });
+    const toEnd = () => { if (el.selectionStart !== el.selectionEnd || el.selectionStart !== el.value.length) { const n = el.value.length; try { el.setSelectionRange(n, n); } catch (e) {} } };
+    const unmark = () => { if (el.selectionStart !== el.selectionEnd) toEnd(); };
+    el.addEventListener('focus', () => { old = el.value; setTimeout(toEnd, 0); });
+    ['select', 'pointerup', 'mouseup', 'touchend'].forEach(ev => el.addEventListener(ev, () => setTimeout(unmark, 0)));
+    el.addEventListener('input', () => { const v = el.value.replace(/\D/g, '').slice(0, 3); if (v !== el.value) el.value = v; });
     el.addEventListener('blur', () => { if (el.value.trim() === '') el.value = old; keep(); });
   }
   typeable(minInput, () => setMinutes(+minInput.value));
-  minInput.onchange = () => setMinutes(+minInput.value);
+  minInput.onchange = () => { if (minInput.value.trim()) setMinutes(+minInput.value); };   // left empty: the blur brings the old number back
   minInput.oninput = () => { const v = Math.round(+minInput.value); if (v >= 1) $('minHint').textContent = 'until ' + fmt(Date.now() + Math.min(999, v) * 60000); };
 
   // +/- : tap for one, hold to run (data-for says which number: the minutes or one of the pomodoro lengths)

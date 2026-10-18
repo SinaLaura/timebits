@@ -6,14 +6,17 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## To do
 
+- [ ] [needs you, quick] Try on a real phone with your fingers (so far only simulated taps in headless Edge): playing quickly across the items of snake, rings, diamonds, spiral, clock and ducks, including taps in the gaps (open the preview server of the PC on the phone, same Wi-Fi: `http://PC-ADDRESS:8765/?m=40&look=snake`). Is the reach right (not too small, not too large)? Tapping clearly empty background should still change the look. Tell me what feels off.
 - [ ] [needs you, big] (Last task, only when everything else is done.) The chocolate bar theme is hard to understand and feels strange. Come up with something better.
 - [ ] [solo, big] (Last task, only when everything else is done.) Pick a theme idea from my ideas in THEMES.md and implement it entirely on your own, without asking me anything. You have a free hand in how, but follow the rules in CLAUDE.md.
+- [ ] [solo, big] (Last task, only when everything else is done.) Design another cool theme entirely on your own, a new idea of yours (not one from THEMES.md). I will review it tomorrow.
 
 ## In progress
 
-- [ ] [needs you, quick] Try these on a real phone with your fingers; so far they were only tested in headless Edge with simulated taps: (1) playing quickly across the items of snake, rings, diamonds, spiral, clock and ducks, including taps in the gaps: is the reach right (not too small, not too large; tapping the empty background still changes the look)? (2) Exit asks "Sure?" and Yes / No sit where Pause and Exit were, with a comfortable gap, and a double tap on Exit never hits "Yes". (3) the small ducklings and the bigger mother duck are easy to see and tap, also at 60 and 150 minutes. Tell me what feels off. (problems-file session, started 02:45)
 
 ## Done
+
+- [x] Phone check of the Exit "Sure?" (Yes / No, gap above Exit) and of the small ducklings with the bigger mother at 60 and 150 minutes: both feel right on a real phone (no code change) → no visual change
 
 - [x] [solo, big] In themes with sound whose items sit close together (little empty space between them), tapping several items in a row should work like playing an instrument: a tap that accidentally lands in a small gap must not count as a tap on the empty background (which switches the theme). This should also apply to themes that get sound later. (848e232) → http://localhost:8765/?m=40&look=snake (tap quickly across the dots, also in the gaps: each tap plays a note and the look stays; also &look=rings, diamonds, spiral, clock, ducks)
 

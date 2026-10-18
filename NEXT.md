@@ -14,10 +14,10 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## To review
 
-- [ ] Cinema, feedback on 1ac87d5: none of the four candidate sounds work. A tapped person should sound angry, like a viewer who really doesn't like the movie. (73c8db5) → http://localhost:8765/test-cinema-sounds.html (now three synthesized angry voices, built from a buzzing voice with vowel shapes, a rough growl and a little rasp: 1 a shouted "Argh!" that rises and drops, 2 a low growling "Grrr", 3 two disgusted grunts, "Ugh! Ugh!". Press one to hear it; tapping the people then uses it too. Argh is the default for now. Write the number you like on this line, or say if none of them works.)
 
 ## Done
 
+- [x] Cinema, feedback on 1ac87d5: none of the four candidate sounds work. A tapped person should sound angry, like a viewer who really doesn't like the movie. Kept two angry voices, "Argh!" and "Grrr"; each time the cinema appears one of them is drawn and used for every tap. (e68a47d) → http://localhost:8765/preview.html?look=cinema&m=12
 - [x] Thermometer: the pulse ring around a tapped segment has an odd shape; give it one that fits the segment. (382192e) → http://localhost:8765/preview.html?look=thermometer&m=12 (tap a segment: the outline is now a rounded rectangle hugging the segment instead of a circle; also try m=60, where the segments are thin)
 - [x] Spider: no pulse ring around a tapped leg (it looks odd), and make each leg tappable along its whole length, not just in one spot. (382192e) → http://localhost:8765/preview.html?look=spider&m=12 (no ring any more. A tap anywhere along a leg, from the body over the knee to the foot, with a finger's width of room, counts for that leg; the body itself still gives the spider's own reaction. Checked: a tap just beside a foot counts for the leg instead of changing the look.)
 - [x] Ducks: no pulse ring around a tapped duckling. (382192e) → http://localhost:8765/preview.html?look=ducks&m=25

@@ -421,8 +421,9 @@
   // The petals fall in a scattered order (golden angle), so the ring thins out evenly like a picked daisy.
   function flowerRing(n, w, h) {
     const cx = w / 2, cy = h * 0.38, R = Math.min(w * 0.46, h * 0.34), rnd = seeded(n), k = Math.PI * 1.1 / Math.max(n, 1);
-    const r0 = Math.min(0.64 * R, Math.max(R * 0.1, R * (0.25 - k) / (0.25 + k))), rc = Math.max(R * 0.2, r0 * 1.12);
-    const len = R - r0, mid = r0 + len / 2, wid = Math.min(len * 0.42, TAU * mid / Math.max(n, 1) * 1.1);
+    const r0 = Math.min(0.5 * R, Math.max(R * 0.1, R * (0.18 - k) / (0.18 + k))), rc = Math.max(R * 0.2, r0 * 1.08);
+    // the petals start a little under the core, so no gaps between their narrow bases show at its edge
+    const rb = r0 - (r0 - R * 0.1) * 0.18, len = R - rb, mid = rb + len / 2, wid = Math.min(len * 0.42, TAU * mid / Math.max(n, 1) * 1.1);
     const fall = Array.from({ length: n }, (_, t) => t).sort((a, b) => (a * 0.6180339887) % 1 - (b * 0.6180339887) % 1);
     const slot = []; fall.forEach((t, r) => { slot[t] = r; });   // t = turn of falling (0 = first), r = place in the ring
     const pts = [];

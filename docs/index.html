@@ -2432,23 +2432,57 @@
     if (!p.g) { c.fillStyle = X.P.dim; rr(c, x - s * 0.5, y + s * 0.12, s, s * 0.42, s * 0.12); c.fill(); }   // own seat hides the legs
   }
   function cinemaTap(G, i) { G.pts[i].tk = performance.now(); grumble(); }
-  // an annoyed "hmpf, hmpf!": two short low growls that drop in pitch
-  function grumble() {
+  // an annoyed cinema-goer; four candidates to choose from (test-cinema-sounds.html), the rest goes once one is picked
+  let angryKind = 'shh';
+  function grumble(kind) {
     if (!audio || pausedAt) return;   // quiet while paused
-    const a = audio, t0 = a.currentTime + 0.01, f0 = 190 + Math.random() * 60;
-    [0, 0.2].forEach((dt, j) => {
-      const t = t0 + dt, o = a.createOscillator(), lp = a.createBiquadFilter(), g = a.createGain();
-      o.type = 'sawtooth';
-      o.frequency.setValueAtTime(f0 * (j ? 1.15 : 1), t);
-      o.frequency.exponentialRampToValueAtTime(f0 * 0.6, t + 0.15);
-      lp.type = 'lowpass'; lp.frequency.value = 900; lp.Q.value = 4;
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.09, t + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.17);
-      o.connect(lp).connect(g).connect(a.destination);
-      o.start(t); o.stop(t + 0.19);
-    });
+    ANGRY[kind || angryKind](audio, audio.currentTime + 0.01);
   }
+  // white noise, the raw stuff for breath and hiss
+  function noise(a, dur) {
+    const b = a.createBuffer(1, Math.ceil(a.sampleRate * dur), a.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const s = a.createBufferSource(); s.buffer = b; return s;
+  }
+  function env(a, t, peak, att, dur) {
+    const g = a.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + att); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    return g;
+  }
+  const ANGRY = {
+    // "shhh!": a sharp hiss, like someone shushing the row behind
+    shh(a, t) {
+      const n = noise(a, 0.6), hp = a.createBiquadFilter(), bp = a.createBiquadFilter(), g = env(a, t, 0.22, 0.05, 0.55);
+      hp.type = 'highpass'; hp.frequency.value = 1800;
+      bp.type = 'bandpass'; bp.frequency.value = 3200; bp.Q.value = 1.2;
+      n.connect(hp).connect(bp).connect(g).connect(a.destination); n.start(t); n.stop(t + 0.6);
+    },
+    // "booo": a low voice-like moan through two vowel formants (o-u)
+    boo(a, t) {
+      const o = a.createOscillator(), f1 = a.createBiquadFilter(), f2 = a.createBiquadFilter(), g = env(a, t, 0.16, 0.08, 0.7), mix2 = a.createGain();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(150, t); o.frequency.linearRampToValueAtTime(118, t + 0.65);
+      f1.type = 'bandpass'; f1.frequency.value = 330; f1.Q.value = 5;
+      f2.type = 'bandpass'; f2.frequency.value = 760; f2.Q.value = 7; mix2.gain.value = 0.5;
+      o.connect(f1).connect(g); o.connect(f2).connect(mix2).connect(g); g.connect(a.destination);
+      o.start(t); o.stop(t + 0.72);
+    },
+    // "tsk tsk": two dry tongue clicks
+    tsk(a, t) {
+      [0, 0.19].forEach(dt => {
+        const n = noise(a, 0.04), bp = a.createBiquadFilter(), g = env(a, t + dt, 0.5, 0.002, 0.035);
+        bp.type = 'bandpass'; bp.frequency.value = 2600; bp.Q.value = 3;
+        n.connect(bp).connect(g).connect(a.destination); n.start(t + dt); n.stop(t + dt + 0.04);
+      });
+    },
+    // "pfff": an exasperated huff, breath that falls away
+    huff(a, t) {
+      const n = noise(a, 0.7), bp = a.createBiquadFilter(), g = env(a, t, 0.3, 0.03, 0.65);
+      bp.type = 'bandpass'; bp.Q.value = 0.9;
+      bp.frequency.setValueAtTime(1400, t); bp.frequency.exponentialRampToValueAtTime(450, t + 0.6);
+      n.connect(bp).connect(g).connect(a.destination); n.start(t); n.stop(t + 0.7);
+    },
+  };
   function cinemaScreen(X) {
     const { c, P, pts } = X, S = X.geo.cinema;
     c.globalAlpha = 0.06 * X.all; c.fillStyle = P.text;   // projector light
@@ -3589,6 +3623,8 @@
     const d = e.data;
     if (!d || typeof d !== 'object') return;
     if (d.timebits === 'info' && e.source) e.source.postMessage({ timebits: 'info', modes: MODES.map(m => m.name), palettes: PALETTES.length }, '*');
+    // {timebits: 'angry', kind}: the cinema's annoyed sound to use from now on, played once right away (test-cinema-sounds.html)
+    if (d.timebits === 'angry' && ANGRY[d.kind]) { angryKind = d.kind; unlockAudio(); if (audio) audio.resume().then(() => grumble()).catch(() => {}); }
     // {timebits: 'state'}: minutes in the picture and in "N left", and ms left (for checking when items leave)
     if (d.timebits === 'state' && e.source) e.source.postMessage({ timebits: 'state', pic: shownMin, text: textMin, left: end - Date.now(), leaving: [...goneAt.keys()] }, '*');
     if (d.timebits === 'minute' && end && !$('run').hidden && !doneTimer) {

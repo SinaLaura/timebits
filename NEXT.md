@@ -6,11 +6,10 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## To do
 
-- [ ] [solo, quick] Penguins: remove the shadow of the swimming penguins in the water, because it looks odd.
-- [ ] [solo, big] Penguins: make sure the swimming penguins never pass through the ice chunks floating in the water.
-
 ## In progress
 
+- [ ] [solo, quick] Penguins: remove the shadow of the swimming penguins in the water, because it looks odd. (Claude Sonnet 5.5, started 16:09)
+- [ ] [solo, big] Penguins: make sure the swimming penguins never pass through the ice chunks floating in the water. (Claude Sonnet 5.5, started 16:09)
 
 ## Done
 

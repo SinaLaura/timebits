@@ -21,7 +21,7 @@ Neue generelle Wünsche des Users hier ergänzen. Theme-Ideen und -Stand stehen 
 - Die Anzeige lautet „N left“, ohne „min“.
 - Buttons: „Start“, „Exit“ (im Countdown und am Ende). Der Pause-Button zeigt jeden Tag einen anderen „ich bin kurz weg“-Text aus `AWAY` und in der Pause „I'm back“.
 - Der Pause-Button steht immer einzeilig über „Exit“, damit sich die Höhe des Bildes beim Pausieren nicht ändert. Zwischen beiden bleibt deutlich Abstand, damit man nicht versehentlich „Exit“ trifft.
-- „Exit“ im Countdown fragt erst „Sure?“ mit „Yes“ und „No“ (sie liegen genau an der Stelle von Pause und Exit, die Höhe des Bildes bleibt gleich; in der Mitte ist eine tote Lücke, damit ein Doppeltipp nie „Yes“ trifft; die Frage verschwindet nach 6 s, bei Esc und bei jedem neuen Start). „Exit“ auf dem End-Bildschirm fragt nicht.
+- „Exit“ im Countdown fragt erst „Sure?“ mit „No“ links und „Yes“ rechts (sie liegen genau an der Stelle von Pause und Exit, die Höhe des Bildes bleibt gleich; in der Mitte ist eine tote Lücke, damit ein Doppeltipp nie „Yes“ trifft; die Frage verschwindet nach 6 s, bei Esc und bei jedem neuen Start). „Exit“ auf dem End-Bildschirm fragt nicht.
 
 ## Aussehen und Tippen
 - Es gibt keine Design-Einstellungen. Das Aussehen ändert sich nur durch Tippen.

@@ -178,9 +178,9 @@
       <div class="focol ask" id="ask">
         <div class="exit" id="askQ">Sure?</div>
         <div class="askRow">
-          <button class="exit muted" id="askYes" type="button">Yes</button>
-          <span class="exit askGap"></span>
           <button class="exit muted" id="askNo" type="button">No</button>
+          <span class="exit askGap"></span>
+          <button class="exit muted" id="askYes" type="button">Yes</button>
         </div>
       </div>
     </div>
@@ -2417,7 +2417,7 @@
     const cand = F.out.sort((a, b) => a.e - b.e).slice(0, n);
     // the floe fits snugly around the crowd
     const m = Math.max(0.35, ...cand.map(p => p.e)), RX = F.ix * m + d * 0.55, RY = F.iy * m + d * 0.2, cy = F.cy;
-    const th = Math.max(5, Math.min(d * 0.3, h * 0.04)), wy0 = cy + RY + th + d * 0.4, wy1 = Math.max(wy0, h - d * 0.35);
+    const th = Math.max(6, Math.min(d * 0.38, h * 0.05)), wy0 = cy + RY + th + d * 0.4, wy1 = Math.max(wy0, h - d * 0.35);
     // the outer ones leave first (a little shuffled)
     cand.forEach(p => { p.k = p.e + rnd() * 0.2; });
     cand.sort((a, b) => a.k - b.k);
@@ -2433,7 +2433,20 @@
         sx: d * 0.5 + rnd() * Math.max(1, w - d), sy: wy0 + rnd() * (wy1 - wy0) };
     });
     const order = pts.map((p, i) => i).sort((a, b) => pts[a].y - pts[b].y);
-    return { pts, d, order, ice: { cx, cy, rx: RX, ry: RY, th, wy0, wy1 } };
+    // a jagged outline around the ellipse (only ever a little outside it, so no penguin stands over the edge)
+    const poly = [], N = 20, rp = seeded(n * 3 + 2);
+    for (let k = 0; k < N; k++) {
+      const a = (k + (rp() - 0.5) * 0.5) / N * TAU, r = 1 + rp() * 0.07 + (rp() < 0.25 ? 0.05 : 0);
+      poly.push([cx + Math.cos(a) * RX * r, cy + Math.sin(a) * RY * r]);
+    }
+    // a few small loose chunks drifting in the open water in front
+    const bits = [];
+    for (let k = 0; k < 3; k++) {
+      const sz = Math.max(6, Math.min(d * 0.45, 30)) * (0.6 + rp() * 0.6), shape = [];
+      for (let j = 0; j < 6; j++) { const a = (j + (rp() - 0.5) * 0.6) / 6 * TAU; shape.push([Math.cos(a) * sz * (0.8 + rp() * 0.4), Math.sin(a) * sz * 0.45 * (0.8 + rp() * 0.4)]); }
+      bits.push({ x: w * (0.15 + 0.7 * rp()), y: wy0 + rp() * Math.max(1, wy1 - wy0), shape, ph: rp() * TAU, th: Math.max(2, sz * 0.25) });
+    }
+    return { pts, d, order, ice: { cx, cy, rx: RX, ry: RY, th, wy0, wy1, poly, bits } };
   }
   function penguinPos(X, i, g, p) {
     const d = X.d;
@@ -2523,6 +2536,35 @@
     c.beginPath(); c.ellipse(-d * 0.27, -d * 0.1, d * 0.06, d * 0.035, 0, 0, TAU); c.ellipse(d * 0.27, -d * 0.1, d * 0.06, d * 0.035, 0, 0, TAU); c.fill();
     c.restore();
   }
+  // ice in palette colours: a light top, darker faceted sides, and the paler part under the water
+  function iceColors(P) {
+    return P.dark
+      ? { top: mix(P.bg, P.text, 0.3), side: mix(P.bg, P.text, 0.15), deep: mix(P.bg, P.text, 0.07), rim: mix(P.bg, P.text, 0.55) }
+      : { top: mix(P.bg, P.dim, 0.8), side: mix(P.dim, P.text, 0.3), deep: mix(P.bg, P.dim, 0.5), rim: P.bg };
+  }
+  // a slab of ice: the outline extruded downwards, each front face shaded by which way it faces, then the flat top with a frosty rim
+  function iceSlab(c, poly, th, C, under) {
+    const n = poly.length;
+    if (under) {
+      // the bigger, paler part of the floe under the water
+      const mx = poly.reduce((s, v) => s + v[0], 0) / n, my = poly.reduce((s, v) => s + v[1], 0) / n;
+      c.fillStyle = C.deep;
+      c.beginPath(); poly.forEach(([x, y]) => c.lineTo(mx + (x - mx) * 1.07, my + (y - my) * 1.1 + th * 1.6)); c.closePath(); c.fill();
+    }
+    c.fillStyle = C.side;
+    c.beginPath(); poly.forEach(([x, y]) => c.lineTo(x, y + th)); c.closePath(); c.fill();
+    for (let k = 0; k < n; k++) {
+      const a = poly[k], b = poly[(k + 1) % n], dx = b[0] - a[0], dy = b[1] - a[1];
+      if (dx >= 0) continue;   // only the faces turned towards us
+      const l = Math.hypot(dx, dy) || 1;
+      c.fillStyle = mix(C.side, C.top, dy / l < 0 ? 0.35 : 0.08 + 0.1 * (k % 2));
+      c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.lineTo(b[0], b[1] + th); c.lineTo(a[0], a[1] + th); c.closePath(); c.fill();
+    }
+    c.fillStyle = C.top;
+    c.beginPath(); poly.forEach(([x, y]) => c.lineTo(x, y)); c.closePath(); c.fill();
+    c.strokeStyle = C.rim; c.lineWidth = Math.max(1, Math.min(th * 0.18, 2.5)); c.lineJoin = 'round';
+    c.stroke();
+  }
   // the floe, a few waves, and the penguins that already dived in, bobbing in the water in front
   function iceFloe(X) {
     const { c, P, d, pts } = X, I = X.geo.ice;
@@ -2534,10 +2576,31 @@
       c.moveTo(x - s, y); c.quadraticCurveTo(x - s / 2, y - s * 0.35, x, y); c.quadraticCurveTo(x + s / 2, y - s * 0.35, x + s, y);
     }
     c.stroke();
-    c.fillStyle = mix(P.bg, P.text, 0.3);
-    c.beginPath(); c.ellipse(I.cx, I.cy + I.th, I.rx, I.ry, 0, 0, TAU); c.fill();
-    c.fillStyle = mix(P.bg, P.text, 0.14);
-    c.beginPath(); c.ellipse(I.cx, I.cy, I.rx, I.ry, 0, 0, TAU); c.fill();
+    const C = iceColors(P);
+    iceSlab(c, I.poly, I.th, C, true);
+    // on top: cracks running in from the edge, and a few snowdrifts along the back
+    const rc = seeded(I.poly.length * 7 + Math.round(I.rx));
+    c.strokeStyle = mix(C.top, C.side, 0.6); c.lineWidth = Math.max(1, Math.min(d * 0.025, 1.8));
+    c.beginPath();
+    for (let j = 0; j < 3; j++) {
+      const v = I.poly[Math.floor(rc() * I.poly.length)];
+      let x = lerp(v[0], I.cx, 0.04), y = lerp(v[1], I.cy, 0.04), a = Math.atan2(I.cy - y, I.cx - x);
+      c.moveTo(x, y);
+      for (let k = 0; k < 4; k++) { a += (rc() - 0.5) * 1.1; x += Math.cos(a) * I.rx * 0.08; y += Math.sin(a) * I.ry * 0.08; c.lineTo(x, y); }
+    }
+    c.stroke();
+    c.fillStyle = C.rim;
+    for (let j = 0; j < 4; j++) {
+      const a = Math.PI * (1.15 + 0.7 * (j + rc() * 0.6) / 4), sx = I.cx + Math.cos(a) * I.rx * 0.82, sy = I.cy + Math.sin(a) * I.ry * 0.78, r = Math.max(4, Math.min(d * 0.3, I.rx * 0.12)) * (0.7 + rc() * 0.6);
+      c.globalAlpha = X.all * 0.7;
+      c.beginPath(); c.ellipse(sx, sy, r, r * 0.35, 0, Math.PI, 0); c.fill();
+    }
+    c.globalAlpha = X.all;
+    // loose chunks bobbing in the water
+    for (const b of I.bits) {
+      const x = Math.max(20, Math.min(W - 20, b.x + Math.sin(X.t * 0.12 + b.ph) * d * 0.5)), y = b.y + Math.sin(X.t * 0.8 + b.ph) * 1.5;
+      iceSlab(c, b.shape.map(([u, v]) => [x + u, y + v]), b.th, C, false);
+    }
     // swimmers: small dim heads with a ripple
     const head = mix(P.fg, P.dim, 0.55), belly = mix(penguinBelly(P, P.fg), P.dim, 0.45), beak = mix(mix(P.fg, P.text, 0.45), P.dim, 0.5);
     const hd = d * 0.62, closed = X.calm < 0.5;

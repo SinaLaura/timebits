@@ -6,10 +6,11 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## To do
 
-- [ ] Turn the chocolate theme into a high-rise building theme, since the bar already almost looks like one: the pieces become apartments on the floors of a tower, and each minute one apartment falls down. Be creative with it.
-- [ ] Test entry for the task list (no actual work needed).
+- [ ] [solo, quick] Test entry for the task list (no actual work needed).
 
 ## In progress
+
+- [ ] [solo, big] Turn the chocolate theme into a high-rise building theme, since the bar already almost looks like one: the pieces become apartments on the floors of a tower, and each minute one apartment falls down. Be creative with it. (next-solo, started 10:00)
 
 ## Done
 

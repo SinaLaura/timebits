@@ -11,6 +11,7 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## In progress
 
+- [ ] [needs you, quick] Try these on a real phone with your fingers; so far they were only tested in headless Edge with simulated taps: (1) playing quickly across the items of snake, rings, diamonds, spiral, clock and ducks, including taps in the gaps: is the reach right (not too small, not too large; tapping the empty background still changes the look)? (2) Exit asks "Sure?" and Yes / No sit where Pause and Exit were, with a comfortable gap, and a double tap on Exit never hits "Yes". (3) the small ducklings and the bigger mother duck are easy to see and tap, also at 60 and 150 minutes. Tell me what feels off. (problems-file session, started 02:45)
 
 ## Done
 

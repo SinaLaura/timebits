@@ -63,7 +63,10 @@
   #minVal, #timeVal { text-align: center; font-size: 64px; font-weight: 700; color: var(--fg); }
   #minVal { width: 150px; -moz-appearance: textfield; }
   #minVal::-webkit-inner-spin-button, #minVal::-webkit-outer-spin-button { -webkit-appearance: none; }
-  #timeVal { display: block; margin: 0 auto; font-size: 56px; }
+  #timeVal { width: 190px; font-size: 56px; font-variant-numeric: tabular-nums; }
+  /* the short line under Minutes / Time: when it ends, or how long it runs */
+  .pane { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .hint { margin: 0; font-size: 15px; font-variant-numeric: tabular-nums; }
   /* pomodoro: one row per length, the same widget as Minutes, just smaller */
   #pomoPane { display: grid; grid-template-columns: auto auto; justify-content: center; align-items: center; gap: 14px 18px; }
   #pomoSum { grid-column: 1 / -1; text-align: center; font-size: 15px; line-height: 1.4; margin-bottom: 14px; }
@@ -133,13 +136,21 @@
         <button type="button" data-mode="pomo" aria-pressed="false">Pomodoro</button>
       </div>
 
-      <div id="minPane" class="stepper">
-        <button type="button" class="step" data-d="-1" aria-label="less">−</button>
-        <input id="minVal" type="number" inputmode="numeric" min="1" max="999" value="37" aria-label="Minutes">
-        <button type="button" class="step" data-d="1" aria-label="more">+</button>
+      <div id="minPane" class="pane">
+        <div class="stepper">
+          <button type="button" class="step" data-d="-1" aria-label="less">−</button>
+          <input id="minVal" type="number" inputmode="numeric" min="1" max="999" value="37" aria-label="Minutes">
+          <button type="button" class="step" data-d="1" aria-label="more">+</button>
+        </div>
+        <p id="minHint" class="hint muted"></p>
       </div>
-      <div id="timePane" hidden>
-        <input id="timeVal" type="time" aria-label="Time">
+      <div id="timePane" class="pane" hidden>
+        <div class="stepper">
+          <button type="button" class="step" data-for="time" data-d="-1" aria-label="earlier">−</button>
+          <input id="timeVal" type="text" inputmode="numeric" maxlength="5" autocomplete="off" aria-label="Time">
+          <button type="button" class="step" data-for="time" data-d="1" aria-label="later">+</button>
+        </div>
+        <p id="timeHint" class="hint muted"></p>
       </div>
       <div id="pomoPane" hidden>
         <p id="pomoSum" class="muted"></p>
@@ -732,7 +743,7 @@
 
   const minInput = $('minVal'), timeInput = $('timeVal'), labelInput = $('label');
   labelInput.value = ls.get('timebits-label') || '';
-  function setMinutes(v) { minutes = Math.max(1, Math.min(999, Math.round(v) || 1)); minInput.value = minutes; }
+  function setMinutes(v) { minutes = Math.max(1, Math.min(999, Math.round(v) || 1)); minInput.value = minutes; hints(); }
   setMinutes(minutes);
   minInput.onchange = () => setMinutes(+minInput.value);
 
@@ -753,8 +764,35 @@
     $('minPane').hidden = m !== 'min';
     $('timePane').hidden = m !== 'time';
     $('pomoPane').hidden = m !== 'pomo';
-    if (m === 'time' && !timeInput.value) timeInput.value = fmt(Date.now() + minutes * 60000);
+    if (m === 'time' && !timeInput.value) setTime(Math.ceil((Date.now() + minutes * 60000) / 300000) * 300000);
+    hints();
   }
+  // Time: the same − value + as Minutes; a tap moves it 5 minutes, and the time can still be typed (18:30, 1830, 930 or 18)
+  function pad2(v) { return String(v).padStart(2, '0'); }
+  function setTime(ts) { const d = new Date(ts); timeInput.value = pad2(d.getHours()) + ':' + pad2(d.getMinutes()); hints(); }
+  bump.time = dir => {
+    const [h, m] = (timeInput.value || fmt(Date.now())).split(':').map(Number), t = (h * 60 + m + 1440 + dir * 5) % 1440;
+    const r = (dir > 0 ? Math.floor(t / 5) : Math.ceil(t / 5)) * 5 % 1440;   // land on whole 5 minutes
+    timeInput.value = pad2(Math.floor(r / 60)) + ':' + pad2(r % 60);
+    hints();
+  };
+  function parseTime(str) {
+    const t = String(str).trim(), m = t.match(/^(\d{1,2})(?:[:.h ]?(\d{2}))?$/);
+    if (!m) return null;
+    const h = +m[1], mi = m[2] === undefined ? 0 : +m[2];
+    return h < 24 && mi < 60 ? pad2(h) + ':' + pad2(mi) : null;
+  }
+  let lastTime = '';
+  timeInput.onfocus = () => { lastTime = timeInput.value; timeInput.select(); };
+  timeInput.onchange = timeInput.onblur = () => { timeInput.value = parseTime(timeInput.value) || lastTime || timeInput.value; hints(); };
+  // the line under the number: "until 14:52" for Minutes, "for 47 min" for Time (kept current while the start screen shows)
+  function dur(ms) { const m = Math.max(1, Math.ceil(ms / 60000)), h = Math.floor(m / 60); return h ? h + ' h' + (m % 60 ? ' ' + (m % 60) + ' min' : '') : m + ' min'; }
+  function hints() {
+    $('minHint').textContent = 'until ' + fmt(Date.now() + minutes * 60000);
+    const t = parseTime(timeInput.value);
+    $('timeHint').textContent = t ? 'for ' + dur(endFromTime(t) - Date.now()) : '';
+  }
+  setInterval(() => { if (!$('setup').hidden) hints(); }, 5000);
   document.querySelectorAll('.seg button').forEach(b => b.onclick = () => setMode(b.dataset.mode));
 
   function endFromTime(str) {
@@ -785,9 +823,10 @@
     byTime = false;
     if (mode === 'pomo') beginPomo(0);
     else if (mode === 'time') {
-      if (!timeInput.value) return timeInput.focus();
+      const t = parseTime(timeInput.value);
+      if (!t) return timeInput.focus();
       byTime = true;
-      begin(endFromTime(timeInput.value));
+      begin(endFromTime(t));
     } else {
       setMinutes(+minInput.value);
       ls.set('timebits-min', minutes);

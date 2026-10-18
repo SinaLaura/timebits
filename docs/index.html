@@ -824,8 +824,7 @@
   function applyPalette() {
     const p = curPal(), root = document.documentElement;
     for (const k of ['bg', 'fg', 'dim', 'text']) root.style.setProperty('--' + k, p[k]);
-    // 'only light' tells the browser not to darken a light palette by itself (Chrome's and Samsung's forced dark mode would turn it near black)
-    root.style.colorScheme = p.dark ? 'dark' : 'only light';
+    root.style.colorScheme = p.dark ? 'dark' : 'light';
     document.querySelector('meta[name=theme-color]').content = p.bg;
   }
   applyPalette();

@@ -7,12 +7,15 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 ## To do
 
 - [ ] [solo, quick] Sound in the boring themes: right now each tap on an item plays a random note, so tapping the same item repeatedly sounds arbitrary. Instead, the pitch should depend on where on the screen the tap lands, like a grid of notes: top left is the highest, bottom right the lowest. Try it on one theme first and show it on localhost.
+- [ ] Penguins: remove the shadow of the swimming penguins in the water, because it looks odd.
+- [ ] Penguins: make sure the swimming penguins never pass through the ice chunks floating in the water.
 
 ## In progress
 
-- [ ] [solo, quick] Flower theme: try a variant with a single layer of petals instead of several layers. Open it on localhost next to the current look, so I can compare the two and decide whether I like it. (Claude Sonnet 5.5, started 12:03)
 
 ## Done
+
+- [x] Flower theme: try a variant with a single layer of petals instead of several layers, to compare with the current look and decide. Built as the hidden variant `flowerring` (one ring of petals; for many minutes the core grows like a sunflower; petals fall in a scattered order), next to the original on a comparison page. (dc88631) → http://localhost:8765/test-flower.html (both side by side, with buttons for 10 / 25 / 60 / 120 minutes and how much is already gone; single look: http://localhost:8765/?m=25&look=flowerring)
 
 - [x] Phone check of the gap-tap reach (playing quickly across the items, including the gaps, in snake, rings, diamonds, spiral, clock and ducks): feels right on a real phone, so no change needed → no visual change
 

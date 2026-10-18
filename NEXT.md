@@ -6,10 +6,11 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## To do
 
-- [ ] Tower: the look is good, but make the floors taller so the building feels more like a skyscraper.
-- [ ] Check which themes don't need the pulse ring around an item when it is tapped, especially advanced themes whose items already react strongly (e.g. the tower's apartments). Implement the suggested changes and give before/after preview links to compare.
+- [ ] [solo, big] Check which themes don't need the pulse ring around an item when it is tapped, especially advanced themes whose items already react strongly (e.g. the tower's apartments). Implement the suggested changes and give before/after preview links to compare.
 
 ## In progress
+
+- [ ] [solo, quick] Tower: the look is good, but make the floors taller so the building feels more like a skyscraper. (next-2302, started 23:02)
 
 ## To review
 

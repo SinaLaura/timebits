@@ -6,7 +6,6 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## To do
 
-- [ ] [needs you, quick] Try on a real phone with your fingers (so far only simulated taps in headless Edge): playing quickly across the items of snake, rings, diamonds, spiral, clock and ducks, including taps in the gaps (open the preview server of the PC on the phone, same Wi-Fi: `http://PC-ADDRESS:8765/?m=40&look=snake`). Is the reach right (not too small, not too large)? Tapping clearly empty background should still change the look. Tell me what feels off.
 - [ ] [solo, quick] Flower theme: try a variant with a single layer of petals instead of several layers. Open it on localhost next to the current look, so I can compare the two and decide whether I like it.
 - [ ] Sound in the boring themes: right now each tap on an item plays a random note, so tapping the same item repeatedly sounds arbitrary. Instead, the pitch should depend on where on the screen the tap lands, like a grid of notes: top left is the highest, bottom right the lowest. Try it on one theme first and show it on localhost.
 
@@ -14,6 +13,8 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 
 ## Done
+
+- [x] Phone check of the gap-tap reach (playing quickly across the items, including the gaps, in snake, rings, diamonds, spiral, clock and ducks): feels right on a real phone, so no change needed → no visual change
 
 - [x] (Last task, only when everything else is done.) The chocolate bar theme is hard to understand and feels strange. Come up with something better. Redesigned as one solid bar on its foil, eaten from the top. (3a38fd5) → http://localhost:8765/?m=10&look=chocolate (each minute the top piece wiggles, snaps off, gets bitten and floats away; crumbs stay on the foil; also &passed=4, &m=60)
 

@@ -726,7 +726,8 @@
       const off = lead + slot[i] * gap, q = pathAt(path, start - off);
       pts.push({ slot: slot[i], off, x: q.x, y: q.y });
     }
-    return { pts, d, duck: { path, gap, lead, mom, s: start, speed: d * 0.9, look: null, mx: 0, my: 0 } };
+    // speed: small ducklings (many minutes) still go once round the pond in about 35 s, so they never seem to crawl
+    return { pts, d, duck: { path, gap, lead, mom, s: start, speed: Math.max(d * 0.9, path.len / 35), look: null, mx: 0, my: 0 } };
   }
 
   // a hedgehog facing right; spines in rows over its back, the outer row falls first
@@ -2091,31 +2092,29 @@
         if (X.still || X.gone(i) >= 1) { p.out = true; continue; }   // already gone before this layout
         const q = pathAt(D.path, D.s - p.off);
         p.x = q.x; p.y = q.y;
-        // it leaves by the longest way: across the pond to the far side
-        const far = [[p.x, -d * 2, p.y], [W - p.x, W + d * 2, p.y], [p.y, p.x, -d * 2], [H - p.y, p.x, H + d * 2]].sort((a, b) => b[0] - a[0])[0];
-        p.lost = { t: 0, h: q.a, turn: 0, tx: far[1], ty: far[2] };
+        // it leaves by a middle way: out over the nearest edge (the line runs round the pond inside it, so it crosses no one),
+        // but slanting off at about 45 degrees instead of straight out
+        const out = [[p.x, Math.PI], [W - p.x, 0], [p.y, -Math.PI / 2], [H - p.y, Math.PI / 2]].sort((a, b) => a[0] - b[0])[0];
+        const slant = (Math.random() < 0.5 ? -1 : 1) * 0.8, run = (out[0] + d * 1.2) / Math.cos(slant);
+        // fast enough to be off the screen in about 3.5 s (5 s at the most, see below)
+        p.lost = { t: 0, h: q.a, turn: 0, aim: out[1] + slant, v: Math.max(d * 1.2, run / 2.4) };
       }
-      // lost: first it dawdles and looks around, then it slowly wanders off the screen on a curvy route
+      // lost: for a moment it dawdles and looks around, then it paddles off the screen, turning on a gentle curve
       const L = p.lost;
       L.t += dt;
-      L.turn = Math.max(-1.8, Math.min(1.8, (L.turn + (Math.random() - 0.5) * 10 * dt) * (1 - dt * 0.5)));
-      L.h += L.turn * dt;
       let v;
-      if (L.t < 4) v = d * 0.35 * (0.3 + 0.7 * Math.pow(Math.sin(L.t * 1.6), 2));
-      else {
-        L.h = turnTo(L.h, Math.atan2(L.ty - p.y, L.tx - p.x), 0.5 * dt);
-        v = d * Math.min(0.9, 0.3 + (L.t - 4) * 0.08);
+      if (L.t < 0.8) {
+        L.turn = Math.max(-1.8, Math.min(1.8, (L.turn + (Math.random() - 0.5) * 10 * dt) * (1 - dt * 0.5)));
+        L.h += L.turn * dt;
+        v = d * 0.15;
+      } else {
+        // it turns first and only speeds up once it faces outwards, so it never bumps into its neighbours in the line
+        L.h = turnTo(L.h, L.aim, 3 * dt);
+        v = L.v * Math.min(1, 0.35 + (L.t - 0.8) * 1.1) * (0.15 + 0.85 * Math.max(0, Math.cos(angDiff(L.h, L.aim))));
       }
       p.x += Math.cos(L.h) * v * dt;
       p.y += Math.sin(L.h) * v * dt;
-      // only the far side lets it out; at the other edges it turns back towards where it's heading
-      const m = d * 0.4, x0 = L.tx < 0 ? -Infinity : m, x1 = L.tx > W ? Infinity : W - m;
-      const y0 = L.ty < 0 ? -Infinity : m, y1 = L.ty > H ? Infinity : H - m;
-      if (p.x < x0 || p.x > x1 || p.y < y0 || p.y > y1) {
-        p.x = Math.max(x0, Math.min(x1, p.x)); p.y = Math.max(y0, Math.min(y1, p.y));
-        L.h = turnTo(L.h, Math.atan2(L.ty - p.y, L.tx - p.x), 3 * dt);
-      }
-      if (p.x < -d || p.x > W + d || p.y < -d || p.y > H + d) p.out = true;
+      if (p.x < -d || p.x > W + d || p.y < -d || p.y > H + d || L.t > 5) p.out = true;
     }
     // the others close the gap: each one paddles up to the place right behind the duckling in front
     line.sort((a, b) => a.slot - b.slot);

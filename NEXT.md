@@ -11,6 +11,7 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 - [ ] [solo, big] (Last task, only when everything else is done.) Pick a theme idea from my ideas in THEMES.md and implement it entirely on your own, without asking me anything. You have a free hand in how, but follow the rules in CLAUDE.md.
 - [ ] [solo, big] (Last task, only when everything else is done.) Design another cool theme entirely on your own, a new idea of yours (not one from THEMES.md). I will review it tomorrow.
 - [ ] [solo, quick] Flower theme: try a variant with a single layer of petals instead of several layers. Open it on localhost next to the current look, so I can compare the two and decide whether I like it.
+- [ ] Sound in the boring themes: right now each tap on an item plays a random note, so tapping the same item repeatedly sounds arbitrary. Instead, the pitch should depend on where on the screen the tap lands, like a grid of notes: top left is the highest, bottom right the lowest. Try it on one theme first and show it on localhost.
 
 ## In progress
 

@@ -7,13 +7,13 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 ## To do
 
 - [ ] [needs you, big] First-time users don't seem to realise that tapping changes the look. Check whether the finger tap demo is still shown to them, and propose (and preview) a way to make sure new users understand it.
-- [ ] Cinema: no pulse ring when a person is tapped. Instead the person throws their hands up above their head, as if annoyed, with a matching sound.
-- [ ] Thermometer: the pulse ring around a tapped segment has an odd shape; give it one that fits the segment.
-- [ ] Ducks: no pulse ring around a tapped duckling.
-- [ ] Spider: no pulse ring around a tapped leg (it looks odd), and make each leg tappable along its whole length, not just in one spot.
 
 ## In progress
 
+- [ ] [solo, big] Cinema: no pulse ring when a person is tapped. Instead the person throws their hands up above their head, as if annoyed, with a matching sound. (next-2302, started 00:03)
+- [ ] [solo, quick] Thermometer: the pulse ring around a tapped segment has an odd shape; give it one that fits the segment. (next-2302, started 00:03)
+- [ ] [solo, quick] Ducks: no pulse ring around a tapped duckling. (next-2302, started 00:03)
+- [ ] [solo, quick] Spider: no pulse ring around a tapped leg (it looks odd), and make each leg tappable along its whole length, not just in one spot. (next-2302, started 00:03)
 
 
 ## To review

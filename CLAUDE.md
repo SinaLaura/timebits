@@ -30,6 +30,7 @@ Neue generelle Wünsche des Users hier ergänzen. Theme-Ideen und -Stand stehen 
 - Die Items nutzen den Platz des Browsers (nicht unbedingt ganz, aber deutlich): Kleine Zeiten ergeben große Items, nicht kleine Punkte in einer leeren Fläche. Das gilt auch für Bewegungen (ein Auto oder eine Ente fährt über den ganzen Bildschirm, Stacheln und Beine verteilen sich über die ganze Breite).
 - **Tipp auf ein aktives Item:** kurze Reaktion (Puls, manchmal eine leicht andere Farbe nahe der Palettenfarbe, ggf. themespezifisch). Sonst passiert nichts.
 - Der Puls-Ring beim Antippen bleibt proportional zum Item: Er liegt eng um das, was man sieht, und ist nie viel größer. Bei runden Items ein Kreis (ggf. `p.ring`), bei nicht runden Formen (Blütenblatt, Auto, Ente, Stachel, Schokolade, Perle) folgt er der Form mit dem Theme-Hook `halo` (Ellipse oder Rechteck, gedreht wie das Item).
+- **Themes mit Ton spielt man wie ein Instrument** (`snd` oder `playable: true`, auch bei künftigen Themes mit Ton setzen): Ein Tipp in die kleine Lücke zwischen eng sitzenden Items zählt fürs nächste Item (Puls, Ton) und wechselt nicht den Look. Reichweite im `hitTest`: ¾ des Item-Abstands, höchstens ein halbes Item über den Treffer-Radius hinaus; weiter weg ist es wieder leerer Hintergrund.
 - **Tipp auf ein vergangenes Item:** nichts.
 - **Tipp auf ein neutrales Element** (Deko, Körper, Rahmen, Linien, Überschrift): nichts, außer das Theme hat bewusst eine eigene Reaktion (z.B. der Igel hüpft, `bodyTap`).
 - **Nur ein Tipp auf leeren Hintergrund** wechselt zufällig Theme und Palette.

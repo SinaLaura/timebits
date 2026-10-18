@@ -35,6 +35,11 @@ New entries are added whenever someone notices one (rule in [CLAUDE.md](CLAUDE.m
 - **Seen in ducks:** since the ducklings swim in one long line on a loop again (a wish, so they stay small and calm), several hundred minutes make them tiny (about 10 px at 150 min, about 1 px at 999 min in a small window); only the bigger mother stays visible. The earlier winding-path version (commit 06a740d) kept them bigger.
 - **Way out:** Lower the maximum, group minutes into bigger items above a limit (e.g. one item per 5 min), or skip the physics for long times. Test the heavy themes with `?m=999` on a real older phone.
 
+### Playing like an instrument leaves less room to change the look
+- **Decision:** In themes with sound, a tap in the small gap between tightly packed items counts for the nearest item (reach: 3/4 of the item spacing, at most half an item beyond the item's own hit radius), so quick runs of taps never switch the theme by accident.
+- **When it could bite:** In a dense layout (a long countdown in snake, rings or diamonds) almost every spot inside the field now belongs to an item, so a user who wants a different look has to tap outside the field, and may think changing the look is broken. The same happens on very small screens.
+- **Way out:** A smaller reach for very dense layouts, a short hint the first time, or a dedicated way to change the look (long press, a corner tap).
+
 ### No way to keep a favourite look
 - **Decision:** There are no design settings; the look changes only by tapping the empty background, and every Start and every Pomodoro phase picks a random look.
 - **When it could bite:** Someone loves one look (the hourglass, say) and cannot keep it, or wants a calm look for a work session and gets something playful.

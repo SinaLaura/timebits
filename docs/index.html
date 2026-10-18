@@ -273,7 +273,7 @@
     // toy cars pottering around, tapping one makes it zoom off a bit with a puff from the exhaust (no ring), a passed minute drives off screen
     { name: 'cars', live: true, hit: 0.6, goneScale: 1, goneDim: 0, goneMs: 3000, lay: cars, step: carStep, pos: carPos, item: car, noRing: true, after: carPuffs, tap: carTap },
     // ducklings swim in line behind their mother, the last one loses track each minute; tap the mother and she looks back
-    { name: 'ducks', live: true, goneScale: 1, goneDim: 0, goneMs: 3500, lay: ducks, step: duckStep, pos: duckPos, item: duckling, halo: (X, p, q) => ({ rx: X.d * 0.62, ry: X.d * 0.4, rot: q ? q.r || 0 : 0 }),
+    { name: 'ducks', live: true, playable: true, goneScale: 1, goneDim: 0, goneMs: 3500, lay: ducks, step: duckStep, pos: duckPos, item: duckling, halo: (X, p, q) => ({ rx: X.d * 0.62, ry: X.d * 0.4, rot: q ? q.r || 0 : 0 }),
       tap: () => peep(), after: motherDuck, bodyTap: duckTap },
     // a thermometer that gets colder each minute; the top segment cools off and fades, the temperature replaces the headline
     { name: 'thermometer', live: true, noHead: true, noDim: true, goneScale: 1, goneDim: 0, goneMs: 1800, goneLinear: true, endArt: 'shatter',
@@ -2292,16 +2292,38 @@
     return busy;
   }
 
+  // how tightly the items sit: the median distance from an item to its nearest neighbour (worked out once per layout)
+  function itemSpacing() {
+    if (geo.nn === undefined) {
+      const P = geo.pts.filter(p => !p.hidden), near = [];
+      for (const a of P) {
+        let m = Infinity;
+        for (const b of P) if (a !== b) m = Math.min(m, Math.hypot((a.cx === undefined ? a.x : a.cx) - (b.cx === undefined ? b.x : b.cx), (a.cy === undefined ? a.y : a.cy) - (b.cy === undefined ? b.y : b.cy)));
+        near.push(m);
+      }
+      near.sort((u, v) => u - v);
+      geo.nn = near.length > 1 ? near[near.length >> 1] : Infinity;
+    }
+    return geo.nn;
+  }
+
   function hitTest(x, y) {
-    const M = MODES[look.m], d = geo.d;
-    let hit = -1, best = Infinity;
+    const M = MODES[look.m], d = geo.d, playable = M.snd || M.playable;
+    let hit = -1, best = Infinity, near = -1, nearD = Infinity;
     for (let i = 0; i < geo.pts.length; i++) {
       const p = geo.pts[i];
       if (p.hidden && !M.keepHit) continue;
       const px = p.hidden || p.cx === undefined ? p.x : p.cx, py = p.hidden || p.cy === undefined ? p.y : p.cy;
       const dx = Math.abs(px - x), dy = Math.abs(py - y);
       const inside = M.shape === 'bar' ? dx < d * 0.7 && dy < d * 1.6 : Math.hypot(dx, dy) < (p.hr || d * (M.hit || 0.55));
-      if (inside && dx + dy < best) { best = dx + dy; hit = i; }
+      if (inside) { if (dx + dy < best) { best = dx + dy; hit = i; } }
+      else if (playable) { const e = Math.hypot(dx, dy); if (e < nearD) { nearD = e; near = i; } }
+    }
+    // a theme you play like an instrument: a tap that lands in the small gap between tightly packed items still counts
+    // for the nearest one and doesn't change the look (reach: 3/4 of the spacing, but at most half an item past the hit radius)
+    if (hit < 0 && near >= 0) {
+      const r0 = d * (M.hit || 0.55);
+      if (nearD < Math.max(r0, Math.min(0.75 * itemSpacing(), r0 + 0.5 * d))) hit = near;
     }
     return hit;   // may also be a past item
   }

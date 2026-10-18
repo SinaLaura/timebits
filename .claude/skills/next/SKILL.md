@@ -1,20 +1,43 @@
 ---
 name: next
-description: Work through the countdown task list in NEXT.md, top item first, until nothing open is left. Use when the user types /next, says "continue with the list", or a /loop fires it.
-argument-hint: (optional) "one" to do only a single item
+description: Work through the countdown task list in NEXT.md, with modes (solo or together, one or all, quick or long first). Use when the user types /next [modes], says "continue with the list", or a /loop fires it.
+argument-hint: (optional, any order) solo | together · one | all · quick | long   — default: solo all, in list order
 ---
 
 Work through `NEXT.md` (repo root). Follow [CLAUDE.md](../../../CLAUDE.md) for everything you build.
 
-Repeat for each item:
+## Modes
 
-1. **Pick.** Read `NEXT.md` fresh. Take the top `- [ ]` line under **To do** that no session has claimed. If there is none, check **In progress** for an item with your own session name (left over from an interrupted run) and finish that. If nothing is left, say "NEXT.md is empty" in one line and stop.
-   **Combine.** Then read the whole **To do** list and add any other open items that make sense to do in the same pass: same theme or same piece of code, or one item builds on or contradicts another (e.g. two fixes to the Jar). Only combine items that are small next to the top one and clearly related. Don't pull in big unrelated work just because it's on the list, and never take items another session has claimed. If two items contradict each other, ask the user instead of choosing one.
+Read the argument `$ARGUMENTS` for these words (any order, case doesn't matter, German synonyms are fine). Pick one word per group, or none for the default. If a group has two conflicting words, ask which one.
+
+- **Who is needed**
+  - `solo` (default): do everything you can **without the user**. Skip items that need them (see below); never wait for an answer.
+  - `together`: the opposite. Work **only on the items that need the user** (the user is at the computer now): ask your questions, then build with the answers.
+- **How many**
+  - `all` (default): keep going until nothing eligible is left.
+  - `one`: exactly one task, then stop. Don't combine items in this mode.
+- **Order**
+  - none (default): list order, top first.
+  - `quick`: quick items first, i.e. small and in one place (a text, a size, a position, a flag, a one-line rule). Among equals, list order.
+  - `long`: time-consuming items first, i.e. a new theme, a redesign, several parts, a new file or page. Among equals, list order.
+
+An item whose line starts with "(Last task" is always taken last, only when no other eligible item is left, whatever the order.
+
+**Needs the user** means: the wording is unclear; it is a matter of taste or a choice between options ("come up with something better", "which one do you like"); it needs something only they can do or see (a store or account setting, their phone, a decision about money or publishing); or the line already carries a question in parentheses that is still unanswered. Everything else is `solo`. Judge from the line and the code; when in doubt between solo and needs-user, treat it as solo and ask later in step 3 if you really get stuck.
+
+Start with one line telling the user which modes you understood, e.g. "Modes: solo · all · quick first." Then repeat for each item:
+
+1. **Pick.** Read `NEXT.md` fresh. From the **To do** lines that no session has claimed, keep the ones that fit the mode (`solo`: not needing the user; `together`: needing the user), sort them by the order mode and take the first. If there is none, check **In progress** for an item with your own session name (left over from an interrupted run) and finish that. If still nothing, say in one line why you stop ("NEXT.md is empty", or "nothing left that works solo, N items need you: run /next together") and stop.
+   **Combine** (not in `one` mode). Add other open items that make sense to do in the same pass: same theme or same piece of code, or one item builds on or contradicts another (e.g. two fixes to the Jar). Only combine items that fit the mode, are small next to the picked one and are clearly related. Don't pull in big unrelated work just because it's on the list, and never take items another session has claimed. If two items contradict each other, ask the user instead of choosing one (in `solo` mode: leave both and say so in the final note).
 2. **Claim.** Move the picked line(s) to **In progress**, each as its own line `- [ ] <task> (<your session name>, started <HH:MM>)`. Change no other line. Use exact line edits, never rewrite the whole file, because the user may be adding lines at the same moment. Commit only `NEXT.md` right away, so parallel sessions don't take them.
-3. **Do it.** Follow CLAUDE.md: read `docs/index.html` fresh right before each edit; test in the browser (headless Edge works: `--headless --dump-dom`, or export the canvas with `toDataURL` for a look); bump the cache in `docs/sw.js` after code changes; update `THEMES.md` for theme work. If the task is unclear or needs a decision only the user can make, don't guess: move it back to the top of **To do** with a short question in parentheses, commit, and go on to the next item.
+3. **Do it.** Follow CLAUDE.md: read `docs/index.html` fresh right before each edit; test in the browser (headless Edge works: `--headless --dump-dom`, or export the canvas with `toDataURL` for a look); bump the cache in `docs/sw.js` after code changes; update `THEMES.md` for theme work.
+   - `solo`: if you find out the task needs the user after all, don't guess: move it back to the top of **To do** with a short question in parentheses, commit, and go on to the next item.
+   - `together`: first ask the user (AskUserQuestion; up to four questions per call, options with a recommendation, previews for visual choices; for something only they can do, tell them exactly what to do). If several picked items need answers, ask them all in one go before building anything. Then build with the answers. If they skip an item, move it back to **To do** unchanged and go on.
 4. **Commit** your work with explicit paths (no `git add -A`).
 5. **Done.** Read `NEXT.md` fresh again, move each claimed line to **Done** as `- [x] <task> (<commit hash>) → <check link>` (combined items share the hash), commit only `NEXT.md`.
    The check link is a local preview URL that shows the change straight away, so the user can look later: `http://localhost:8765/?m=10&look=<theme name>`, plus `&passed=N` if the change only shows after some minutes, or a path like `http://localhost:8765/test-xyz.html` for a separate page. Without a visible change (e.g. docs, skills) write `→ no visual change` instead.
 6. Write the user a short note for these items: what changed, the same check link, what was tested and what was not. Remind them that the link needs the preview server running (`cd docs && py -m http.server 8765`).
 
-Then go back to step 1, unless the argument was "one". New lines the user adds while you work are picked up at the next step 1.
+Then go back to step 1, unless the mode is `one`. New lines the user adds while you work are picked up at the next step 1.
+
+When a `solo all` run ends and items that need the user are left, name them in the last note (one line each) so the user knows what `/next together` will ask.

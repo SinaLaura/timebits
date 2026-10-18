@@ -35,11 +35,14 @@
   /* while counting down the picture uses the whole browser width; heading and buttons stay in the column */
   main:has(> #run:not([hidden])) { max-width: none; }
   #run > :not(#stage) { margin-left: max(0px, calc((100% - 600px) / 2)); }
-  #run > .foot { margin-right: max(0px, calc((100% - 600px) / 2)); }
+  #run > .foot { margin-right: max(0px, calc((100% - 600px) / 2)); margin-bottom: -12px; }   /* the buttons sit a little lower, still clear of the home bar */
   [hidden] { display: none !important; }
   button, input { font: inherit; color: inherit; background: none; border: 0; outline: none; }
   button { cursor: pointer; touch-action: manipulation; }
   input { -webkit-user-select: text; user-select: text; }
+  /* the numbers on the start screen: a tap empties them for typing a new one, nothing gets marked or offered for copying */
+  #minVal, .pnum { caret-color: var(--fg); -webkit-touch-callout: none; }
+  #minVal::selection, .pnum::selection { background: transparent; }
   .muted { opacity: .5; }
 
   /* setup */
@@ -111,7 +114,7 @@
   /* the away text stays on one line (smaller on a narrow phone), so the height never changes with "I'm back" */
   #pause, #askQ { padding: 10px 12px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: min(15px, 3.6vw); }
   /* space between pause and exit, so a tap meant for one doesn't hit the other */
-  #pause, #askQ { margin-bottom: 4px; }
+  #pause, #askQ { margin-bottom: 7px; }
   #run .foot #exit, #run .foot .askRow > .exit { padding-top: 6px; }
   .askRow { display: flex; }
   /* the middle of the row (where Exit was) is a dead spot, so a double tap on Exit can never land on Yes */
@@ -766,7 +769,15 @@
   labelInput.value = ls.get('timebits-label') || '';
   function setMinutes(v) { minutes = Math.max(1, Math.min(999, Math.round(v) || 1)); minInput.value = minutes; hints(); }
   setMinutes(minutes);
+  // a tap on a number empties it, so a new one can be typed right away (no marked text); typing nothing keeps the old one
+  function typeable(el, keep) {
+    let old = '';
+    el.addEventListener('focus', () => { old = el.value; el.value = ''; });
+    el.addEventListener('blur', () => { if (el.value.trim() === '') el.value = old; keep(); });
+  }
+  typeable(minInput, () => setMinutes(+minInput.value));
   minInput.onchange = () => setMinutes(+minInput.value);
+  minInput.oninput = () => { const v = Math.round(+minInput.value); if (v >= 1) $('minHint').textContent = 'until ' + fmt(Date.now() + Math.min(999, v) * 60000); };
 
   // +/- : tap for one, hold to run (data-for says which number: the minutes or one of the pomodoro lengths)
   const bump = { min: d => setMinutes(minutes + d) };
@@ -874,8 +885,8 @@
       sum();
     };
     bump[k] = d => set(POMO[k] + d);
-    el.onchange = el.onblur = () => set(+el.value);
-    el.onfocus = () => el.select();
+    el.onchange = () => set(+el.value);
+    typeable(el, () => set(+el.value));
     set(POMO[k]);
   });
   // the sentence above the numbers says what they add up to

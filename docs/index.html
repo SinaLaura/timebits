@@ -270,8 +270,6 @@
     { name: 'tiles',    off: true, shape: 'tri',     hit: 0.3, lay: (n, w, h) => grid(n, w, h, 0.58, 0.95, { max: 190 }) },
     // petals fall off and land on the ground
     { name: 'flower', lay: flower, reverse: true, goneScale: 0.45, goneMs: 2600, pos: petalPos, item: petal, halo: (X, p, q) => ({ rx: p.len * 0.58, ry: p.wid * 0.62, rot: q ? q.r : p.a }), before: stem, after: flowerCenter },
-    // the same flower with a single ring of petals instead of layers (to compare, see docs/test-flower.html)
-    { name: 'flowerring', lab: true, lay: flowerRing, reverse: true, goneScale: 0.45, goneMs: 2600, pos: petalPos, item: petal, halo: (X, p, q) => ({ rx: p.len * 0.58, ry: p.wid * 0.62, rot: q ? q.r : p.a }), before: stem, after: flowerCenter },
     // moons circle a planet, a passed minute drifts off into space
     { name: 'orbit', shape: 'circle', live: true, hit: 0.8, goneScale: 1, goneDim: 0.3, goneMs: 3000, lay: orbit, pos: moonPos, before: planet, bodyTap: saturnTap },
     // a full jar of balls with gravity; tapping kicks one up, a passed minute makes the top one jump out
@@ -398,43 +396,32 @@
     return { pts, d, circle: { x: w / 2, y: h / 2, r: R } };
   }
 
-  // petals in rings around a centre (inner rings first, so the outer petals fall first)
+  // one ring of petals, a daisy; with many minutes the core grows a little (a sunflower) so the petals stay petals, not needles.
+  // The petals differ a bit in length, width and angle, and fall in a scattered order (golden angle),
+  // so the ring thins out evenly like a picked daisy.
   function flower(n, w, h) {
-    const cx = w / 2, cy = h * 0.38, R = Math.min(w * 0.46, h * 0.34), rc = R * 0.2, rnd = seeded(n);
-    const L = Math.ceil(n / 20), pts = [];
-    for (let j = 0; j < L; j++) {
-      const m = Math.floor(n / L) + (j < n % L ? 1 : 0);
-      const tip = L === 1 ? R : R * (0.5 + 0.5 * j / (L - 1)), len = tip - rc * 0.5, mid = rc * 0.5 + len / 2;
-      const wid = Math.min(len * 0.42, TAU * mid / m * 1.1);
-      for (let k = 0; k < m; k++) {
-        const a = -Math.PI / 2 + (k + (j % 2) * 0.5) * TAU / m;
-        pts.push({
-          x: cx + Math.cos(a) * mid, y: cy + Math.sin(a) * mid, a, len, wid, hr: len * 0.45,
-          lx: w * (0.08 + 0.84 * rnd()), ly: h - wid * 0.55 - rnd() * 8, la: (rnd() - 0.5) * 0.8, sway: rnd() * TAU,
-        });
-      }
-    }
-    return { pts, d: pts.length ? pts[pts.length - 1].wid : 20, flower: { cx, cy, R, rc } };
-  }
-
-  // the same flower with one ring of petals: a daisy; with many minutes the core grows (a sunflower) so the petals stay petals, not needles.
-  // The petals fall in a scattered order (golden angle), so the ring thins out evenly like a picked daisy.
-  function flowerRing(n, w, h) {
-    const cx = w / 2, cy = h * 0.38, R = Math.min(w * 0.46, h * 0.34), rnd = seeded(n), k = Math.PI * 1.1 / Math.max(n, 1);
-    const r0 = Math.min(0.5 * R, Math.max(R * 0.1, R * (0.18 - k) / (0.18 + k))), rc = Math.max(R * 0.2, r0 * 1.08);
+    const cx = w / 2, cy = h * 0.38, R = Math.min(w * 0.46, h * 0.34), rnd = seeded(n), N = Math.max(n, 1);
+    // many thin petals may overlap a little, and vary less from one to the next (else the ring turns into fur)
+    const crowd = clamp((n - 30) / 60), wf = 1.3 + 0.4 * crowd, amp = 0.14 - 0.07 * crowd, k = Math.PI * wf / N;
+    const r0 = Math.min(0.38 * R, Math.max(R * 0.1, R * (0.18 - k) / (0.18 + k))), rc = Math.max(R * 0.16, r0 * 1.08);
     // the petals start a little under the core, so no gaps between their narrow bases show at its edge
-    const rb = r0 - (r0 - R * 0.1) * 0.18, len = R - rb, mid = rb + len / 2, wid = Math.min(len * 0.42, TAU * mid / Math.max(n, 1) * 1.1);
+    const rb = r0 - (r0 - R * 0.1) * 0.18, len0 = R - rb;
     const fall = Array.from({ length: n }, (_, t) => t).sort((a, b) => (a * 0.6180339887) % 1 - (b * 0.6180339887) % 1);
     const slot = []; fall.forEach((t, r) => { slot[t] = r; });   // t = turn of falling (0 = first), r = place in the ring
     const pts = [];
+    let sw = 0;
     for (let i = 0; i < n; i++) {
-      const a = -Math.PI / 2 + slot[n - 1 - i] * TAU / n;
+      const a = -Math.PI / 2 + (slot[n - 1 - i] + (rnd() - 0.5) * 0.3) * TAU / n;
+      // a slow wave around the ring (some sides a bit longer) plus a little chance per petal
+      const len = len0 * (0.97 - amp * rnd() + 0.03 * Math.sin(3 * a + 1.7)), mid = rb + len / 2;
+      const wid = Math.min(len * 0.42, TAU * mid / N * wf) * (0.92 + 0.16 * rnd());
+      sw += wid;
       pts.push({
         x: cx + Math.cos(a) * mid, y: cy + Math.sin(a) * mid, a, len, wid, hr: len * 0.45,
         lx: w * (0.08 + 0.84 * rnd()), ly: h - wid * 0.55 - rnd() * 8, la: (rnd() - 0.5) * 0.8, sway: rnd() * TAU,
       });
     }
-    return { pts, d: pts.length ? wid : 20, flower: { cx, cy, R, rc } };
+    return { pts, d: n ? sw / n : 20, flower: { cx, cy, R, rc } };
   }
 
   // moons on orbits around a planet; outer orbits get more moons

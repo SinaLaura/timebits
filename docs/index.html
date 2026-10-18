@@ -88,14 +88,24 @@
   #run > #count, #run > #sub { margin-left: auto; margin-right: auto; text-align: center; }
   #stage { flex: 1; min-height: 0; position: relative; margin: 20px 0 8px; }
   #stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .foot { display: flex; flex-direction: column; align-items: center; }   /* pause above exit, always: the picture keeps its height */
+  /* pause above exit, always: the picture keeps its height. "Sure?" / Yes / No lies over the same spot (hidden, not removed) */
+  .foot { display: grid; justify-items: center; }
+  .foot > .focol { grid-area: 1 / 1; display: flex; flex-direction: column; align-items: center; max-width: 100%; }
+  .foot > .ask { visibility: hidden; }
+  .asking .foot > .ask { visibility: visible; }
+  .asking .foot > #footMain { visibility: hidden; }
   #stage { transition: opacity .4s; }
   .paused #stage { opacity: .3; }
   .paused.nodim #stage { opacity: 1; }   /* the theme shows the pause itself */
   .exit { align-self: center; padding: 12px 28px; font-size: 15px; letter-spacing: .06em; }
   /* the away text stays on one line (smaller on a narrow phone), so the height never changes with "I'm back" */
-  #pause { padding: 10px 12px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: min(15px, 3.6vw); }
-  #run .foot #exit { padding-top: 6px; }
+  #pause, #askQ { padding: 10px 12px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: min(15px, 3.6vw); }
+  /* space between pause and exit, so a tap meant for one doesn't hit the other */
+  #pause, #askQ { margin-bottom: 16px; }
+  #run .foot #exit, #run .foot .askRow > .exit { padding-top: 6px; }
+  .askRow { display: flex; }
+  /* the middle of the row (where Exit was) is a dead spot, so a double tap on Exit can never land on Yes */
+  #run .foot .askRow > .askGap { padding: 6px 0 12px; width: 24px; }
   .peek .foot { visibility: hidden; }   /* the last picture from the done page: nothing to press */
 
   /* done */
@@ -161,8 +171,18 @@
     <p id="sub" class="muted"></p>
     <div id="stage"><canvas id="canvas"></canvas></div>
     <div class="foot">
-      <button class="exit muted" id="pause" type="button">I'm going to the kitchen</button>
-      <button class="exit muted" id="exit" type="button">Exit</button>
+      <div class="focol" id="footMain">
+        <button class="exit muted" id="pause" type="button">I'm going to the kitchen</button>
+        <button class="exit muted" id="exit" type="button">Exit</button>
+      </div>
+      <div class="focol ask" id="ask">
+        <div class="exit" id="askQ">Sure?</div>
+        <div class="askRow">
+          <button class="exit muted" id="askYes" type="button">Yes</button>
+          <span class="exit askGap"></span>
+          <button class="exit muted" id="askNo" type="button">No</button>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -831,6 +851,7 @@
     clearTimeout(doneTimer); doneTimer = 0;
     end = e;
     pausedAt = 0;
+    askExit(false);
     $('run').classList.remove('paused');
     $('pause').textContent = pauseText();
     total = t || Math.max(1, Math.ceil((end - Date.now()) / 60000));
@@ -936,13 +957,27 @@
     pomo = -1;
     byTime = false;
     peek = false;
+    askExit(false);
     $('run').classList.remove('paused', 'peek');
     endArt('');
     document.title = TITLE;
     show('setup');
   }
-  $('exit').onclick = stop;
+  // Exit in the countdown first asks "Sure?" (Yes / No take the buttons' place, so the picture keeps its size);
+  // the question goes away by itself after a few seconds. Exit on the end page just leaves, nothing is lost there.
+  let askTimer = 0;
+  function askExit(on) {
+    clearTimeout(askTimer); askTimer = 0;
+    $('run').classList.toggle('asking', on);
+    if (!on) return;
+    askTimer = setTimeout(() => askExit(false), 6000);
+    $('askNo').focus();
+  }
+  $('exit').onclick = () => askExit(true);
+  $('askNo').onclick = () => askExit(false);
+  $('askYes').onclick = stop;
   $('again').onclick = stop;
+  addEventListener('keydown', e => { if (e.key === 'Escape') askExit(false); });
 
   // the last minute leaves like the others: its animation and the sound play first, then the end screen comes
   let doneTimer = 0;

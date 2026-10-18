@@ -1920,9 +1920,10 @@
   function lookBack(X) {
     const D = X.geo.duck, p = 1 - X.calm;   // during a pause she turns round and keeps watching them
     let e = 0;
-    if (D.look && !X.still) {
+    if (D.look) {
       const t = (X.now - D.look) / 1800;
       if (t >= 1) D.look = null;
+      else if (X.still) e = 1;   // reduced motion: she just looks back for a moment, without the turn
       else { e = t < 0.25 ? t / 0.25 : t > 0.75 ? (1 - t) / 0.25 : 1; X.more = true; }
     }
     return Math.max(e * e * (3 - 2 * e), p * p * (3 - 2 * p));
@@ -2005,7 +2006,7 @@
   function duckTap(G, x, y) {
     const D = G.duck;
     if (Math.hypot(x - D.mx, y - D.my) > D.mom * 0.65) return false;
-    if (!D.look) D.look = performance.now();
+    if (!D.look) { D.look = performance.now(); if (still) setTimeout(kick, 1850); }   // still mode draws no frames on its own: one more to turn her back
     quack();
     return true;
   }
@@ -2834,7 +2835,8 @@
     return geo.nn;
   }
 
-  function hitTest(x, y) {
+  // direct: only real hits, without the reach into the gaps (so a body like the mother duck is asked first)
+  function hitTest(x, y, direct) {
     const M = MODES[look.m], d = geo.d, playable = M.snd || M.playable;
     let hit = -1, best = Infinity, near = -1, nearD = Infinity;
     for (let i = 0; i < geo.pts.length; i++) {
@@ -2848,7 +2850,7 @@
     }
     // a theme you play like an instrument: a tap that lands in the small gap between tightly packed items still counts
     // for the nearest one and doesn't change the look (reach: 3/4 of the spacing, but at most half an item past the hit radius)
-    if (hit < 0 && near >= 0) {
+    if (hit < 0 && near >= 0 && !direct) {
       const r0 = d * (M.hit || 0.55);
       if (nearD < Math.max(r0, Math.min(0.75 * itemSpacing(), r0 + 0.5 * d))) hit = near;
     }
@@ -2886,7 +2888,13 @@
     if (peek && !$('run').hidden) { if (++peekTaps >= 3) leavePeek(); return; }
     if ($('run').hidden || e.target.closest('.exit, #count, #sub')) return;
     const r = canvas.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
-    const i = hitTest(x, y);
+    // a body (mother duck, hedgehog, spider ...) right under the finger wins over the reach into the gaps between items
+    let i = hitTest(x, y, true);
+    if (i < 0 && !pausedAt && MODES[look.m].bodyTap && MODES[look.m].bodyTap(geo, x, y)) {
+      if (navigator.vibrate) navigator.vibrate(8);
+      return kick();
+    }
+    if (i < 0) i = hitTest(x, y);
     if (i >= shownMin) return restyle();   // a past item (time already gone) counts like the empty background: new look
     if (i >= 0 && pausedAt) return;   // paused: items (and bodies, below) stay quiet; only a tap on empty background still changes the look
     if (i >= 0) {
@@ -2900,9 +2908,6 @@
       }
       if (M.tap) M.tap(geo, i);
       if (M.snd) tapChime(M.snd);
-      if (navigator.vibrate) navigator.vibrate(8);
-      kick();
-    } else if (!pausedAt && MODES[look.m].bodyTap && MODES[look.m].bodyTap(geo, x, y)) {
       if (navigator.vibrate) navigator.vibrate(8);
       kick();
     } else if (onLeftover(x, y) || !onDrawing(x, y)) restyle();

@@ -1,7 +1,7 @@
 ---
 name: next
-description: Work through the countdown task list in NEXT.md, with modes (solo or together, one or all, quick or long first). Use when the user types /next [modes], says "continue with the list", or a /loop fires it.
-argument-hint: (optional, any order) solo | together · one | all · quick | long   — default: solo all, in list order
+description: Work through the countdown task list in NEXT.md, with modes (solo or co, one or all, quick or long first). Use when the user types /next [modes], says "continue with the list", or a /loop fires it.
+argument-hint: (optional, any order) solo | co · one | all · quick | long   — default: solo all, in list order
 ---
 
 Work through `NEXT.md` (repo root). Follow [CLAUDE.md](../../../CLAUDE.md) for everything you build.
@@ -12,7 +12,7 @@ Read the argument `$ARGUMENTS` for these words (any order, case doesn't matter, 
 
 - **Who is needed**
   - `solo` (default): do everything you can **without the user**. Skip items that need them (see below); never wait for an answer.
-  - `together`: the opposite. Work **only on the items that need the user** (the user is at the computer now): ask your questions, then build with the answers.
+  - `co` (as in co-working): the opposite. Work **only on the items that need the user** (the user is at the computer now): ask your questions, then build with the answers.
 - **How many**
   - `all` (default): keep going until nothing eligible is left.
   - `one`: exactly one task, then stop. Don't combine items in this mode.
@@ -34,12 +34,12 @@ An item whose line starts with "(Last task" (after its tags, see below) is alway
 
 Start with one line telling the user which modes you understood, e.g. "Modes: solo · all · quick first." Then repeat for each item:
 
-1. **Pick.** Read `NEXT.md` fresh and tag any untagged **To do** lines (see Tags). From the **To do** lines that no session has claimed, keep the ones that fit the mode (`solo`: tagged `solo`; `together`: tagged `needs you`), sort them by the order mode and take the first. If there is none, check **In progress** for an item with your own session name (left over from an interrupted run) and finish that. If still nothing, say in one line why you stop ("NEXT.md is empty", or "nothing left that works solo, N items need you: run /next together") and stop.
+1. **Pick.** Read `NEXT.md` fresh and tag any untagged **To do** lines (see Tags). From the **To do** lines that no session has claimed, keep the ones that fit the mode (`solo`: tagged `solo`; `co`: tagged `needs you`), sort them by the order mode and take the first. If there is none, check **In progress** for an item with your own session name (left over from an interrupted run) and finish that. If still nothing, say in one line why you stop ("NEXT.md is empty", or "nothing left that works solo, N items need you: run /next co") and stop.
    **Combine** (not in `one` mode). Add other open items that make sense to do in the same pass: same theme or same piece of code, or one item builds on or contradicts another (e.g. two fixes to the Jar). Only combine items that fit the mode, are small next to the picked one and are clearly related. Don't pull in big unrelated work just because it's on the list, and never take items another session has claimed. If two items contradict each other, ask the user instead of choosing one (in `solo` mode: leave both and say so in the final note).
 2. **Claim.** Move the picked line(s) to **In progress**, each as its own line `- [ ] [<tags>] <task> (<your session name>, started <HH:MM>)`. Change no other line. Use exact line edits, never rewrite the whole file, because the user may be adding lines at the same moment. Commit only `NEXT.md` right away, so parallel sessions don't take them.
 3. **Do it.** Follow CLAUDE.md: read `docs/index.html` fresh right before each edit; test in the browser (headless Edge works: `--headless --dump-dom`, or export the canvas with `toDataURL` for a look); bump the cache in `docs/sw.js` after code changes; update `THEMES.md` for theme work.
    - `solo`: if you find out the task needs the user after all, don't guess: move it back to the top of **To do** with a short question in parentheses, re-tag it `needs you`, commit, and go on to the next item.
-   - `together`: first ask the user (AskUserQuestion; up to four questions per call, options with a recommendation, previews for visual choices; for something only they can do, tell them exactly what to do). If several picked items need answers, ask them all in one go before building anything. Then build with the answers. If they skip an item, move it back to **To do** unchanged and go on.
+   - `co`: first ask the user (AskUserQuestion; up to four questions per call, options with a recommendation, previews for visual choices; for something only they can do, tell them exactly what to do). If several picked items need answers, ask them all in one go before building anything. Then build with the answers. If they skip an item, move it back to **To do** unchanged and go on.
 4. **Commit** your work with explicit paths (no `git add -A`).
 5. **Done.** Read `NEXT.md` fresh again, move each claimed line to **Done** as `- [x] <task> (<commit hash>) → <check link>`, without its tags (combined items share the hash), commit only `NEXT.md`.
    The check link is a local preview URL that shows the change straight away, so the user can look later: `http://localhost:8765/?m=10&look=<theme name>`, plus `&passed=N` if the change only shows after some minutes, or a path like `http://localhost:8765/test-xyz.html` for a separate page. Without a visible change (e.g. docs, skills) write `→ no visual change` instead.
@@ -47,4 +47,4 @@ Start with one line telling the user which modes you understood, e.g. "Modes: so
 
 Then go back to step 1, unless the mode is `one`. New lines the user adds while you work are picked up at the next step 1.
 
-When a `solo all` run ends and items that need the user are left, name them in the last note (one line each) so the user knows what `/next together` will ask.
+When a `solo all` run ends and items that need the user are left, name them in the last note (one line each) so the user knows what `/next co` will ask.

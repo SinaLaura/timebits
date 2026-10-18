@@ -442,10 +442,13 @@
     const cx = w / 2, cy = h * 0.38, R = Math.min(w * 0.46, h * 0.34), rc = R * 0.2, rnd = seeded(n);
     // one layer up to 30 minutes, two up to 75, then one more every 15 (6 from 136 on)
     const L = Math.max(1, Math.min(n, n <= 30 ? 1 : n <= 75 ? 2 : Math.min(6, 2 + Math.ceil((n - 75) / 15)))), pts = [];
+    // how far the petals of a layer may reach into their neighbours (1 = just touching): with two layers there are few petals,
+    // so they get wider and overlap, with many layers they stay slim
+    const ov = [0.95, 1.45, 1.15, 1.05, 0.95][L - 1] || 0.95;
     for (let j = 0; j < L; j++) {
       const m = Math.floor(n / L) + (j < n % L ? 1 : 0), sh = PETAL_SHAPES[L - 1 - j];
       const tip = L === 1 ? R : R * (0.5 + 0.5 * j / (L - 1)), len = tip - rc * 0.5, mid = rc * 0.5 + len / 2;
-      const wid = Math.min(len * 0.42, TAU * mid / m * 0.95) * sh.wr, shade = L === 1 ? 0 : 0.26 * (1 - j / (L - 1));
+      const wid = Math.min(len * 0.42, TAU * mid / m * ov) * sh.wr, shade = L === 1 ? 0 : 0.26 * (1 - j / (L - 1));
       // within a layer the petals fall in a scattered order (golden angle), so it thins out evenly instead of going bald on one side
       const fall = Array.from({ length: m }, (_, t) => t).sort((a, b) => (a * 0.6180339887) % 1 - (b * 0.6180339887) % 1);
       const slot = []; fall.forEach((t, r) => { slot[t] = r; });   // t = turn of falling (0 = first), r = place in the layer

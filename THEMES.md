@@ -6,6 +6,8 @@ Regeln für alle Themes stehen in [CLAUDE.md](CLAUDE.md). Testen: `?m=10&look=<i
 
 Offline genommen (`off: true` in `ALL_MODES`, im Code erhalten, nicht mehr in der Rotation): dots, squares, bars, tiles (4 von 9 ausgemustert). Zurück in der Rotation: spiral, clock, honey, rings, diamonds. Die Nummern in `?look=` zählen nur die aktiven Themes; zum Zurückholen `off: true` entfernen.
 
+Varianten zum Vergleichen (`lab: true` in `ALL_MODES`): nur über `?look=<name>` erreichbar, nie in der Zufallsrotation, hinten einsortiert (die Nummern der anderen bleiben). Nach der Entscheidung des Users bleibt eine Version, die andere wird gelöscht (und `lab` ggf. entfernt).
+
 | # | Name | Was pro Minute passiert |
 |---|---|---|
 | 0 | dots | Punkt schrumpft zu grauem Punkt |
@@ -37,6 +39,7 @@ Offline genommen (`off: true` in `ALL_MODES`, im Code erhalten, nicht mehr in de
 | 26 | balloons | Luftballon-Strauß, alle Schnüre an einem Knoten mit Schleife; der Strauß füllt die obere Fläche (Größe proportional zur Zeit), die Ballons treiben im Wind; pro Minute bläht sich ein äußerer Ballon kurz auf und platzt (Comic-Blitz, Gummifetzen fliegen und fallen), seine Schnur fällt herab und baumelt blass mit dem Gummiknoten am Knoten (vergangene Minuten bleiben als Quaste sichtbar); Antippen = Ballon wird angeschubst und schwingt an der Schnur zurück; bei vielen Ballons werden die Schnüre durchsichtiger |
 | 27 | penguins | Eigene Idee: Pinguine mit Gesicht stehen dicht an dicht auf einer Eisscholle (gezackter Rand, dicke Eiskante mit Facetten, heller Frostrand, Risse und Schneewehen oben, der hellere Teil unter Wasser schimmert durch, ein paar lose Eisstücke treiben im Wasser) (Größe proportional zur Zeit, hintere Reihen zeigen nur die Köpfe); pro Minute watschelt ein äußerer Pinguin zum Rand, hüpft und taucht kopfüber ein (Spritzer, Ring auf dem Wasser) und schwimmt danach blass als kleiner Kopf im Wasser vor der Scholle (vergangene Minuten bleiben so sichtbar); Antippen = er ruft wie ein Pinguin (zwei nasale Töne, „ha-haah“, jedes Mal etwas anders), hüpft und flattert mit den Flügeln, kein Ring (so gewünscht); spielbar wie ein Instrument; blinzelt ab und zu; Pause = alle schlafen (Augen zu) |
 | 28 | realpenguins | Dieselben Pinguine in echten Farben (so gewünscht, Ausnahme von der Palettenregel): schwarz-weiß mit orangem Schnabel und orangen Füßen, rosa Bäckchen, weiße Eisscholle, blaues Meer als Hintergrund des ganzen Bildschirms (eigene Palette `pal`) |
+| 29 | flowerring | Variante von flower zum Vergleichen (`lab`, nicht in der Rotation; Vergleichsseite `docs/test-flower.html` zeigt beide nebeneinander): statt mehrerer Lagen ein einziger Blütenblattkranz. Bei wenigen Minuten (bis 20) wie flower; bei vielen wird der Kern größer (Sonnenblume), damit die Blätter Blätter bleiben und keine Nadeln; die Blätter fallen in verstreuter Reihenfolge (Goldener Winkel), der Kranz lichtet sich gleichmäßig wie bei einer gepflückten Margerite |
 
 ## Offene Ideen
 

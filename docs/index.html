@@ -270,6 +270,8 @@
     { name: 'tiles',    off: true, shape: 'tri',     hit: 0.3, lay: (n, w, h) => grid(n, w, h, 0.58, 0.95, { max: 190 }) },
     // petals fall off and land on the ground
     { name: 'flower', lay: flower, reverse: true, goneScale: 0.45, goneMs: 2600, pos: petalPos, item: petal, halo: (X, p, q) => ({ rx: p.len * 0.58, ry: p.wid * 0.62, rot: q ? q.r : p.a }), before: stem, after: flowerCenter },
+    // the same flower with a single ring of petals instead of layers (to compare, see docs/test-flower.html)
+    { name: 'flowerring', lab: true, lay: flowerRing, reverse: true, goneScale: 0.45, goneMs: 2600, pos: petalPos, item: petal, halo: (X, p, q) => ({ rx: p.len * 0.58, ry: p.wid * 0.62, rot: q ? q.r : p.a }), before: stem, after: flowerCenter },
     // moons circle a planet, a passed minute drifts off into space
     { name: 'orbit', shape: 'circle', live: true, hit: 0.8, goneScale: 1, goneDim: 0.3, goneMs: 3000, lay: orbit, pos: moonPos, before: planet, bodyTap: saturnTap },
     // a full jar of balls with gravity; tapping kicks one up, a passed minute makes the top one jump out
@@ -321,7 +323,10 @@
     { name: 'realpenguins', live: true, playable: true, noRing: true, goneScale: 1, goneDim: 0, goneMs: 3200, goneLinear: true, pal: REAL.pal,
       lay: (n, w, h) => Object.assign(penguins(n, w, h), { real: true }), pos: penguinPos, item: penguin, tap: penguinTap, before: iceFloe },
   ];
-  const MODES = ALL_MODES.filter(m => !m.off);
+  // lab: true = a variant to compare with its original: reachable by ?look=<name> only, never in the random rotation
+  // (sorted last, so the numbers of the others stay)
+  const MODES = ALL_MODES.filter(m => !m.off).sort((a, b) => !!a.lab - !!b.lab);
+  const ROTATION = MODES.filter(m => !m.lab).length;
 
   const TAU = Math.PI * 2;
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -410,6 +415,25 @@
       }
     }
     return { pts, d: pts.length ? pts[pts.length - 1].wid : 20, flower: { cx, cy, R, rc } };
+  }
+
+  // the same flower with one ring of petals: a daisy; with many minutes the core grows (a sunflower) so the petals stay petals, not needles.
+  // The petals fall in a scattered order (golden angle), so the ring thins out evenly like a picked daisy.
+  function flowerRing(n, w, h) {
+    const cx = w / 2, cy = h * 0.38, R = Math.min(w * 0.46, h * 0.34), rnd = seeded(n), k = Math.PI * 1.1 / Math.max(n, 1);
+    const r0 = Math.min(0.64 * R, Math.max(R * 0.1, R * (0.25 - k) / (0.25 + k))), rc = Math.max(R * 0.2, r0 * 1.12);
+    const len = R - r0, mid = r0 + len / 2, wid = Math.min(len * 0.42, TAU * mid / Math.max(n, 1) * 1.1);
+    const fall = Array.from({ length: n }, (_, t) => t).sort((a, b) => (a * 0.6180339887) % 1 - (b * 0.6180339887) % 1);
+    const slot = []; fall.forEach((t, r) => { slot[t] = r; });   // t = turn of falling (0 = first), r = place in the ring
+    const pts = [];
+    for (let i = 0; i < n; i++) {
+      const a = -Math.PI / 2 + slot[n - 1 - i] * TAU / n;
+      pts.push({
+        x: cx + Math.cos(a) * mid, y: cy + Math.sin(a) * mid, a, len, wid, hr: len * 0.45,
+        lx: w * (0.08 + 0.84 * rnd()), ly: h - wid * 0.55 - rnd() * 8, la: (rnd() - 0.5) * 0.8, sway: rnd() * TAU,
+      });
+    }
+    return { pts, d: pts.length ? wid : 20, flower: { cx, cy, R, rc } };
   }
 
   // moons on orbits around a planet; outer orbits get more moons
@@ -741,7 +765,7 @@
       return q.pop();
     };
   }
-  const nextMode = bag(MODES.length), nextPal = bag(PALETTES.length);
+  const nextMode = bag(ROTATION), nextPal = bag(PALETTES.length);
 
   let look = ls.get('timebits-look');
   if (!look || !MODES[look.m] || !PALETTES[look.p]) look = { m: 0, p: 0 };

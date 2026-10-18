@@ -270,6 +270,8 @@
     { name: 'tiles',    off: true, shape: 'tri',     hit: 0.3, lay: (n, w, h) => grid(n, w, h, 0.58, 0.95, { max: 190 }) },
     // petals fall off and land on the ground
     { name: 'flower', lay: flower, reverse: true, goneScale: 0.45, goneMs: 2600, pos: petalPos, item: petal, halo: (X, p, q) => ({ rx: p.len * 0.58, ry: p.wid * 0.62, rot: q ? q.r : p.a }), before: stem, after: flowerCenter },
+    // the earlier flower with petals in layers, back with more layers, each in a slightly different shade (to compare with the ring flower in preview.html)
+    { name: 'flowerlayers', lab: true, lay: flowerLayers, reverse: true, goneScale: 0.45, goneMs: 2600, pos: petalPos, item: layerPetal, halo: (X, p, q) => ({ rx: p.len * 0.58, ry: p.wid * 0.62, rot: q ? q.r : p.a }), before: stem, after: flowerCenter },
     // moons circle a planet, a passed minute drifts off into space
     { name: 'orbit', shape: 'circle', live: true, hit: 0.8, goneScale: 1, goneDim: 0.3, goneMs: 3000, lay: orbit, pos: moonPos, before: planet, bodyTap: saturnTap },
     // a full jar of balls with gravity; tapping kicks one up, a passed minute makes the top one jump out
@@ -422,6 +424,26 @@
       });
     }
     return { pts, d: n ? sw / n : 20, flower: { cx, cy, R, rc } };
+  }
+
+  // petals in layers around a centre (inner layers first, so the outer petals fall first): many thin layers instead of a few thick ones,
+  // and every layer gets its own shade, fading towards the colour of the core on the inside
+  function flowerLayers(n, w, h) {
+    const cx = w / 2, cy = h * 0.38, R = Math.min(w * 0.46, h * 0.34), rc = R * 0.2, rnd = seeded(n);
+    const L = Math.max(1, Math.min(n, 9, Math.max(2, Math.ceil(n / 9)))), pts = [];
+    for (let j = 0; j < L; j++) {
+      const m = Math.floor(n / L) + (j < n % L ? 1 : 0);
+      const tip = L === 1 ? R : R * (0.5 + 0.5 * j / (L - 1)), len = tip - rc * 0.5, mid = rc * 0.5 + len / 2;
+      const wid = Math.min(len * 0.42, TAU * mid / m * 1.1), shade = L === 1 ? 0 : 0.26 * (1 - j / (L - 1));
+      for (let k = 0; k < m; k++) {
+        const a = -Math.PI / 2 + (k + (j % 2) * 0.5) * TAU / m;
+        pts.push({
+          x: cx + Math.cos(a) * mid, y: cy + Math.sin(a) * mid, a, len, wid, hr: len * 0.45, shade,
+          lx: w * (0.08 + 0.84 * rnd()), ly: h - wid * 0.55 - rnd() * 8, la: (rnd() - 0.5) * 0.8, sway: rnd() * TAU,
+        });
+      }
+    }
+    return { pts, d: pts.length ? pts[pts.length - 1].wid : 20, flower: { cx, cy, R, rc } };
   }
 
   // moons on orbits around a planet; outer orbits get more moons
@@ -1202,6 +1224,10 @@
   function petal(X, i, x, y, k, q, p) {
     const c = X.c;
     c.beginPath(); c.ellipse(x, y, p.len / 2 * k, p.wid / 2 * k, q ? q.r : p.a, 0, TAU); c.fill();
+  }
+  function layerPetal(X, i, x, y, k, q, p, fill) {
+    if (p.shade) X.c.fillStyle = mix(fill, X.P.bg, p.shade * (1 - p.g));
+    petal(X, i, x, y, k, q, p);
   }
   function stem(X) {
     const { c, P } = X, F = X.geo.flower;

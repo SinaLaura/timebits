@@ -6,10 +6,11 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## To do
 
-- [ ] [solo, big] All themes: a leaving item should be completely gone by the time its minute is over, not just start leaving then. Check every theme and fix those where this isn't true, and add it as a rule to CLAUDE.md so future themes follow it too.
 - [ ] [needs you, big] First-time users don't seem to realise that tapping changes the look. Check whether the finger tap demo is still shown to them, and propose (and preview) a way to make sure new users understand it.
 
 ## In progress
+
+- [ ] [solo, big] All themes: a leaving item should be completely gone by the time its minute is over, not just start leaving then. Check every theme and fix those where this isn't true, and add it as a rule to CLAUDE.md so future themes follow it too. (next-2302, started 23:17)
 
 
 ## To review

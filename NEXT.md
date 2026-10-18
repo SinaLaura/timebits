@@ -7,6 +7,10 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 ## To do
 
 - [ ] [needs you, big] First-time users don't seem to realise that tapping changes the look. Check whether the finger tap demo is still shown to them, and propose (and preview) a way to make sure new users understand it.
+- [ ] Cinema: no pulse ring when a person is tapped. Instead the person throws their hands up above their head, as if annoyed, with a matching sound.
+- [ ] Thermometer: the pulse ring around a tapped segment has an odd shape; give it one that fits the segment.
+- [ ] Ducks: no pulse ring around a tapped duckling.
+- [ ] Spider: no pulse ring around a tapped leg (it looks odd), and make each leg tappable along its whole length, not just in one spot.
 
 ## In progress
 
@@ -14,10 +18,10 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## To review
 
-- [ ] Check which themes don't need the pulse ring around an item when it is tapped, especially advanced themes whose items already react strongly (e.g. the tower's apartments). Implement the suggested changes and give before/after preview links to compare. (d5eccf9) → before (left) / after (right): http://localhost:8765/preview.html?look=tower~ring,tower&m=12 · http://localhost:8765/preview.html?look=jar~ring,jar&m=12 · http://localhost:8765/preview.html?look=marbles~ring,marbles&m=12 · http://localhost:8765/preview.html?look=balloons~ring,balloons&m=12 (the ring is gone where the tapped item clearly does something itself: the tower's light flicks off, a jar ball jumps, a marble hops, a balloon is pushed away. Cars and penguins already had no ring. The item's small swell and the colour change stay. The others keep their ring, because tapping them shows little else: snake, spiral, clock, honey, rings, diamonds, flower, orbit, caterpillar, hourglass, fuse, abacus, stars, hedgehog, cinema, spider, ducks, thermometer. Honey, stars and hedgehog also have the shaped outlines you asked for. Borderline ones I kept: the caterpillar smiles and the snake makes a face, but on the head, not on the tapped segment, and the ducks only peep. In the preview, a look name ending in `~ring` brings the old ring back for comparing.)
 
 ## Done
 
+- [x] Check which themes don't need the pulse ring around an item when it is tapped, especially advanced themes whose items already react strongly (e.g. the tower's apartments). Implement the suggested changes and give before/after preview links to compare. (d5eccf9) → http://localhost:8765/preview.html?look=tower~ring,tower&m=12
 - [x] Ducks, feedback on 480e5ed: the leaving duckling should take longer to leave, about 3 to 5 seconds, and must not take the shortest way out (right now it heads for the nearest edge). (54420d0) → http://localhost:8765/preview.html?look=ducks&m=25
 - [x] Turn the chocolate theme into a high-rise building theme, since the bar already almost looks like one: the pieces become apartments on the floors of a tower, and each minute one apartment falls down. Be creative with it. (7fd3ec1) → http://localhost:8765/preview.html?look=tower&m=12&gone=1
 - [x] Tower: the look is good, but make the floors taller so the building feels more like a skyscraper. (01dc4c4) → http://localhost:8765/preview.html?look=tower&m=12&gone=1

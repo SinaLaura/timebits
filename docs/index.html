@@ -704,7 +704,7 @@
   }
   const nextMode = bag(MODES.length), nextPal = bag(PALETTES.length);
 
-  let look = ls.get('countdown-look');
+  let look = ls.get('timebits-look');
   if (!look || !MODES[look.m] || !PALETTES[look.p]) look = { m: 0, p: 0 };
 
   function applyPalette() {
@@ -718,13 +718,13 @@
   // ================= setup =================
 
   let end = 0, total = 0, timer = 0, shownMin = -1, label = '';
-  let mode = 'min', minutes = ls.get('countdown-min') || 37, audio = null, wake = null;
+  let mode = 'min', minutes = ls.get('timebits-min') || 37, audio = null, wake = null;
 
   const show = id => document.querySelectorAll('.screen').forEach(s => s.hidden = s.id !== id);
   const fmt = ts => new Date(ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
   const minInput = $('minVal'), timeInput = $('timeVal'), labelInput = $('label');
-  labelInput.value = ls.get('countdown-label') || '';
+  labelInput.value = ls.get('timebits-label') || '';
   function setMinutes(v) { minutes = Math.max(1, Math.min(999, Math.round(v) || 1)); minInput.value = minutes; }
   setMinutes(minutes);
   minInput.onchange = () => setMinutes(+minInput.value);
@@ -773,7 +773,7 @@
     unlockAudio();
     askToNotify();
     label = labelInput.value.trim();
-    ls.set('countdown-label', label);
+    ls.set('timebits-label', label);
     pomo = -1;
     byTime = false;
     if (mode === 'pomo') beginPomo(0);
@@ -783,7 +783,7 @@
       begin(endFromTime(timeInput.value));
     } else {
       setMinutes(+minInput.value);
-      ls.set('countdown-min', minutes);
+      ls.set('timebits-min', minutes);
       begin(Date.now() + minutes * 60000);
     }
   };
@@ -793,16 +793,16 @@
   // the end time only shows for "Minutes": with "Time" you chose it yourself, a pomodoro just goes round
   let byTime = false;
   const subText = () => [label, pomo >= 0 ? pomoName(pomo) : '', pomo < 0 && !byTime ? fmt(end) : ''].filter(Boolean).join(' · ');
-  const saveRun = extra => ls.set('countdown', Object.assign({ end, total, label }, pomo >= 0 ? { pomo } : {}, byTime ? { byTime } : {}, extra));
+  const saveRun = extra => ls.set('timebits', Object.assign({ end, total, label }, pomo >= 0 ? { pomo } : {}, byTime ? { byTime } : {}, extra));
 
   // pomodoro (the classic way): 25 min focus, 5 min break, every 4th break 15 min, round and round until Exit
   // the minutes can be changed on the start screen (kept for next time)
-  const POMO = Object.assign({ focus: 25, short: 5, long: 15 }, ls.get('countdown-pomo'), { rounds: 4 });
+  const POMO = Object.assign({ focus: 25, short: 5, long: 15 }, ls.get('timebits-pomo'), { rounds: 4 });
   ['focus', 'short', 'long'].forEach(k => {
     const el = $('pomo' + k[0].toUpperCase() + k.slice(1));
     const set = v => {
       POMO[k] = Math.max(1, Math.min(999, Math.round(v) || POMO[k]));
-      ls.set('countdown-pomo', { focus: POMO.focus, short: POMO.short, long: POMO.long });
+      ls.set('timebits-pomo', { focus: POMO.focus, short: POMO.short, long: POMO.long });
       el.value = POMO[k];
       sum();
     };
@@ -841,7 +841,7 @@
     doneTimer = setTimeout(() => {
       doneTimer = 0;
       look = { m: nextMode(look.m), p: nextPal(look.p) };
-      ls.set('countdown-look', look);
+      ls.set('timebits-look', look);
       applyPalette();
       beginPomo(pomo + 1, from + pomoLen(pomo + 1) * 60000);
     }, still ? 0 : Math.min(3000, (MODES[look.m].goneMs || 800) + 600));
@@ -926,7 +926,7 @@
     if (doneTimer) return;
     if (inBreak() && !pausedAt) {
       look = { m: nextMode(look.m), p: nextPal(look.p) };
-      ls.set('countdown-look', look);
+      ls.set('timebits-look', look);
       applyPalette();
       return beginPomo(pomo + 1);
     }
@@ -951,7 +951,7 @@
     clearTimeout(doneTimer); doneTimer = 0;
     letSleep();
     cancelAlarm();
-    ls.del('countdown');
+    ls.del('timebits');
     end = 0;
     pausedAt = 0;
     pomo = -1;
@@ -2330,7 +2330,7 @@
 
   function restyle() {
     look = { m: nextMode(look.m), p: nextPal(look.p) };
-    ls.set('countdown-look', look);
+    ls.set('timebits-look', look);
     applyPalette();
     born = performance.now();
     pulses.clear(); tints.clear();
@@ -2470,7 +2470,7 @@
   $('done').addEventListener('pointerdown', e => {
     if (e.target.closest('button')) return;
     look.p = nextPal(look.p);
-    ls.set('countdown-look', look);
+    ls.set('timebits-look', look);
     applyPalette();
     if (artKind && still) endArt(artKind);
     if (++doneTaps >= 10 && total > 0) {
@@ -2722,7 +2722,7 @@
   function notify(title, body) {
     if (native || !('Notification' in window) || Notification.permission !== 'granted') return;
     if (document.visibilityState === 'visible' && document.hasFocus()) return;
-    const opt = { body, icon: 'icon-192.png', tag: 'countdown' };
+    const opt = { body, icon: 'icon-192.png', tag: 'timebits' };
     const plain = () => { try { new Notification(title, opt); } catch (e) {} };
     // phones only show notifications through the service worker
     if (navigator.serviceWorker && navigator.serviceWorker.controller)
@@ -2749,13 +2749,13 @@
   // ================= start: ?m=37 or ?bis=18:30 (optional &t=Lunch, &look=3 or &look=ducks, &passed=5) starts right away =================
 
   const q = new URLSearchParams(location.search);
-  const saved = ls.get('countdown');
+  const saved = ls.get('timebits');
   ls.del('essen');
   if (q.has('look')) {
     // a number (look.palette, e.g. 3 or 3.2) or a look's name (ducks)
     const v = q.get('look').split('.'), byName = MODES.findIndex(m => m.name === v[0]);
     look = { m: byName >= 0 ? byName : (+v[0] || 0) % MODES.length, p: (+v[1] || 0) % PALETTES.length };
-    ls.set('countdown-look', look);
+    ls.set('timebits-look', look);
     applyPalette();
   }
   if (saved) { label = saved.label || ''; byTime = !!saved.byTime; }
@@ -2787,7 +2787,7 @@
   } else if (saved && Date.now() - saved.end < 15 * 60000) {
     finish(true);
   } else {
-    ls.del('countdown');
+    ls.del('timebits');
   }
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {

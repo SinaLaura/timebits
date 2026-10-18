@@ -1,6 +1,6 @@
 ---
 name: next
-description: Work through the countdown task list in NEXT.md, with modes (solo or co, one or all, quick or big first). Use when the user types /next [modes], says "continue with the list", or a /loop fires it.
+description: Work through the Timebits task list in NEXT.md, with modes (solo or co, one or all, quick or big first). Use when the user types /next [modes], says "continue with the list", or a /loop fires it.
 argument-hint: (optional, any order) solo | co · one | all · quick | big   — default: solo all, in list order
 ---
 

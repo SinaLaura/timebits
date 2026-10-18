@@ -10,11 +10,10 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## In progress
 
-- [ ] [solo, quick] Palette choice by phone setting: a light phone should also show the dark palettes (mixed in with the light ones), while a dark phone keeps showing only dark palettes. (Claude Sonnet 5.5, started 17:07)
-- [ ] [solo, quick] Pitch grid for the other sound themes: make the tap notes of spiral, clock, honey, rings, diamonds and ducks depend on where the item sits on the screen (top left highest, bottom right lowest), like the snake does now, so the same item always gives the same note. (Claude Sonnet 5.5, started 17:07)
-
 ## Done
 
+- [x] Palette choice by phone setting: a light phone also shows the dark palettes (mixed in with the light ones), while a dark phone keeps showing only dark palettes. (31d632a) → http://localhost:8765/preview.html?look=snake&m=25&gone=1&p=2 (arrows next to "Palette" page through 0 to 16; on a real light phone, tap the background: light and dark palettes both come up)
+- [x] Pitch grid for the sound themes, only honey and diamonds for now (decided together): the tap note depends on where the item sits on the screen, top left highest, bottom right lowest, like the snake. Spiral, clock, rings and ducks keep their random notes. (31d632a) → http://localhost:8765/preview.html?look=honey,diamonds&m=40 (tap along the items: higher up and to the left, lower down and to the right; the same item always gives the same note)
 - [x] Colour palettes: some combinations looked odd on black or white, and on a dark Android phone nearly every background was black (forced dark mode darkened the light palettes, and almost all dark palettes were near black). Now there are 17 palettes with clearly different, tinted backgrounds, and the palette group follows the phone's light or dark setting; no light or dark mode is forced. (9280bdf, 0fda237) → http://localhost:8765/preview.html?look=snake&m=25&gone=1&p=2 (use the arrows next to "Palette" to page through 0 to 16; check on a real phone is still open)
 - [x] Add a small version note to the start menu, so I can check which version of the app is running while testing. (e84301f) → http://localhost:8765/ (a faint "v108" under the Start button; it is the cache version in sw.js, so it changes with every release)
 - [x] Penguins: remove the shadow of the swimming penguins in the water, because it looks odd. (303a3a7) → http://localhost:8765/preview.html?look=penguins&m=10&gone=1 (the small swimming heads have no ripple under them any more; also look=realpenguins)

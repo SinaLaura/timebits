@@ -8,10 +8,9 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## In progress
 
-- [ ] [solo, quick] Add a small version note to the start menu, so I can check which version of the app is running while testing. (Claude Sonnet 5.5, started 16:51)
-
 ## Done
 
+- [x] Add a small version note to the start menu, so I can check which version of the app is running while testing. (e84301f) → http://localhost:8765/ (a faint "v108" under the Start button; it is the cache version in sw.js, so it changes with every release)
 - [x] Penguins: remove the shadow of the swimming penguins in the water, because it looks odd. (303a3a7) → http://localhost:8765/preview.html?look=penguins&m=10&gone=1 (the small swimming heads have no ripple under them any more; also look=realpenguins)
 - [x] Penguins: make sure the swimming penguins never pass through the ice chunks floating in the water. (303a3a7) → http://localhost:8765/preview.html?look=penguins&m=10&gone=1 (swimmers glide around the loose chunks; checked over 15 simulated minutes at nine sizes with no overlap)
 

@@ -281,6 +281,10 @@
     // a marble run: each minute the gate lets one ball roll down the zigzag ramps into the tray
     { name: 'marbles', goneScale: 1, goneDim: 0, goneMs: 2400, goneLinear: true,
       lay: marbleRun, step: mbStep, pos: mbPos, item: mbBall, tap: mbTap, before: mbTrack },
+    // a bunch of balloons tied at one knot: the outermost pops each minute and its string dangles from the knot; a tap pushes one away
+    { name: 'balloons', live: true, goneScale: 1, goneDim: 0, goneMs: 1500, goneLinear: true,
+      lay: balloons, pos: balloonPos, item: balloon, tap: balloonTap, before: balloonStrings,
+      halo: (X, p, q) => ({ rx: X.d * 0.56 * p.s, ry: X.d * 0.66 * p.s, rot: q ? q.r : 0 }) },
   ];
   const MODES = ALL_MODES.filter(m => !m.off);
 
@@ -2173,6 +2177,158 @@
     c.restore();
   }
 
+
+  // ---- balloons ----
+  // a bunch of balloons tied together at one knot; the outermost one pops each minute and its string drops and dangles from the knot
+  function balloons(n, w, h) {
+    const rnd = seeded(n * 11 + 7), kx = w / 2, ky = h * 0.86;
+    const bw = Math.min(w, h * 1.4), top = h * 0.02, bot = h * 0.64, cx = w / 2, cy = (top + bot) / 2;
+    // the biggest balloon size for which n balloons fit into the bunch (an ellipse above the knot), packed in offset rows
+    const fit = d => {
+      const rx = bw / 2 - d * 0.52, ry = (bot - top) / 2 - d * 0.62, sx = d * 0.96, sy = d * 1.04, out = [];
+      if (rx <= 0 || ry <= 0) return d < 20 ? [{ x: cx, y: cy, e: 0 }] : out;
+      for (let r = -Math.floor(ry / sy); r <= Math.floor(ry / sy); r++) {
+        const y = cy + r * sy, off = r % 2 ? sx / 2 : 0;
+        for (let k = -Math.ceil(rx / sx) - 1; k <= Math.ceil(rx / sx) + 1; k++) {
+          const x = cx + k * sx + off, e = Math.hypot((x - cx) / rx, (y - cy) / ry);
+          if (e <= 1) out.push({ x, y, e });
+        }
+      }
+      return out;
+    };
+    let d = Math.min(w * 0.6, (bot - top) * 0.78, 260), cand = fit(d);
+    while (cand.length < n && d > 3) { d *= 0.97; cand = fit(d); }
+    while (cand.length < n) cand.push({ x: cx, y: cy, e: 0 });
+    // keep the n closest to the middle, then centre the bunch; the outer ones pop first (a little shuffled)
+    cand.sort((a, b) => a.e - b.e);
+    cand = cand.slice(0, n);
+    const xs = cand.map(p => p.x), ys = cand.map(p => p.y);
+    const sx = cx - (Math.min(...xs) + Math.max(...xs)) / 2, sy = cy - (Math.min(...ys) + Math.max(...ys)) / 2;
+    cand.forEach(p => { p.k = p.e + rnd() * 0.25; });
+    cand.sort((a, b) => a.k - b.k);
+    const dl = Math.min(d * 0.9, h * 0.1);
+    const pts = cand.map(p => {
+      const s = 0.93 + rnd() * 0.1;
+      return { x: p.x + sx, y: p.y + sy, s, hr: d * 0.58 * s, sh: rnd() * 0.2, ph: rnd() * TAU, ph2: rnd() * TAU,
+        da: (rnd() - 0.5) * 1.1, dl: dl * (0.55 + 0.45 * rnd()) };
+    });
+    // the upper balloons are drawn first, so the lower ones sit in front of their strings
+    const order = pts.map((p, i) => i).sort((a, b) => pts[a].y - pts[b].y);
+    return { pts, d, order, bal: { kx, ky } };
+  }
+  // drifting in the wind (X.t, so a pause brings them to rest); a tap pushes one away and it swings back on its string
+  function balloonPos(X, i, g, p) {
+    const d = X.d, t = X.t, B = X.geo.bal;
+    const wind = Math.sin(t * 0.37 + 1) * 0.6 + Math.sin(t * 0.23) * 0.4, lift = clamp((B.ky - p.y) / B.ky);
+    let x = p.x + d * (0.07 * Math.sin(t * 0.9 + p.ph) + 0.14 * wind * lift), y = p.y + d * 0.05 * Math.sin(t * 1.3 + p.ph2), kick = 0;
+    if (p.tk) {
+      const s = (X.now - p.tk) / 1000;
+      if (s < 2.5) { kick = Math.exp(-s * 2) * Math.sin(s * 8); x += Math.cos(p.ta) * d * 0.35 * kick; y += Math.sin(p.ta) * d * 0.2 * kick; X.more = true; }
+      else p.tk = 0;
+    }
+    // the string pulls the balloon's bottom towards the knot
+    const r = Math.atan2(-(B.kx - x), B.ky - y) * 0.7 + Math.sin(t * 1.1 + p.ph) * 0.05 + kick * 0.25 * Math.cos(p.ta);
+    return { x, y, r, a: g >= 1 ? 0 : 1 };
+  }
+  function balloonTap(G, i) { const p = G.pts[i]; p.tk = performance.now(); p.ta = Math.random() * TAU; }
+  // where a popped balloon's string hangs: down from the knot, a little to one side
+  function danglePos(X, p) {
+    const B = X.geo.bal, a = p.da + Math.sin(X.t * 0.7 + p.ph) * 0.06;
+    return [B.kx + Math.sin(a) * p.dl, B.ky + Math.cos(a) * p.dl];
+  }
+  function balloonStrings(X) {
+    const { c, P, d, pts } = X, B = X.geo.bal, n = pts.length;
+    c.strokeStyle = mix(P.dim, P.text, 0.35); c.lineWidth = Math.max(1, d * 0.022);
+    // the gathered strings below the knot
+    c.beginPath(); c.moveTo(B.kx, B.ky);
+    c.quadraticCurveTo(B.kx + Math.sin(X.t * 0.6) * d * 0.15, (B.ky + H) / 2, B.kx + Math.sin(X.t * 0.4) * d * 0.05, H + 2); c.stroke();
+    // strings of the balloons still up (one path for all, so hundreds stay cheap; fainter when there are many, so they don't merge into a solid fan)
+    const a0 = c.globalAlpha;
+    c.globalAlpha = a0 * Math.min(1, Math.sqrt(40 / Math.max(1, X.min)));
+    c.beginPath();
+    for (let i = 0; i < n; i++) {
+      const p = pts[i];
+      if (p.g >= 0.08) continue;
+      c.moveTo(B.kx, B.ky);
+      c.quadraticCurveTo((B.kx + p.cx) / 2 + Math.sin(X.t * 0.8 + p.ph) * d * 0.08, (B.ky + p.cy) / 2, p.cx, p.cy);
+    }
+    c.stroke();
+    c.globalAlpha = a0;
+    // popped: the string falls down and dangles from the knot, with the little rubber knot left at its end
+    const ends = [];
+    c.beginPath();
+    for (let i = 0; i < n; i++) {
+      const p = pts[i];
+      if (p.g < 0.08) continue;
+      const e = easeOut(clamp((p.g - 0.08) / 0.6)), [dx, dy] = danglePos(X, p);
+      const ex = lerp(p.cx, dx, e), ey = lerp(p.cy, dy, e);
+      c.moveTo(B.kx, B.ky);
+      c.quadraticCurveTo((B.kx + ex) / 2 + (1 - e) * d * 0.3, (B.ky + ey) / 2 + (1 - e) * d * 0.4, ex, ey);
+      ends.push(ex, ey);
+    }
+    c.stroke();
+    if (ends.length) {
+      c.fillStyle = mix(P.fg, P.dim, 0.65);
+      const s = Math.max(1.5, d * 0.06);
+      c.beginPath();
+      for (let j = 0; j < ends.length; j += 2) { c.moveTo(ends[j], ends[j + 1] - s * 0.4); c.lineTo(ends[j] - s, ends[j + 1] + s); c.lineTo(ends[j] + s, ends[j + 1] + s); c.closePath(); }
+      c.fill();
+    }
+    // a small bow at the knot
+    const b = Math.min(26, Math.max(10, d * 0.22));
+    c.strokeStyle = P.fg; c.lineWidth = Math.max(1.5, b * 0.22);
+    c.beginPath(); c.ellipse(B.kx - b * 0.55, B.ky - b * 0.1, b * 0.55, b * 0.3, -0.35, 0, TAU); c.stroke();
+    c.beginPath(); c.ellipse(B.kx + b * 0.55, B.ky - b * 0.1, b * 0.55, b * 0.3, 0.35, 0, TAU); c.stroke();
+    c.fillStyle = P.fg; c.beginPath(); c.arc(B.kx, B.ky, b * 0.2, 0, TAU); c.fill();
+  }
+  // an egg-shaped balloon with a tied knot and a shine; it swells a little, then bursts into shreds that fly off and fall
+  function balloonBody(c, rw, rh, col, hl) {
+    c.fillStyle = col;
+    c.beginPath(); c.moveTo(0, rh);
+    c.bezierCurveTo(rw * 0.55, rh * 0.92, rw, rh * 0.35, rw, -rh * 0.15);
+    c.bezierCurveTo(rw, -rh * 0.72, rw * 0.55, -rh, 0, -rh);
+    c.bezierCurveTo(-rw * 0.55, -rh, -rw, -rh * 0.72, -rw, -rh * 0.15);
+    c.bezierCurveTo(-rw, rh * 0.35, -rw * 0.55, rh * 0.92, 0, rh);
+    c.fill();
+    c.beginPath(); c.moveTo(0, rh * 0.9); c.lineTo(-rw * 0.15, rh * 1.1); c.lineTo(rw * 0.15, rh * 1.1); c.closePath(); c.fill();
+    c.fillStyle = hl; c.globalAlpha *= 0.7;
+    c.beginPath(); c.ellipse(-rw * 0.45, -rh * 0.4, rw * 0.14, rh * 0.24, 0.45, 0, TAU); c.fill();
+  }
+  function balloon(X, i, x, y, k, q, p, col) {
+    const c = X.c, P = X.P, g = p.g, base = mix(col, P.bg, p.sh);
+    const hl = P.text === P.fg ? mix(base, P.bg, 0.35) : mix(base, P.dark ? P.text : P.bg, 0.55);
+    let rw = X.d * 0.5 * p.s * k, rh = X.d * 0.6 * p.s * k;
+    c.save(); c.translate(x, y); c.rotate(q ? q.r : 0);
+    if (g < 0.08) {
+      const sw = 1 + 1.6 * g;   // swells just before it pops
+      balloonBody(c, rw * sw, rh * sw, base, hl);
+      c.restore(); return;
+    }
+    const t = (g - 0.08) / 0.92, a0 = c.globalAlpha, rnd = seeded(i * 13 + 5);
+    // a quick comic burst
+    if (t < 0.4) {
+      const u = t / 0.4;
+      c.strokeStyle = base; c.lineWidth = Math.max(1.5, rw * 0.08); c.globalAlpha = a0 * (1 - u);
+      c.beginPath();
+      for (let j = 0; j < 8; j++) {
+        const a = j * TAU / 8 + 0.2;
+        c.moveTo(Math.cos(a) * rw * (0.9 + 0.8 * u), Math.sin(a) * rw * (0.9 + 0.8 * u));
+        c.lineTo(Math.cos(a) * rw * (1.25 + 1.1 * u), Math.sin(a) * rw * (1.25 + 1.1 * u));
+      }
+      c.stroke();
+    }
+    // rubber shreds fly out, spin and fall
+    c.fillStyle = base; c.globalAlpha = a0 * (1 - t);
+    const e = easeOut(Math.min(1, t * 1.6));
+    for (let j = 0; j < 7; j++) {
+      const a = j * TAU / 7 + rnd() * 0.8, v = 0.8 + rnd() * 0.9, s = rw * (0.22 + rnd() * 0.12) * (1 - 0.4 * t);
+      const px = Math.cos(a) * rw * v * (0.3 + 1.5 * e), py = Math.sin(a) * rh * v * (0.3 + 1.2 * e) + X.d * 1.6 * t * t;
+      c.save(); c.translate(px, py); c.rotate(a + t * (rnd() < 0.5 ? -6 : 6));
+      c.beginPath(); c.moveTo(-s, -s * 0.3); c.quadraticCurveTo(0, -s * 0.9, s, -s * 0.2); c.lineTo(s * 0.6, s * 0.4); c.quadraticCurveTo(0, 0, -s * 0.7, s * 0.35); c.closePath(); c.fill();
+      c.restore();
+    }
+    c.restore();
+  }
 
   // returns true while something is still animating
   function draw(now) {

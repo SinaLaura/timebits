@@ -34,6 +34,7 @@ Offline genommen (`off: true` in `ALL_MODES`, im Code erhalten, nicht mehr in de
 | 23 | ducks | Ein zufälliges Küken verliert langsam den Anschluss und paddelt auf Umwegen davon, auf dem längsten Weg zur gegenüberliegenden Seite, die anderen schließen auf; Mama antippen = sie dreht sich um und quakt; Pause = Reihe stoppt, Mama schaut zurück; viele Küken bleiben klein und schwimmen in einer langen Reihe auf einer Runde um den Teich (so gewünscht; der Schlängelweg über den ganzen Teich aus Commit 06a740d ist wieder raus), dafür ist Mama deutlich größer (3× ein Küken, höchstens 120 px, mindestens 44 px) |
 | 24 | thermometer | Oberstes Segment kühlt ab und verblasst, die Säule zeigt die vergangene Zeit (kein Frost am Glas, so gewünscht); es schneit immer stärker; Temperatur („12°“) ersetzt die Überschrift; Kugel antippen = Säule flackert auf; Pause = Strickmütze; Ende = zerspringt in Eissplitter |
 | 25 | marbles | Kugelbahn: Die Kugeln warten oben hinter einer Klappe auf den Rampen; pro Minute kippt die Klappe, eine Kugel rollt die Zickzack-Bahn hinunter (fällt von Rampe zu Rampe, dreht sich sichtbar) in die Schale unten und bleibt dort blass liegen, die Warteschlange rückt nach; Antippen = Kugel hüpft kurz |
+| 26 | balloons | Luftballon-Strauß, alle Schnüre an einem Knoten mit Schleife; der Strauß füllt die obere Fläche (Größe proportional zur Zeit), die Ballons treiben im Wind; pro Minute bläht sich ein äußerer Ballon kurz auf und platzt (Comic-Blitz, Gummifetzen fliegen und fallen), seine Schnur fällt herab und baumelt blass mit dem Gummiknoten am Knoten (vergangene Minuten bleiben als Quaste sichtbar); Antippen = Ballon wird angeschubst und schwingt an der Schnur zurück; bei vielen Ballons werden die Schnüre durchsichtiger |
 
 ## Offene Ideen
 
@@ -49,7 +50,7 @@ Offline genommen (`off: true` in `ALL_MODES`, im Code erhalten, nicht mehr in de
 
 ### Physik und Spielzeug
 - [ ] **Dominosteine:** Pro Minute kippt einer um.
-- [ ] ★ **Luftballons:** Sie schweben an Schnüren und wackeln im Wind, pro Minute platzt einer. Antippen schubst einen Ballon an.
+- [x] ★ **Luftballons:** gebaut als `balloons` (#26).
 - [ ] **Pixel-Herz:** Pro Minute fällt ein Pixel heraus.
 
 ### Abstrakt

@@ -1,7 +1,7 @@
 # Timebits (Ordner „countdown“) – Regeln
 
 Generelle Regeln für diese App. Gelten immer, wenn der User nichts Genaueres sagt.
-Neue generelle Wünsche des Users hier ergänzen. Theme-Ideen und -Stand stehen in [THEMES.md](THEMES.md).
+Neue generelle Wünsche des Users hier ergänzen. Theme-Ideen und -Stand stehen in [THEMES.md](THEMES.md), mögliche künftige Probleme in [RISKS.md](RISKS.md).
 
 ## Projekt
 - Die App ist eine PWA in `docs/`: reines HTML/JS in `docs/index.html`, kein Build. Vorschau: `cd docs && py -m http.server 8765` (Port 8000 belegt auf diesem Rechner die Go-Girls-Seite).
@@ -61,4 +61,5 @@ Neue generelle Wünsche des Users hier ergänzen. Theme-Ideen und -Stand stehen 
 - Nach jeder fertigen Änderung sofort committen, und zwar nur die eigenen Dateien mit expliziten Pfaden, kein `git add -A`. Ausnahme: Neue Aufgaben in `NEXT.md` (`/later`) werden nicht einzeln committet, sie gehen mit dem nächsten Commit von `NEXT.md` mit.
 - Bei Code-Änderungen den Cache-Namen in `docs/sw.js` hochzählen.
 - Wird ein Theme gebaut oder eine Idee verworfen, `THEMES.md` aktualisieren.
+- [RISKS.md](RISKS.md) sammelt mögliche künftige Probleme und Entscheidungen, die jetzt okay sind, später aber stören könnten (z.B. Töne folgen dem Stumm-Schalter). Wer so etwas bemerkt, auch bei der eigenen Arbeit und ohne dass der User fragt, trägt es dort selbst ein (englisch, im Format der vorhandenen Einträge: Entscheidung, warum jetzt okay, wann es stören könnte, Ausweg) und committet die Datei mit der Änderung, die den Anlass gab. Erledigte Einträge wandern nach „Resolved“.
 - [NEXT.md](NEXT.md) ist die Aufgabenliste des Users. Wer frei ist, nimmt die oberste offene Aufgabe, trägt sie mit Sitzungsnamen unter „In progress“ ein (gleich committen, damit keine zweite Sitzung sie nimmt) und verschiebt sie nach „Done“ mit dem Commit und einem localhost-Link zum Nachschauen (z.B. `http://localhost:8765/?m=10&look=jar`). Skills dafür: `/later <Aufgabe>` trägt ein, `/next` arbeitet die Liste ab (Ablauf steht in `.claude/skills/`).

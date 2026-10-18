@@ -37,6 +37,7 @@
 <script>
   // This page only works on the local preview server (the app ignores these helpers online and in the store app).
   // URL: preview.html?look=flower,flowerring&m=25&gone=1&p=0   (several looks = side by side; gone = 0, 1 or 2 thirds)
+  // A look name ending in ~ring (look=tower~ring,tower) shows the tap ring even where the look leaves it out (before/after).
   // Optional raw=pomo=1: opens the app with exactly this query instead (for things that are not a look, e.g. the Pomodoro).
   const q = new URLSearchParams(location.search);
   const MINS = [3, 10, 25, 60, 120, 240], GONE = [[0, 'nothing'], [1, 'a third'], [2, 'two thirds']];
@@ -85,7 +86,8 @@
   function loadAll() { save(); document.querySelectorAll('iframe').forEach((f, i) => { f.src = appUrl(looks[i]); }); }
 
   function fillSelect(sel, cur) {
-    const names = modes.length ? modes : [cur];
+    // a look with ~ring (tower~ring: the tap ring as it was, for before/after) keeps its own entry
+    const names = modes.length ? (modes.includes(cur) ? modes : [cur, ...modes]) : [cur];
     sel.innerHTML = '';
     names.forEach(n => { const o = document.createElement('option'); o.value = o.textContent = n; sel.appendChild(o); });
     sel.value = cur;

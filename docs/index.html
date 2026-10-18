@@ -284,8 +284,8 @@
     { name: 'flowerlayers', lab: true, lay: flowerLayers, reverse: true, goneScale: 0.45, goneMs: 2600, pos: petalPos, item: layerPetal, halo: (X, p, q) => ({ rx: p.len * 0.58, ry: p.wid * 0.62, rot: q ? q.r : p.a }), before: stem, after: flowerCenter },
     // moons circle a planet, a passed minute drifts off into space
     { name: 'orbit', shape: 'circle', live: true, hit: 0.8, goneScale: 1, goneDim: 0.3, goneMs: 3000, lay: orbit, pos: moonPos, before: planet, bodyTap: saturnTap },
-    // a full jar of balls with gravity; tapping kicks one up, a passed minute makes the top one jump out
-    { name: 'jar', shape: 'circle', hit: 0.6, goneScale: 1, goneDim: 0, goneMs: 2400, goneLinear: true,
+    // a full jar of balls with gravity; tapping kicks one up (no ring: the jump says enough), a passed minute makes the top one jump out
+    { name: 'jar', shape: 'circle', hit: 0.6, noRing: true, goneScale: 1, goneDim: 0, goneMs: 2400, goneLinear: true,
       lay: jar, step: jarStep, pos: ballPos, item: jarBall, tap: jarTap, before: drawJar },
     // crawling caterpillar, turns into a butterfly at the end
     { name: 'caterpillar', shape: 'circle', live: true, body: 0.8, eyes: true, stripes: true, endArt: 'butterfly',
@@ -294,8 +294,8 @@
     { name: 'hourglass', shape: 'circle', goneScale: 1, goneDim: 0.55, goneMs: 1600, noDim: true, lay: hourglass, pos: grainPos, item: grain, before: glass, after: plug },
     // a burning fuse with sparks
     { name: 'fuse', shape: 'circle', live: true, endArt: 'bang', goneScale: 0.4, lay: fuse, step: fuseStep, before: fuseLine, after: sparks },
-    // a high-rise, one apartment per minute: each minute one on the top floor pops out and tumbles down, and once a floor is empty the roof drops onto the next; tap one and its light flicks off; paused: the lights go out
-    { name: 'tower', live: true, goneScale: 1, goneDim: 0, goneMs: 2200, goneLinear: true, lay: tower, pos: aptPos, item: apartment, tap: aptTap, before: towerBody,
+    // a high-rise, one apartment per minute: each minute one on the top floor pops out and tumbles down, and once a floor is empty the roof drops onto the next; tap one and its light flicks off (no ring); paused: the lights go out
+    { name: 'tower', live: true, noRing: true, goneScale: 1, goneDim: 0, goneMs: 2200, goneLinear: true, lay: tower, pos: aptPos, item: apartment, tap: aptTap, before: towerBody,
       halo: (X, p, q) => ({ rx: X.d * 0.36, ry: X.geo.tower.fh * 0.35, rot: q ? q.r || 0 : 0, rect: true }) },
     // beads slide along the wires of an abacus
     { name: 'abacus', goneScale: 1, goneDim: 0.5, goneMs: 700, lay: abacus, pos: beadPos, item: bead, halo: X => ({ rx: X.d * 0.54, ry: X.geo.abacus.bh * 0.58 }), before: abacusFrame },
@@ -319,11 +319,11 @@
     // a thermometer that gets colder each minute; the top segment cools off and fades, the temperature replaces the headline
     { name: 'thermometer', live: true, noHead: true, noDim: true, goneScale: 1, goneDim: 0, goneMs: 1800, goneLinear: true, endArt: 'shatter',
       lay: thermometer, pos: freeze, item: segment, before: thermoGlass, after: beanie, bodyTap: thermoTap },
-    // a marble run: each minute the gate lets one ball roll down the zigzag ramps into the tray
-    { name: 'marbles', goneScale: 1, goneDim: 0, goneMs: 2400, goneLinear: true,
+    // a marble run: each minute the gate lets one ball roll down the zigzag ramps into the tray; a tapped ball hops (no ring)
+    { name: 'marbles', noRing: true, goneScale: 1, goneDim: 0, goneMs: 2400, goneLinear: true,
       lay: marbleRun, step: mbStep, pos: mbPos, item: mbBall, tap: mbTap, before: mbTrack },
-    // a bunch of balloons tied at one knot: the outermost pops each minute and its string dangles from the knot; a tap pushes one away
-    { name: 'balloons', live: true, goneScale: 1, goneDim: 0, goneMs: 1500, goneLinear: true,
+    // a bunch of balloons tied at one knot: the outermost pops each minute and its string dangles from the knot; a tap pushes one away (no ring)
+    { name: 'balloons', live: true, noRing: true, goneScale: 1, goneDim: 0, goneMs: 1500, goneLinear: true,
       lay: balloons, pos: balloonPos, item: balloon, tap: balloonTap, before: balloonStrings,
       halo: (X, p, q) => ({ rx: X.d * 0.56 * p.s, ry: X.d * 0.66 * p.s, rot: q ? q.r : 0 }) },
     // penguins on an ice floe: each minute one waddles to the edge and dives in, then bobs in the water; tap one and it honks, flaps and hops (no ring); asleep while paused
@@ -1177,6 +1177,7 @@
   // so moving looks come to rest while paused and pick up again afterwards
   let calm = 1, motionT = 0;
   const goneAt = new Map(), pulses = new Map(), tints = new Map();
+  let forceRing = false;   // preview only (look name ending in ~ring): draw the tap ring even for looks with noRing
   const still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function relayout() {
@@ -2979,7 +2980,7 @@
       c.globalAlpha = q && q.a !== undefined ? q.a : 1;
       if (M.item) M.item(X, i, p.cx, p.cy, sc, q, p, fill); else shape(M.shape, p, p.cx, p.cy, d * sc, g);
       c.globalAlpha = 1;
-      if (pk && !M.noRing) {
+      if (pk && (!M.noRing || forceRing)) {
         c.globalAlpha = 1 - pt01; c.strokeStyle = P.fg; c.lineWidth = 2;
         // the ring stays in proportion to the item (p.ring if a theme sets one, else from its tap radius / size)
         const hz = M.halo && M.halo(X, p, p.q), s = 1 + 0.6 * pt01;
@@ -3514,7 +3515,10 @@
   ls.del('essen');
   if (q.has('look')) {
     // a number (look.palette, e.g. 3 or 3.2) or a look's name (ducks)
-    const v = q.get('look').split('.'), byName = MODES.findIndex(m => m.name === v[0]);
+    // local preview only: a name ending in ~ring (tower~ring) shows the tap ring even where the look leaves it out, to compare before and after
+    const v = q.get('look').split('.');
+    if (DEV && v[0].endsWith('~ring')) { forceRing = true; v[0] = v[0].slice(0, -5); }
+    const byName = MODES.findIndex(m => m.name === v[0]);
     look = { m: byName >= 0 ? byName : (+v[0] || 0) % MODES.length, p: (+v[1] || 0) % PALETTES.length };
     ls.set('timebits-look', look);
     applyPalette();

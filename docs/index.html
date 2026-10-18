@@ -318,10 +318,10 @@
       halo: (X, p, q) => ({ rx: X.d * 0.56 * p.s, ry: X.d * 0.66 * p.s, rot: q ? q.r : 0 }) },
     // penguins on an ice floe: each minute one waddles to the edge and dives in, then bobs in the water; tap one and it honks, flaps and hops (no ring); asleep while paused
     { name: 'penguins', live: true, playable: true, noRing: true, goneScale: 1, goneDim: 0, goneMs: 3200, goneLinear: true,
-      lay: penguins, pos: penguinPos, item: penguin, tap: penguinTap, before: iceFloe },
+      lay: penguins, step: penguinStep, pos: penguinPos, item: penguin, tap: penguinTap, before: iceFloe },
     // the same penguins in their real colours, black and white on blue sea water (the user asked for real colours here)
     { name: 'realpenguins', live: true, playable: true, noRing: true, goneScale: 1, goneDim: 0, goneMs: 3200, goneLinear: true, pal: REAL.pal,
-      lay: (n, w, h) => Object.assign(penguins(n, w, h), { real: true }), pos: penguinPos, item: penguin, tap: penguinTap, before: iceFloe },
+      lay: (n, w, h) => Object.assign(penguins(n, w, h), { real: true }), step: penguinStep, pos: penguinPos, item: penguin, tap: penguinTap, before: iceFloe },
   ];
   // lab: true = a variant to compare with its original: reachable by ?look=<name> only, never in the random rotation
   // (sorted last, so the numbers of the others stay)
@@ -2605,7 +2605,10 @@
     for (let k = 0; k < 3; k++) {
       const sz = Math.max(6, Math.min(d * 0.45, 30)) * (0.6 + rp() * 0.6), shape = [];
       for (let j = 0; j < 6; j++) { const a = (j + (rp() - 0.5) * 0.6) / 6 * TAU; shape.push([Math.cos(a) * sz * (0.8 + rp() * 0.4), Math.sin(a) * sz * 0.45 * (0.8 + rp() * 0.4)]); }
-      bits.push({ x: w * (0.15 + 0.7 * rp()), y: wy0 + rp() * Math.max(1, wy1 - wy0), shape, ph: rp() * TAU, th: Math.max(2, sz * 0.25) });
+      const bth = Math.max(2, sz * 0.25);
+      // rx, ry: the ellipse around the chunk (outline and thickness) that swimmers keep out of
+      bits.push({ x: w * (0.15 + 0.7 * rp()), y: wy0 + rp() * Math.max(1, wy1 - wy0), shape, ph: rp() * TAU, th: bth,
+        rx: Math.max(...shape.map(v => Math.abs(v[0]))), ry: Math.max(...shape.map(v => Math.abs(v[1]))) + bth / 2 });
     }
     return { pts, d, order, ice: { cx, cy, rx: RX, ry: RY, th, wy0, wy1, poly, bits } };
   }
@@ -2625,6 +2628,38 @@
     return { x: lerp(p.ex, p.wx, u), y: lerp(p.ey, p.wy, u) - Math.sin(Math.PI * u) * d * 0.6, r: p.dir * u * u * 2.3, s: 1 - 0.55 * u * u, walk: 1 };
   }
   function penguinTap(G, i) { G.pts[i].tk = performance.now(); penguinCall(); }
+  // where a loose ice chunk floats just now (it drifts a little from side to side)
+  const iceBitAt = (X, b) => [Math.max(20, Math.min(W - 20, b.x + Math.sin(X.t * 0.12 + b.ph) * X.d * 0.5)), b.y + Math.sin(X.t * 0.8 + b.ph) * 1.5];
+  // the swimmers drift from side to side and bob; each follows its own wish a little behind and swims around the ice chunks (never through them)
+  function penguinStep(X, dt) {
+    const I = X.geo.ice, d = X.d, hd = d * 0.62, hx = hd * 0.36, hy = hd * 0.22, yo = hd * 0.27;
+    // the head is a small ellipse a little above where the swimmer is placed; grow each chunk by it and test the placement point
+    const obs = I.bits.map(b => { const [x, y] = iceBitAt(X, b); return { x, y: y + b.th / 2 + yo, rx: b.rx + hx + 2, ry: b.ry + hy + 2 }; });
+    const lo = I.wy0 - d * 0.1, hi = H - d * 0.1;
+    for (let i = Math.max(0, X.min); i < X.pts.length; i++) {
+      const p = X.pts[i];
+      const gx = Math.max(hd, Math.min(W - hd, p.sx + Math.sin(X.t * 0.15 + p.ph) * d * 1.2)), gy = p.sy + Math.sin(X.t * 0.9 + p.ph2) * d * 0.06;
+      if (p.mx === undefined || X.still) { p.mx = gx; p.my = gy; }
+      else {
+        // a spring towards its wish, but never faster than a calm swimming speed (also when it slides free of a chunk)
+        let sx = (gx - p.mx) * Math.min(1, dt * 3), sy = (gy - p.my) * Math.min(1, dt * 3);
+        const len = Math.hypot(sx, sy), cap = d * 0.6 * dt;
+        if (len > cap) { sx *= cap / len; sy *= cap / len; }
+        p.mx += sx; p.my += sy;
+      }
+      for (let it = 0; it < 3; it++) {
+        for (const o of obs) {
+          let ux = (p.mx - o.x) / o.rx, uy = (p.my - o.y) / o.ry;
+          const l = Math.hypot(ux, uy);
+          if (l >= 1) continue;
+          if (l < 1e-3) { ux = i % 2 ? 1 : -1; uy = 0; } else { ux /= l; uy /= l; }
+          p.mx = o.x + ux * o.rx * 1.01; p.my = o.y + uy * o.ry * 1.01;
+        }
+        p.mx = Math.max(hd, Math.min(W - hd, p.mx)); p.my = Math.max(lo, Math.min(hi, p.my));
+      }
+    }
+    return false;
+  }
   // a penguin's honk: two nasal calls, a short one and a longer one ("ha-haah"), a little different every time
   function penguinCall() {
     if (!audio || pausedAt) return;   // quiet while paused
@@ -2759,20 +2794,18 @@
     c.globalAlpha = X.all;
     // loose chunks bobbing in the water
     for (const b of I.bits) {
-      const x = Math.max(20, Math.min(W - 20, b.x + Math.sin(X.t * 0.12 + b.ph) * d * 0.5)), y = b.y + Math.sin(X.t * 0.8 + b.ph) * 1.5;
+      const [x, y] = iceBitAt(X, b);
       iceSlab(c, b.shape.map(([u, v]) => [x + u, y + v]), b.th, C, false);
     }
-    // swimmers: small dim heads with a ripple
+    // swimmers: small dim heads (placed by penguinStep)
     const R = X.geo.real, head = mix(P.fg, P.dim, R ? 0.35 : 0.55), belly = mix(R ? REAL.belly : penguinBelly(P, P.fg), P.dim, R ? 0.3 : 0.45), beak = mix(R ? REAL.beak : mix(P.fg, P.text, 0.45), P.dim, R ? 0.3 : 0.5);
     const hd = d * 0.62, closed = X.calm < 0.5;
     for (let i = Math.max(0, X.min); i < pts.length; i++) {
       const p = pts[i];
       if (p.g < 0.85) continue;
-      const x = Math.max(hd, Math.min(W - hd, p.sx + Math.sin(X.t * 0.15 + p.ph) * d * 1.2)), y = p.sy + Math.sin(X.t * 0.9 + p.ph2) * d * 0.06;
+      const x = p.mx, y = p.my;
       c.globalAlpha = X.all * clamp((p.g - 0.85) / 0.15);
       leftover(X, x, y - hd * 0.1, Math.max(12, hd * 0.55));
-      c.strokeStyle = P.dim; c.lineWidth = Math.max(1, d * 0.03);
-      c.beginPath(); c.ellipse(x, y + hd * 0.22, hd * 0.55, hd * 0.12, 0, 0, TAU); c.stroke();
       c.save(); c.translate(x, y);
       c.fillStyle = head;
       c.beginPath(); c.arc(0, -hd * 0.12, hd * 0.36, Math.PI * 0.95, Math.PI * 0.05); c.closePath(); c.fill();

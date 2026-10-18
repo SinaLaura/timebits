@@ -6,12 +6,12 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## To do
 
-- [ ] [solo, quick] Sound in the boring themes: right now each tap on an item plays a random note, so tapping the same item repeatedly sounds arbitrary. Instead, the pitch should depend on where on the screen the tap lands, like a grid of notes: top left is the highest, bottom right the lowest. Try it on one theme first and show it on localhost.
-- [ ] Penguins: remove the shadow of the swimming penguins in the water, because it looks odd.
-- [ ] Penguins: make sure the swimming penguins never pass through the ice chunks floating in the water.
+- [ ] [solo, quick] Penguins: remove the shadow of the swimming penguins in the water, because it looks odd.
+- [ ] [solo, big] Penguins: make sure the swimming penguins never pass through the ice chunks floating in the water.
 
 ## In progress
 
+- [ ] [solo, quick] Sound in the boring themes: right now each tap on an item plays a random note, so tapping the same item repeatedly sounds arbitrary. Instead, the pitch should depend on where on the screen the tap lands, like a grid of notes: top left is the highest, bottom right the lowest. Try it on one theme first and show it on localhost. (Claude Sonnet 5.5, started 12:12)
 
 ## Done
 

@@ -12,9 +12,10 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## In progress
 
-- [ ] [solo, big] (Last task, only when everything else is done.) Pick a theme idea from my ideas in THEMES.md and implement it entirely on your own, without asking me anything. You have a free hand in how, but follow the rules in CLAUDE.md. (night-run session, started 01:10)
 
 ## Done
+
+- [x] (Last task, only when everything else is done.) Pick a theme idea from my ideas in THEMES.md and implement it entirely on your own, without asking me anything. You have a free hand in how, but follow the rules in CLAUDE.md. Built the balloons idea. (1249eda) → http://localhost:8765/?m=10&look=balloons (one pops each minute and its string dangles from the knot; tap a balloon to nudge it; also &m=60, &m=1, &passed=6)
 
 - [x] Update the `/later` skill so that it no longer keeps the user's wording, but describes each new task in its own words in good English (the repo is public, and CLAUDE.md already says so); the skill file itself stays untouched until this task is picked up. (b41ce8f) → no visual change
 

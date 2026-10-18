@@ -101,7 +101,7 @@
   /* the away text stays on one line (smaller on a narrow phone), so the height never changes with "I'm back" */
   #pause, #askQ { padding: 10px 12px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: min(15px, 3.6vw); }
   /* space between pause and exit, so a tap meant for one doesn't hit the other */
-  #pause, #askQ { margin-bottom: 16px; }
+  #pause, #askQ { margin-bottom: 10px; }
   #run .foot #exit, #run .foot .askRow > .exit { padding-top: 6px; }
   .askRow { display: flex; }
   /* the middle of the row (where Exit was) is a dead spot, so a double tap on Exit can never land on Yes */
@@ -285,10 +285,9 @@
     { name: 'balloons', live: true, goneScale: 1, goneDim: 0, goneMs: 1500, goneLinear: true,
       lay: balloons, pos: balloonPos, item: balloon, tap: balloonTap, before: balloonStrings,
       halo: (X, p, q) => ({ rx: X.d * 0.56 * p.s, ry: X.d * 0.66 * p.s, rot: q ? q.r : 0 }) },
-    // penguins on an ice floe: each minute one waddles to the edge and dives in, then bobs in the water; tap one and it flaps and hops; asleep while paused
-    { name: 'penguins', live: true, goneScale: 1, goneDim: 0, goneMs: 3200, goneLinear: true,
-      lay: penguins, pos: penguinPos, item: penguin, tap: penguinTap, before: iceFloe,
-      halo: (X, p, q) => ({ rx: X.d * 0.6, ry: X.d * 0.78, rot: q && q.r ? q.r : 0 }) },
+    // penguins on an ice floe: each minute one waddles to the edge and dives in, then bobs in the water; tap one and it honks, flaps and hops (no ring); asleep while paused
+    { name: 'penguins', live: true, playable: true, noRing: true, goneScale: 1, goneDim: 0, goneMs: 3200, goneLinear: true,
+      lay: penguins, pos: penguinPos, item: penguin, tap: penguinTap, before: iceFloe },
   ];
   const MODES = ALL_MODES.filter(m => !m.off);
 
@@ -2451,7 +2450,26 @@
     const u = Math.min(1, (g - 0.55) / 0.2);
     return { x: lerp(p.ex, p.wx, u), y: lerp(p.ey, p.wy, u) - Math.sin(Math.PI * u) * d * 0.6, r: p.dir * u * u * 2.3, s: 1 - 0.55 * u * u, walk: 1 };
   }
-  function penguinTap(G, i) { G.pts[i].tk = performance.now(); }
+  function penguinTap(G, i) { G.pts[i].tk = performance.now(); penguinCall(); }
+  // a penguin's honk: two nasal calls, a short one and a longer one ("ha-haah"), a little different every time
+  function penguinCall() {
+    if (!audio || pausedAt) return;   // quiet while paused
+    const a = audio, t0 = a.currentTime + 0.01, k = 0.88 + Math.random() * 0.28;
+    const bp = a.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1300 * k; bp.Q.value = 2.5;
+    bp.connect(a.destination);
+    const honk = (t, dur, f0, f1) => {
+      const o = a.createOscillator(), g = a.createGain(), lfo = a.createOscillator(), lg = a.createGain();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(f0, t); o.frequency.linearRampToValueAtTime(f1, t + dur * 0.35); o.frequency.linearRampToValueAtTime(f0 * 0.85, t + dur);
+      lfo.frequency.value = 30; lg.gain.value = f0 * 0.05; lfo.connect(lg).connect(o.frequency);   // the rough, buzzy wobble
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.09, t + 0.02);
+      g.gain.setValueAtTime(0.09, t + dur * 0.6); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g).connect(bp);
+      o.start(t); o.stop(t + dur + 0.02); lfo.start(t); lfo.stop(t + dur + 0.02);
+    };
+    honk(t0, 0.09, 500 * k, 680 * k);
+    honk(t0 + 0.13, 0.24, 540 * k, 800 * k);
+  }
   // belly and face mask: light against the body (the palette's light colour; if body and text are the same, the background)
   const penguinBelly = (P, col) => P.text === P.fg ? P.bg : P.dark ? mix(P.text, col, 0.1) : P.bg;
   function penguinFace(c, d, belly, eyeCol, beak, closed) {

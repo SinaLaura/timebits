@@ -260,7 +260,7 @@
   const ALL_MODES = [
     { name: 'dots',     off: true, shape: 'circle',  lay: (n, w, h) => grid(n, w, h, 1.6, 1.6) },
     { name: 'squares',  off: true, shape: 'square',  lay: (n, w, h) => grid(n, w, h, 1.5, 1.5) },
-    { name: 'snake', snd: 'snake',    shape: 'circle',  body: 0.42, eyes: true, glance: snakeGlance, lay: (n, w, h) => grid(n, w, h, 1.45, 1.45, { snake: true, pad: 1.5 }), after: snakeFace, tap: snakeTap },
+    { name: 'snake', snd: 'snake', pitchGrid: true, shape: 'circle',  body: 0.42, eyes: true, glance: snakeGlance, lay: (n, w, h) => grid(n, w, h, 1.45, 1.45, { snake: true, pad: 1.5 }), after: snakeFace, tap: snakeTap },
     { name: 'spiral', snd: 'spiral',   shape: 'circle',  guide: 'path', lay: spiral },
     { name: 'clock', snd: 'clock',    shape: 'circle',  guide: 'ring', lay: ring },
     { name: 'bars',     off: true, shape: 'bar',     lay: (n, w, h) => grid(n, w, h, 1.8, 3.6, { max: 65 }) },
@@ -2067,22 +2067,31 @@
   // (WebAudio, so the phone's silent switch mutes them like the end tone)
   const CALM = [392, 440, 523.25, 587.33, 659.25, 783.99, 880, 1046.5];
   let lastCalm = -1;
+  // a theme with pitchGrid: true plays its note by where the item sits on the screen instead of at random, like a keyboard laid out
+  // in rows (the same pentatonic notes, A3 to C6): top left is the highest, bottom right the lowest, each row two steps below the one above
+  const GRID_NOTES = [220, 261.63, 293.66, 329.63, 392, 440, 523.25, 587.33, 659.25, 783.99, 880, 1046.5], GRID_COLS = 6, GRID_ROWS = 4;
+  function gridNote(x, y) {
+    const col = Math.min(GRID_COLS - 1, Math.max(0, Math.floor(x / W * GRID_COLS))), row = Math.min(GRID_ROWS - 1, Math.max(0, Math.floor(y / H * GRID_ROWS)));
+    return GRID_NOTES[(GRID_ROWS - 1 - row) * 2 + (GRID_COLS - 1 - col)];
+  }
   // a first tap creates the audio context while the browser may not count the tap as a gesture yet (mouse: only once the button
   // went down), so the note waits and is played the moment the context really runs (or when the tap ends)
   let chimeWait = null;
   function playWaiting() {
     if (!chimeWait || !audio) return;
-    audio.resume().then(() => { const k = chimeWait; chimeWait = null; if (k && audio.state === 'running' && performance.now() - k.at < 1500) tapChime(k.kind); }).catch(() => {});
+    audio.resume().then(() => { const k = chimeWait; chimeWait = null; if (k && audio.state === 'running' && performance.now() - k.at < 1500) tapChime(k.kind, k.pos); }).catch(() => {});
   }
   document.addEventListener('pointerup', playWaiting);
   document.addEventListener('click', playWaiting);
-  function tapChime(kind) {
+  // pos = {x, y} of the item on the stage: the note follows the place (pitchGrid themes); without it a random note
+  function tapChime(kind, pos) {
     if (!audio || pausedAt) return;   // quiet while paused
-    if (audio.state !== 'running') { chimeWait = { kind, at: performance.now() }; playWaiting(); return; }
+    if (audio.state !== 'running') { chimeWait = { kind, pos, at: performance.now() }; playWaiting(); return; }
     const a = audio, t = a.currentTime + 0.01;
-    let k; do k = Math.floor(Math.random() * CALM.length); while (k === lastCalm);
-    lastCalm = k;
-    const f = CALM[k], out = a.createGain();
+    let f;
+    if (pos) f = gridNote(pos.x, pos.y);
+    else { let k; do k = Math.floor(Math.random() * CALM.length); while (k === lastCalm); lastCalm = k; f = CALM[k]; }
+    const out = a.createGain();
     out.gain.value = 0.55;
     out.connect(a.destination);
     // a short soft echo so it feels like space, not a click
@@ -2937,7 +2946,11 @@
         tints.set(i, { from: tn ? tn.to : base, to: nudge(base), t0: now });
       }
       if (M.tap) M.tap(geo, i);
-      if (M.snd) tapChime(M.snd);
+      if (M.snd) {
+        // the item's own place (not the exact finger spot), so tapping the same item always gives the same note
+        const p = geo.pts[i];
+        tapChime(M.snd, M.pitchGrid ? { x: p.cx === undefined ? p.x : p.cx, y: p.cy === undefined ? p.y : p.cy } : null);
+      }
       if (navigator.vibrate) navigator.vibrate(8);
       kick();
     } else if (onLeftover(x, y) || !onDrawing(x, y)) restyle();

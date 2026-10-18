@@ -12,7 +12,7 @@ Varianten zum Vergleichen (`lab: true` in `ALL_MODES`): nur über `?look=<name>`
 |---|---|---|
 | 0 | dots | Punkt schrumpft zu grauem Punkt |
 | 1 | squares | Quadrat schrumpft |
-| 2 | snake | Schlange zieht den Schwanz ein; Antippen = Kopf reagiert (lächeln, traurig mit Träne oder Zunge züngeln), pro Durchlauf zufällig gewählt und dann immer gleich; Augen schauen geradeaus und beim Antippen kurz in Kopfrichtung (fernes Auge wandert mehr), Zunge kommt vorne raus, Rand lässt Platz für die Zunge |
+| 2 | snake | Schlange zieht den Schwanz ein; Antippen = Kopf reagiert (lächeln, traurig mit Träne oder Zunge züngeln), pro Durchlauf zufällig gewählt und dann immer gleich; Augen schauen geradeaus und beim Antippen kurz in Kopfrichtung (fernes Auge wandert mehr), Zunge kommt vorne raus, Rand lässt Platz für die Zunge; Test (`pitchGrid: true`): die Tonhöhe hängt vom Ort des Items ab statt vom Zufall, wie ein Tastenfeld aus 6 × 4 Feldern (Pentatonik A3 bis C6, oben links am höchsten, unten rechts am tiefsten, jede Reihe zwei Stufen tiefer); die übrigen Themes mit Ton spielen noch zufällige Töne, bis der User entscheidet |
 | 3 | spiral | Spirale läuft von außen nach innen ab |
 | 4 | clock | Punkt im Uhr-Kreis erlischt |
 | 5 | bars | Balken schrumpft |

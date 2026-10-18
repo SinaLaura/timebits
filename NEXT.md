@@ -10,10 +10,10 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## In progress
 
-- [ ] [solo, quick] Tower: the look is good, but make the floors taller so the building feels more like a skyscraper. (next-2302, started 23:02)
 
 ## To review
 
+- [ ] Tower: the look is good, but make the floors taller so the building feels more like a skyscraper. (01dc4c4) → http://localhost:8765/preview.html?look=tower&m=12&gone=1 (floors are now 1.2× as high as an apartment is wide, instead of 0.78×, with taller windows. The building is also slimmer, with fewer columns and more floors, and roof and lobby keep their old size. Compare m=5, m=12 and m=60, and a wide window.)
 - [ ] Turn the chocolate theme into a high-rise building theme, since the bar already almost looks like one: the pieces become apartments on the floors of a tower, and each minute one apartment falls down. Be creative with it. (7fd3ec1) → http://localhost:8765/preview.html?look=tower&m=12&gone=1 (the look is now called `tower`. Each apartment has a lit window with something inside: curtains, a plant, a lamp, a cat or blinds. Each minute one on the top floor wiggles, pops out of the facade and tumbles off the screen, leaving its empty concrete frame. Once a floor is empty, the roof with its blinking antenna drops onto the floor below. If the last floor isn't full, it sits on top as a narrower penthouse. Tap an apartment: its light flicks off for a moment. Pause: the lights go out one by one. My own choices: it stays narrow even in a wide window, and the chocolate code is gone. Try "A minute is over" twice to see the roof drop, also m=60.)
 
 ## Done

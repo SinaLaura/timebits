@@ -63,9 +63,12 @@
   #minVal, #timeVal { text-align: center; font-size: 64px; font-weight: 700; color: var(--fg); }
   #minVal { width: 150px; -moz-appearance: textfield; }
   #minVal::-webkit-inner-spin-button, #minVal::-webkit-outer-spin-button { -webkit-appearance: none; }
-  #timeVal { display: block; width: 190px; font-size: 56px; font-variant-numeric: tabular-nums; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  #timeVal { display: block; font-size: min(56px, 13vw); font-variant-numeric: tabular-nums; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
   /* the phone's own time picker lies invisibly over the time: a tap on it opens the picker, and the time can't be selected or copied */
-  #timeBox { position: relative; }
+  #timeBox { position: relative; display: flex; align-items: center; gap: 8px; }
+  @media (min-width: 360px) { #timeBox { padding-left: 30px; } }   /* as much room on the left as the clock takes on the right, so the time stays centred */
+  /* a small clock beside the time says "this is a clock, tap to pick" (the hidden picker's own icon doesn't show) */
+  #timeBox .clock { width: 22px; height: 22px; flex: none; fill: none; stroke: var(--fg); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; opacity: .55; }
   #timePick { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px; cursor: pointer; -webkit-user-select: none; user-select: none; }
   #timePick::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: auto; height: auto; opacity: 0; cursor: pointer; }
   /* the short line under Minutes / Time: when it ends, or how long it runs */
@@ -151,7 +154,7 @@
       <div id="timePane" class="pane" hidden>
         <div class="stepper">
           <button type="button" class="step" data-for="time" data-d="-1" aria-label="earlier">−</button>
-          <div id="timeBox"><span id="timeVal" aria-hidden="true"></span><input id="timePick" type="time" aria-label="Time"></div>
+          <div id="timeBox"><span id="timeVal" aria-hidden="true"></span><svg class="clock" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 6.5V12l3.5 2.2"/></svg><input id="timePick" type="time" aria-label="Time"></div>
           <button type="button" class="step" data-for="time" data-d="1" aria-label="later">+</button>
         </div>
         <p id="timeHint" class="hint muted"></p>

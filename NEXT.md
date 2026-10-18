@@ -10,17 +10,17 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## In progress
 
-- [ ] [solo, big] Cinema: no pulse ring when a person is tapped. Instead the person throws their hands up above their head, as if annoyed, with a matching sound. (next-2302, started 00:03)
-- [ ] [solo, quick] Thermometer: the pulse ring around a tapped segment has an odd shape; give it one that fits the segment. (next-2302, started 00:03)
-- [ ] [solo, quick] Ducks: no pulse ring around a tapped duckling. (next-2302, started 00:03)
-- [ ] [solo, quick] Spider: no pulse ring around a tapped leg (it looks odd), and make each leg tappable along its whole length, not just in one spot. (next-2302, started 00:03)
 
 
 ## To review
 
+- [ ] Cinema: no pulse ring when a person is tapped. Instead the person throws their hands up above their head, as if annoyed, with a matching sound. (382192e) → http://localhost:8765/preview.html?look=cinema&m=12 (tap a person: no ring. Both arms shoot up above the head with fists and shake for about a second, the head shakes along, and a short low grumble plays, "hmpf hmpf". My own choices: the gesture and the sound.)
+- [ ] Thermometer: the pulse ring around a tapped segment has an odd shape; give it one that fits the segment. (382192e) → http://localhost:8765/preview.html?look=thermometer&m=12 (tap a segment: the outline is now a rounded rectangle hugging the segment instead of a circle; also try m=60, where the segments are thin)
+- [ ] Spider: no pulse ring around a tapped leg (it looks odd), and make each leg tappable along its whole length, not just in one spot. (382192e) → http://localhost:8765/preview.html?look=spider&m=12 (no ring any more. A tap anywhere along a leg, from the body over the knee to the foot, with a finger's width of room, counts for that leg; the body itself still gives the spider's own reaction. Checked: a tap just beside a foot counts for the leg instead of changing the look.)
 
 ## Done
 
+- [x] Ducks: no pulse ring around a tapped duckling. (382192e) → http://localhost:8765/preview.html?look=ducks&m=25
 - [x] Check which themes don't need the pulse ring around an item when it is tapped, especially advanced themes whose items already react strongly (e.g. the tower's apartments). Implement the suggested changes and give before/after preview links to compare. (d5eccf9) → http://localhost:8765/preview.html?look=tower~ring,tower&m=12
 - [x] Ducks, feedback on 480e5ed: the leaving duckling should take longer to leave, about 3 to 5 seconds, and must not take the shortest way out (right now it heads for the nearest edge). (54420d0) → http://localhost:8765/preview.html?look=ducks&m=25
 - [x] Turn the chocolate theme into a high-rise building theme, since the bar already almost looks like one: the pieces become apartments on the floors of a tower, and each minute one apartment falls down. Be creative with it. (7fd3ec1) → http://localhost:8765/preview.html?look=tower&m=12&gone=1

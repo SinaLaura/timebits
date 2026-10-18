@@ -8,7 +8,7 @@ Work through `NEXT.md` (repo root). Follow [CLAUDE.md](../../../CLAUDE.md) for e
 
 ## Modes
 
-Read the argument `$ARGUMENTS` for these words (any order, case doesn't matter, German synonyms are fine). Pick one word per group, or none for the default. If a group has two conflicting words, ask which one.
+Read the argument `$ARGUMENTS` for these words (any order, case doesn't matter, German synonyms are fine, a leading `/` or `-` is ignored, so `/next /co /quick` means the same as `/next co quick`). Pick one word per group, or none for the default. If a group has two conflicting words, ask which one.
 
 - **Who is needed**
   - `solo` (default): do everything you can **without the user**. Skip items that need them (see below); never wait for an answer.

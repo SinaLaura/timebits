@@ -727,7 +727,7 @@
       pts.push({ slot: slot[i], off, x: q.x, y: q.y });
     }
     // speed: small ducklings (many minutes) still go once round the pond in about 35 s, so they never seem to crawl
-    return { pts, d, duck: { path, gap, lead, mom, s: start, speed: Math.max(d * 0.9, path.len / 35), look: null, mx: 0, my: 0 } };
+    return { pts, d, duck: { path, gap, lead, mom, edge: m, s: start, speed: Math.max(d * 0.9, path.len / 35), look: null, mx: 0, my: 0 } };
   }
 
   // a hedgehog facing right; spines in rows over its back, the outer row falls first
@@ -2123,25 +2123,34 @@
         if (X.still || X.gone(i) >= 1) { p.out = true; continue; }   // already gone before this layout
         const q = pathAt(D.path, D.s - p.off);
         p.x = q.x; p.y = q.y;
-        // it leaves by a middle way: out over the nearest edge (the line runs round the pond inside it, so it crosses no one),
-        // but slanting off at about 45 degrees instead of straight out
-        const out = [[p.x, Math.PI], [W - p.x, 0], [p.y, -Math.PI / 2], [H - p.y, Math.PI / 2]].sort((a, b) => a[0] - b[0])[0];
-        const slant = (Math.random() < 0.5 ? -1 : 1) * 0.8, run = (out[0] + d * 1.2) / Math.cos(slant);
-        // fast enough to be off the screen in about 3.5 s (its leave time, goneMs, is 4.5 s)
-        p.lost = { t: 0, h: q.a, turn: 0, aim: out[1] + slant, v: Math.max(d * 1.2, run / 2.4) };
+        // it leaves by a middle way, never across the line: out into the strip between the line and the nearest edge,
+        // along that strip (outside the others) to the nearer corner, and off the screen there
+        const S = D.edge * 0.5, sides = [
+          [p.x, [S, p.y], [0, 1]], [W - p.x, [W - S, p.y], [0, 1]],
+          [p.y, [p.x, S], [1, 0]], [H - p.y, [p.x, H - S], [1, 0]]];
+        const [, a, t] = sides.sort((u, w) => u[0] - w[0])[0];
+        // towards the nearer corner: + or - along the edge
+        const sg = t[0] ? (a[0] < W / 2 ? -1 : 1) : (a[1] < H / 2 ? -1 : 1);
+        const b = t[0] ? [sg < 0 ? -d * 2 : W + d * 2, a[1]] : [a[0], sg < 0 ? -d * 2 : H + d * 2];
+        const run = Math.hypot(a[0] - p.x, a[1] - p.y) + Math.hypot(b[0] - a[0], b[1] - a[1]);
+        // its speed makes the whole way take about 4 s (3 to 5 s; its leave time, goneMs, is 4.5 s)
+        p.lost = { t: 0, h: q.a, turn: 0, wp: [a, b], v: Math.max(d * 0.5, run / 3.1) };
       }
-      // lost: for a moment it dawdles and looks around, then it paddles off the screen, turning on a gentle curve
+      // lost: for a moment it dawdles and looks around, then it paddles off from one waypoint to the next
       const L = p.lost;
       L.t += dt;
       let v;
-      if (L.t < 0.8) {
+      if (L.t < 0.6) {
         L.turn = Math.max(-1.8, Math.min(1.8, (L.turn + (Math.random() - 0.5) * 10 * dt) * (1 - dt * 0.5)));
         L.h += L.turn * dt;
         v = d * 0.15;
       } else {
-        // it turns first and only speeds up once it faces outwards, so it never bumps into its neighbours in the line
-        L.h = turnTo(L.h, L.aim, 3 * dt);
-        v = L.v * Math.min(1, 0.35 + (L.t - 0.8) * 1.1) * (0.15 + 0.85 * Math.max(0, Math.cos(angDiff(L.h, L.aim))));
+        const w = L.wp[0];
+        if (L.wp.length > 1 && Math.hypot(w[0] - p.x, w[1] - p.y) < Math.max(d * 0.4, L.v * dt * 2)) L.wp.shift();
+        const aim = Math.atan2(L.wp[0][1] - p.y, L.wp[0][0] - p.x);
+        // it turns first and only speeds up once it faces where it goes, so it never bumps into its neighbours in the line
+        L.h = turnTo(L.h, aim, 4 * dt);
+        v = L.v * Math.min(1, 0.35 + (L.t - 0.6) * 1.5) * (0.15 + 0.85 * Math.max(0, Math.cos(angDiff(L.h, aim))));
       }
       p.x += Math.cos(L.h) * v * dt;
       p.y += Math.sin(L.h) * v * dt;

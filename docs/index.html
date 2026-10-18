@@ -426,24 +426,34 @@
     return { pts, d: n ? sw / n : 20, flower: { cx, cy, R, rc } };
   }
 
-  // petals in layers around a centre (inner layers first, so the outer petals fall first): many thin layers instead of a few thick ones,
-  // and every layer gets its own shade, fading towards the colour of the core on the inside
+  // the petal shape of each layer, counted from the outside: ex = how blunt (2 = ellipse, more = rounder tip), tp = how much wider towards the tip,
+  // wr = width of the layer's petals (1 = as thick as the room allows)
+  const PETAL_SHAPES = [
+    { ex: 2.5, tp: 0.15, wr: 1 },      // broad, round-tipped
+    { ex: 2.0, tp: 0, wr: 0.8 },       // slimmer oval
+    { ex: 2.8, tp: 0.35, wr: 1 },      // spoon: broad, blunt tip
+    { ex: 2.0, tp: -0.2, wr: 0.7 },    // narrow, tapering to the tip
+    { ex: 2.4, tp: 0.25, wr: 0.9 },
+    { ex: 2.0, tp: 0, wr: 0.75 },
+  ];
+  // petals in layers around a centre (inner layers first, so the outer petals fall first): one layer for a short time, more when needed (one
+  // per 25 minutes, at most 6); every layer has its own petal shape and its own shade, fading towards the colour of the core on the inside
   function flowerLayers(n, w, h) {
     const cx = w / 2, cy = h * 0.38, R = Math.min(w * 0.46, h * 0.34), rc = R * 0.2, rnd = seeded(n);
-    const L = Math.max(1, Math.min(n, 6, Math.ceil(n / 40))), pts = [];
+    const L = Math.max(1, Math.min(n, 6, Math.ceil(n / 25))), pts = [];
     for (let j = 0; j < L; j++) {
-      const m = Math.floor(n / L) + (j < n % L ? 1 : 0);
+      const m = Math.floor(n / L) + (j < n % L ? 1 : 0), sh = PETAL_SHAPES[L - 1 - j];
       const tip = L === 1 ? R : R * (0.5 + 0.5 * j / (L - 1)), len = tip - rc * 0.5, mid = rc * 0.5 + len / 2;
-      const wid = Math.min(len * 0.5, TAU * mid / m * 2), shade = L === 1 ? 0 : 0.26 * (1 - j / (L - 1));
+      const wid = Math.min(len * 0.5, TAU * mid / m * 1.15) * sh.wr, shade = L === 1 ? 0 : 0.26 * (1 - j / (L - 1));
       // within a layer the petals fall in a scattered order (golden angle), so it thins out evenly instead of going bald on one side
       const fall = Array.from({ length: m }, (_, t) => t).sort((a, b) => (a * 0.6180339887) % 1 - (b * 0.6180339887) % 1);
       const slot = []; fall.forEach((t, r) => { slot[t] = r; });   // t = turn of falling (0 = first), r = place in the layer
       for (let k = 0; k < m; k++) {
-        // every petal is a little different: length, width, how blunt the tip is, how much wider it gets towards the tip, a slight turn
+        // inside the layer's shape every petal is a little different: length, width, bluntness, widening, a slight turn
         const a = -Math.PI / 2 + (slot[m - 1 - k] + (j % 2) * 0.5 + (rnd() - 0.5) * 0.25) * TAU / m;
         const pl = len * (0.94 + 0.06 * rnd()), pw = wid * (0.9 + 0.2 * rnd()), pm = rc * 0.5 + pl / 2;
         pts.push({
-          x: cx + Math.cos(a) * pm, y: cy + Math.sin(a) * pm, a, len: pl, wid: pw, hr: pl * 0.45, shade, ex: 2.2 + 0.5 * rnd(), tp: 0.1 + 0.2 * rnd(),
+          x: cx + Math.cos(a) * pm, y: cy + Math.sin(a) * pm, a, len: pl, wid: pw, hr: pl * 0.45, shade, ex: sh.ex + 0.3 * (rnd() - 0.5), tp: sh.tp + 0.1 * (rnd() - 0.5),
           lx: w * (0.08 + 0.84 * rnd()), ly: h - pw * 0.55 - rnd() * 8, la: (rnd() - 0.5) * 0.8, sway: rnd() * TAU,
         });
       }
@@ -1231,7 +1241,7 @@
     c.beginPath(); c.ellipse(x, y, p.len / 2 * k, p.wid / 2 * k, q ? q.r : p.a, 0, TAU); c.fill();
   }
   // a rounded petal, no sharp tip: a slightly squared-off oval (p.ex: 2 = ellipse, more = blunter), wider towards the tip (p.tp).
-  // Thick petals overlap a lot, so each one gets a thin, soft outline (its colour towards the background) to stay readable as a petal
+  // flat colour, no outline: the layers are told apart by their shade and their shape
   function layerPetal(X, i, x, y, k, q, p, fill) {
     const c = X.c, rot = q ? q.r : p.a, cs = Math.cos(rot), sn = Math.sin(rot), A = p.len / 2 * k, B = p.wid / 2 * k, e = 2 / p.ex;
     if (p.shade) c.fillStyle = mix(fill, X.P.bg, p.shade * (1 - p.g));
@@ -1243,7 +1253,6 @@
       if (s) c.lineTo(px, py); else c.moveTo(px, py);
     }
     c.closePath(); c.fill();
-    c.strokeStyle = mix(c.fillStyle, X.P.bg, 0.55); c.lineWidth = Math.max(1, p.wid * k * 0.03); c.stroke();
   }
   function stem(X) {
     const { c, P } = X, F = X.geo.flower;

@@ -2432,11 +2432,13 @@
     if (!p.g) { c.fillStyle = X.P.dim; rr(c, x - s * 0.5, y + s * 0.12, s, s * 0.42, s * 0.12); c.fill(); }   // own seat hides the legs
   }
   function cinemaTap(G, i) { G.pts[i].tk = performance.now(); grumble(); }
-  // a viewer who hates the movie; three angry voices to choose from (test-cinema-sounds.html), the rest goes once one is picked
-  let angryKind = 'argh';
-  function grumble(kind) {
+  // a viewer who hates the movie: an angry "Argh!" or "Grrr", drawn once each time the cinema appears and the same for every tap
+  let angryRun = -1, angryKind = 'argh';
+  function grumble() {
+    if (!audio && !pausedAt) unlockAudio();   // the very first tap creates the sound (it is a tap, so the browser allows it)
     if (!audio || pausedAt) return;   // quiet while paused
-    ANGRY[kind || angryKind](audio, audio.currentTime + 0.01);
+    if (angryRun !== born) { angryRun = born; angryKind = Math.random() < 0.5 ? 'argh' : 'grrr'; }
+    ANGRY[angryKind](audio, audio.currentTime + 0.01);
   }
   function env(a, t, peak, att, dur) {
     const g = a.createGain();
@@ -2470,8 +2472,6 @@
     argh: (a, t) => angryVoice(a, t, { dur: 0.6, gain: 0.5, att: 0.04, f0: [[0, 190], [0.12, 260], [0.6, 150]], form: [[750, 6, 1], [1250, 8, 0.6], [2600, 10, 0.25]], growl: 0.7, growlHz: 34, rasp: 3, breath: 0.2 }),
     // "Grrr": a low growl with a rolled r
     grrr: (a, t) => angryVoice(a, t, { dur: 0.7, gain: 0.55, att: 0.06, f0: [[0, 105], [0.35, 120], [0.7, 90]], form: [[480, 5, 1], [1300, 7, 0.5], [2400, 9, 0.2]], growl: 0.95, growlHz: 26, rasp: 4, breath: 0.1 }),
-    // "Ugh! Ugh!": two short disgusted grunts
-    ugh: (a, t) => { for (const [dt, f] of [[0, 210], [0.3, 180]]) angryVoice(a, t + dt, { dur: 0.24, gain: 0.5, att: 0.015, f0: [[0, f], [0.24, f * 0.7]], form: [[640, 6, 1], [1190, 8, 0.6], [2400, 10, 0.2]], growl: 0.5, growlHz: 40, rasp: 3, breath: 0.25 }); },
   };
   function cinemaScreen(X) {
     const { c, P, pts } = X, S = X.geo.cinema;
@@ -3613,8 +3613,6 @@
     const d = e.data;
     if (!d || typeof d !== 'object') return;
     if (d.timebits === 'info' && e.source) e.source.postMessage({ timebits: 'info', modes: MODES.map(m => m.name), palettes: PALETTES.length }, '*');
-    // {timebits: 'angry', kind}: the cinema's annoyed sound to use from now on, played once right away (test-cinema-sounds.html)
-    if (d.timebits === 'angry' && ANGRY[d.kind]) { angryKind = d.kind; unlockAudio(); if (audio) audio.resume().then(() => grumble()).catch(() => {}); }
     // {timebits: 'state'}: minutes in the picture and in "N left", and ms left (for checking when items leave)
     if (d.timebits === 'state' && e.source) e.source.postMessage({ timebits: 'state', pic: shownMin, text: textMin, left: end - Date.now(), leaving: [...goneAt.keys()] }, '*');
     if (d.timebits === 'minute' && end && !$('run').hidden && !doneTimer) {

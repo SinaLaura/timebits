@@ -10,10 +10,11 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 - [ ] [needs you, big] (Last task, only when everything else is done.) The chocolate bar theme is hard to understand and feels strange. Come up with something better.
 - [ ] [solo, big] (Last task, only when everything else is done.) Pick a theme idea from my ideas in THEMES.md and implement it entirely on your own, without asking me anything. You have a free hand in how, but follow the rules in CLAUDE.md.
 - [ ] [solo, big] (Last task, only when everything else is done.) Design another cool theme entirely on your own, a new idea of yours (not one from THEMES.md). I will review it tomorrow.
-- [ ] Update the `/later` skill so that it no longer keeps the user's wording, but describes each new task in its own words in good English (the repo is public, and CLAUDE.md already says so); the skill file itself stays untouched until this task is picked up.
+- [ ] [solo, quick] Flower theme: try a variant with a single layer of petals instead of several layers. Open it on localhost next to the current look, so I can compare the two and decide whether I like it.
 
 ## In progress
 
+- [ ] [solo, quick] Update the `/later` skill so that it no longer keeps the user's wording, but describes each new task in its own words in good English (the repo is public, and CLAUDE.md already says so); the skill file itself stays untouched until this task is picked up. (Claude Sonnet 5.5, started 11:56)
 
 ## Done
 

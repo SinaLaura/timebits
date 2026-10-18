@@ -1,4 +1,4 @@
-# Timebits (Ordner „countdown“) – Regeln
+# Timebits (Ordner „timebits“, früher „countdown“) – Regeln
 
 Generelle Regeln für diese App. Gelten immer, wenn der User nichts Genaueres sagt.
 Neue generelle Wünsche des Users hier ergänzen. Theme-Ideen und -Stand stehen in [THEMES.md](THEMES.md), mögliche künftige Probleme in [RISKS.md](RISKS.md).

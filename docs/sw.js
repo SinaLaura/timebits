@@ -1,5 +1,5 @@
 // Offline support: always try the network first (so updates show up), fall back to the cache.
-const CACHE = 'timebits-v120';
+const CACHE = 'timebits-v121';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

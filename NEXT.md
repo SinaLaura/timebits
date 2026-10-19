@@ -9,11 +9,10 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## In progress
 
-- [ ] [needs you, big] First-time users don't seem to realise that tapping changes the look. Check whether the finger tap demo is still shown to them, and propose (and preview) a way to make sure new users understand it. (next-2302, started 09:54)
-
 
 ## To review
 
+- [ ] First-time users don't seem to realise that tapping changes the look. Check whether the finger tap demo is still shown to them, and propose (and preview) a way to make sure new users understand it. (5ea34c2) → http://localhost:8765/preview.html?raw=m=10%26hint&look=snake (the finger demo was only ever on its preview page, so new users saw nothing. As you chose, the same finger with "tap the void" is now in the app: a few seconds into a countdown it glides to an empty spot and shows a tap with a ripple, without changing anything, and repeats. Any tap of your own ends it for that countdown; once the look has been changed by a tap, the device remembers it and the hint never shows again. My own additions: it checks right before the tap that the spot is still empty (moving looks), and in the preview &hint shows it even on a browser that has tapped before. Not tried on a phone.)
 
 ## Done
 

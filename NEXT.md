@@ -12,10 +12,10 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## To review
 
-- [ ] Start screen: the three modes (Minutes / Time / Pomodoro) should sit on the same line height and stay in place when switching, instead of shifting around, which looks messy. (1002bc5) → http://localhost:8765/preview.html?raw=start (switch between the three modes: the label and the mode row no longer move, and neither do − / + and the line below between Minutes and Time. My choice: the space below the mode row is always as tall as the Pomodoro rows and Minutes / Time hang from its top, so Minutes now sits higher with more empty space above Start. Windows under 580 px tall keep the old centring.)
 
 ## Done
 
+- [x] Start screen: the three modes (Minutes / Time / Pomodoro) should sit on the same line height and stay in place when switching, instead of shifting around, which looks messy. (1002bc5) → http://localhost:8765/preview.html?raw=start (label, mode row, − / + and the line below stay put when switching)
 - [x] First-time users don't seem to realise that tapping changes the look. Check whether the finger tap demo is still shown to them, and propose (and preview) a way to make sure new users understand it. (5ea34c2) → http://localhost:8765/preview.html?raw=m=10%26hint&look=snake
 - [x] Cinema, feedback on 1ac87d5: none of the four candidate sounds work. A tapped person should sound angry, like a viewer who really doesn't like the movie. Kept two angry voices, "Argh!" and "Grrr"; each time the cinema appears one of them is drawn and used for every tap. (e68a47d) → http://localhost:8765/preview.html?look=cinema&m=12
 - [x] Thermometer: the pulse ring around a tapped segment has an odd shape; give it one that fits the segment. (382192e) → http://localhost:8765/preview.html?look=thermometer&m=12 (tap a segment: the outline is now a rounded rectangle hugging the segment instead of a circle; also try m=60, where the segments are thin)

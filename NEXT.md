@@ -9,6 +9,7 @@ Claude picks up the top open item whenever it is free, moves it to **In progress
 
 ## In progress
 
+- [ ] [solo, quick] Start screen: the three modes (Minutes / Time / Pomodoro) should sit on the same line height and stay in place when switching, instead of shifting around, which looks messy. (next-1329, started 13:29)
 
 ## To review
 

@@ -79,6 +79,12 @@ New entries are added whenever someone notices one (rule in [CLAUDE.md](CLAUDE.m
 - **When it could bite:** Someone with a dark phone wants to see the bright palettes and never can. A browser that reports the setting wrongly, or a desktop with a fixed dark setting, only gets the dark group.
 - **Way out:** Mix a few light palettes into the dark phone's rotation, or add a small switch for it.
 
+### The start screen keeps room for the Pomodoro rows
+- **Decision:** So the label and the Minutes / Time / Pomodoro row never move when switching, the area under the mode row is always as tall as the Pomodoro rows; Minutes and Time hang from its top. This only applies in windows at least 580 px tall (the whole Pomodoro screen needs about 565 px); shorter windows keep the old centring.
+- **Why it is fine now:** The app is portrait-only, and phones in the app or in fullscreen are much taller than 580 px.
+- **When it could bite:** In a short window (a small phone with browser bars, a landscape tablet, a low laptop window) the mode row still jumps, and Pomodoro squeezes the Start button because its rows don't fit (that was already so before). If more Pomodoro rows are added, the threshold has to grow with them, and Minutes gets an even larger empty space below it.
+- **Way out:** Shrink the gaps and steppers on short screens (height media queries), or let the start screen scroll; raise the 580 px in `docs/index.html` when the Pomodoro block grows.
+
 ## Resolved
 
 Nothing yet.

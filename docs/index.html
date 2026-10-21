@@ -960,15 +960,17 @@
     ls.set('timebits-label', label);
     pomo = -1;
     byTime = false;
-    if (mode === 'pomo') beginPomo(0);
+    if (mode === 'pomo') { startSession(POMO.focus); beginPomo(0); }
     else if (mode === 'time') {
       const t = parseTime(timeInput.value);
       if (!t) return;
       byTime = true;
+      startSession((endFromTime(t) - Date.now()) / 60000);
       begin(endFromTime(t));
     } else {
       setMinutes(+minInput.value);
       ls.set('timebits-min', minutes);
+      startSession(minutes);
       begin(Date.now() + minutes * 60000);
     }
   };
@@ -1048,7 +1050,7 @@
     show('run');
     born = performance.now();
     relayout();
-    if (ls.get('timebits-tapped') && !hintForce) hintStop(); else hint();   // new users: the finger shows how to change the look
+    hintBegin();   // new users: a finger shows what tapping does (see the first-use hint)
     clearInterval(timer);
     timer = setInterval(tick, 250);
     tick();
@@ -3189,7 +3191,7 @@
   }
 
   function restyle() {
-    ls.set('timebits-tapped', true);   // they found out how to change the look: no more finger hint
+    noteTap('look');   // they found out how to change the look
     look = { m: nextMode(look.m), p: nextPal(look.p) };
     ls.set('timebits-look', look);
     applyPalette();
@@ -3197,10 +3199,88 @@
     pulses.clear(); tints.clear();
     relayout();
   }
-  // ---- first-use hint: until the look has been changed by a tap once, a finger glides to an empty spot and shows a tap there ----
-  // ("tap the void"); it only shows, it changes nothing. Any tap of the user's own ends it for this countdown
-  let hintRun = 0, hintForce = false;
+  // ---- first-use hint: a finger shows what a tap can do; it only shows, it changes nothing ----
+  // stage 1 "tap a bit": the finger presses an item, until the user has tapped one themselves.
+  // stage 2 "tap the void": once the user has been idle for a moment (and not before they have tapped an item), the finger presses empty
+  // background (that changes the look). Counters kept on the device only decide who gets reminded again (nothing leaves the phone).
+  const HINT = {
+    IDLE: 2500,          // ms without any tap before "tap the void" shows (every tap restarts the wait)
+    BURST: 3,            // presses of the finger on an item, then it rests
+    REST: 6000,          // ms of rest between two bursts
+    ITEM_LEARNED: 10,    // this many item taps in total: never remind again
+    ITEM_QUIET: 3,       // item reminder: no item tap in the last 3 countdowns
+    LOOK_LEARNED: 3,     // this many look changes by tap: never remind again
+    LOOK_QUIET: 5,       // void reminder: no look change by tap in the last 5 countdowns
+    REMIND_MAX: 2,       // reminders in a row that had no effect, then never again
+    REMIND_GAP: 3,       // at least this many countdowns between two reminders
+  };
+  const hs = Object.assign({ starts: 0, items: 0, looks: 0, itemAt: 0, lookAt: 0, remI: 0, remV: 0, remIAt: 0, remVAt: 0 }, ls.get('timebits-hint'));
+  const hintSave = () => ls.set('timebits-hint', hs);
+  if (ls.get('timebits-tapped')) { hs.looks = Math.max(hs.looks, HINT.LOOK_LEARNED); ls.del('timebits-tapped'); hintSave(); }   // the old one-time flag
+  let hintRun = 0, hintForce = '', hintPlan = { item: false, void: false }, runItem = false, runLook = false, lastTapAt = 0;
   function hintStop() { hintRun++; $('finger').style.opacity = 0; $('fingerCap').style.opacity = 0; }
+  // the user's own taps: an item (it reacted) or the background (the look changed)
+  function noteTap(kind) {
+    if (kind === 'item') { hs.items++; hs.itemAt = hs.starts; hs.remI = 0; runItem = true; $('finger').style.opacity = 0; $('fingerCap').style.opacity = 0; }
+    else { hs.looks++; hs.lookAt = hs.starts; hs.remV = 0; runLook = true; }
+    hintSave();
+  }
+  // Start was pressed (not a reloaded or pomodoro phase): count it; the very first countdown of someone who has not tapped anything yet
+  // starts in the jar (round balls that hop when tapped), unless it is very long
+  function startSession(mins) {
+    hs.starts++;
+    hintSave();
+    if (hs.starts === 1 && !hs.items && !hs.looks && mins <= 60) {
+      look = { m: MODES.findIndex(m => m.name === 'jar'), p: nextPal(look.p) };
+      ls.set('timebits-look', look);
+      applyPalette();
+    }
+  }
+  // which stages this countdown shows (worked out once per begin(); the same countdown keeps its answer when the app is reloaded)
+  function hintDecide() {
+    if (hintForce) return { item: hintForce === 'all', void: true };
+    const s = hs.starts, plan = { item: false, void: false };
+    if (s === 0) return { item: !hs.items, void: !hs.looks };   // opened with a link (preview): nothing counted
+    if (hs.items < HINT.ITEM_LEARNED && hs.itemAt !== s) {
+      if (hs.remIAt === s) plan.item = true;
+      else if (hs.items ? s - hs.itemAt > HINT.ITEM_QUIET && hs.remI < HINT.REMIND_MAX && s - hs.remIAt >= HINT.REMIND_GAP : hs.remI < 1 + HINT.REMIND_MAX) {
+        plan.item = true; hs.remI++; hs.remIAt = s; hintSave();
+      }
+    }
+    if (hs.looks < HINT.LOOK_LEARNED && hs.lookAt !== s) {
+      if (s === 1 && !hs.looks || hs.remVAt === s) plan.void = true;
+      else if (s - hs.lookAt >= HINT.LOOK_QUIET && hs.remV < HINT.REMIND_MAX && s - hs.remVAt >= HINT.REMIND_GAP) {
+        plan.void = true; hs.remV++; hs.remVAt = s; hintSave();
+      }
+    }
+    return plan;
+  }
+  function hintBegin() {
+    runItem = runLook = false;
+    lastTapAt = performance.now();
+    hintPlan = hintDecide();
+    if (hintPlan.item || hintPlan.void) hint(); else hintStop();
+  }
+  // an item that is active (not the next one to leave) and really answers a tap where the finger will press; the one nearest the middle
+  function findItem() {
+    const cr = $('canvas').getBoundingClientRect(), cx = cr.width / 2, cy = cr.height / 2, list = [], last = shownMin > 1 ? shownMin - 1 : -1;
+    for (let i = 0; i < Math.min(shownMin, geo.pts.length); i++) {
+      const p = geo.pts[i];
+      if (p.hidden || i === last) continue;
+      const x = p.cx === undefined ? p.x : p.cx, y = p.cy === undefined ? p.y : p.cy;
+      if (x < 30 || y < 30 || x > cr.width - 30 || y > cr.height - 30) continue;
+      list.push({ i, x, y, d: Math.hypot(x - cx, y - cy) });
+    }
+    list.sort((a, b) => a.d - b.d);
+    for (const t of list.slice(0, 40)) if (hitTest(t.x, t.y, true) === t.i) return { i: t.i, x: cr.left + t.x, y: cr.top + t.y };
+    // a look whose items answer elsewhere than at their own spot (spider legs, hedgehog spikes): try the picture itself, from the middle outwards
+    const grid = [];
+    for (let y = 30; y < cr.height - 30; y += 10) for (let x = 30; x < cr.width - 30; x += 10) grid.push([x, y, Math.hypot(x - cx, y - cy)]);
+    grid.sort((a, b) => a[2] - b[2]);
+    for (const [x, y] of grid) { const i = hitTest(x, y, true); if (i >= 0 && i < shownMin && i !== last) return { i, x: cr.left + x, y: cr.top + y }; }
+    return null;
+  }
+  const itemStill = t => { const cr = $('canvas').getBoundingClientRect(); return hitTest(t.x - cr.left, t.y - cr.top, true) === t.i; };
   // real empty background: a spot whose surroundings are all background colour (items, decoration and text are not)
   // (x, y on the screen; rad: how much room around it must be empty)
   function voidAt(x, y, rad) {
@@ -3224,27 +3304,64 @@
     const me = ++hintRun, ok = () => me === hintRun && !$('run').hidden && !peek;
     const f = $('finger'), cap = $('fingerCap'), wait = ms => new Promise(res => setTimeout(res, ms));
     const place = (x, y) => { f.style.transform = `translate(${x - 16}px, ${y - 6}px)`; };
-    let first = true;
-    while (ok()) {
-      cap.style.opacity = 0; f.style.opacity = 0; place(innerWidth * 0.6, innerHeight + 60);
-      await wait(first ? 2600 : 1800); first = false; if (!ok()) break;   // the picture has appeared by then
-      const v = findVoid();
-      if (!v) { await wait(3000); continue; }   // no empty spot just now (a full picture): try again later
-      f.style.opacity = 1; place(v[0], v[1]);
-      await wait(1900); if (!ok()) break;
-      if (!voidAt(v[0], v[1], 12)) continue;   // something moved there meanwhile (ducks, cars): no tap on it, look again
-      cap.textContent = 'tap the void'; cap.style.opacity = 1;
+    const hide = () => { cap.style.opacity = 0; f.style.opacity = 0; };
+    const away = () => place(innerWidth * 0.6, innerHeight + 60);
+    // the finger presses (a ripple, the caption); nothing is really tapped
+    const press = async (x, y, text) => {
+      cap.textContent = text; cap.style.opacity = 1;
       f.classList.add('down');
-      const rp = document.createElement('div'); rp.className = 'ripple'; rp.style.left = v[0] + 'px'; rp.style.top = v[1] + 'px';
+      const rp = document.createElement('div'); rp.className = 'ripple'; rp.style.left = x + 'px'; rp.style.top = y + 'px';
       document.body.appendChild(rp); setTimeout(() => rp.remove(), 700);
       await wait(200); f.classList.remove('down');
-      await wait(1700); if (!ok()) break;
-      cap.style.opacity = 0; f.style.opacity = 0;
-      await wait(1500);
+    };
+    let first = true;
+    hide(); away();
+    while (ok()) {
+      const wantItem = hintPlan.item && !runItem, wantVoid = hintPlan.void && !runLook;
+      if (!wantItem && !wantVoid) break;
+      if (first) { await wait(2600); first = false; continue; }   // the picture has appeared by then
+      if (wantItem) {
+        // stage 1: stays on an item and gently presses it a few times, rests, comes back; no finger while paused (items stay quiet then)
+        if (pausedAt) { hide(); await wait(500); continue; }
+        const t = findItem();
+        if (!t) { await wait(2000); continue; }
+        f.style.opacity = 1; place(t.x, t.y);
+        await wait(1900);
+        for (let k = 0; k < HINT.BURST && ok() && !runItem && !pausedAt; k++) {
+          if (!itemStill(t)) break;   // it moved meanwhile (ducks, cars): look again
+          await press(t.x, t.y, 'tap a bit');
+          await wait(1700);
+        }
+        hide();
+        if (!ok()) break;
+        if (runItem) continue;   // they tapped one: on to stage 2 (which waits for the quiet moment itself)
+        away();
+        await wait(HINT.REST);
+      } else {
+        // stage 2: only after a moment without any tap (someone playing with the items is not interrupted)
+        const idle = HINT.IDLE - (performance.now() - lastTapAt);
+        if (idle > 0) { hide(); await wait(idle + 50); continue; }
+        const v = findVoid();
+        if (!v) { await wait(3000); continue; }   // no empty spot just now (a full picture): try again later
+        const t0 = performance.now();
+        f.style.opacity = 1; place(v[0], v[1]);
+        await wait(1900); if (!ok()) break;
+        if (lastTapAt > t0 || !voidAt(v[0], v[1], 12)) continue;   // a tap, or something moved there meanwhile (ducks, cars): look again
+        await press(v[0], v[1], 'tap the void');
+        await wait(1700); if (!ok()) break;
+        hide();
+        await wait(1500);
+      }
     }
     if (me === hintRun) hintStop();
   }
-  document.addEventListener('pointerdown', () => { if (!$('run').hidden) hintStop(); }, true);
+  // every tap of the user's own restarts the wait before "tap the void"
+  // (and a finger that shows "tap the void" gets out of the way; the one on an item stays until the item has been tapped)
+  document.addEventListener('pointerdown', () => {
+    if ($('run').hidden) return;
+    lastTapAt = performance.now();
+    if (!hintPlan.item || runItem) { $('finger').style.opacity = 0; $('fingerCap').style.opacity = 0; }
+  }, true);
 
   // the phone switches between light and dark while the app is open: change to a palette that fits
   if (schemeMq && schemeMq.addEventListener) schemeMq.addEventListener('change', () => {
@@ -3289,6 +3406,7 @@
     if (i >= 0 && pausedAt) return;   // paused: items (and bodies, below) stay quiet; only a tap on empty background still changes the look
     if (i >= 0) {
       const now = performance.now(), M = MODES[look.m];
+      noteTap('item');
       pulses.set(i, now);
       // sometimes the item also takes on a slightly different colour
       if (Math.random() < 0.45) {
@@ -3710,7 +3828,7 @@
     applyPalette();
   }
   if (saved) { label = saved.label || ''; byTime = !!saved.byTime; }
-  if (DEV && q.has('hint')) hintForce = true;   // &hint: the finger hint shows even where the look was already changed by a tap
+  if (DEV && q.has('hint')) hintForce = q.get('hint') === 'void' ? 'void' : 'all';   // &hint: both stages of the finger hint show; &hint=void: only "tap the void"
   if (q.has('m') || q.has('bis') || q.has('pomo')) {
     history.replaceState(null, '', location.pathname);
     label = (q.get('t') || '').trim().slice(0, 40); byTime = false;

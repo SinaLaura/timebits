@@ -85,6 +85,12 @@ New entries are added whenever someone notices one (rule in [CLAUDE.md](CLAUDE.m
 - **When it could bite:** In a short window (a small phone with browser bars, a landscape tablet, a low laptop window) the mode row still jumps, and Pomodoro squeezes the Start button because its rows don't fit (that was already so before). If more Pomodoro rows are added, the threshold has to grow with them, and Minutes gets an even larger empty space below it.
 - **Way out:** Shrink the gaps and steppers on short screens (height media queries), or let the start screen scroll; raise the 580 px in `docs/index.html` when the Pomodoro block grows.
 
+### The first-use finger can nag, and the first look is the jar
+- **Decision:** A finger shows new users what tapping does ("tap a bit" on an item, then "tap the void"). Counters in `localStorage` (`timebits-hint`: starts, item taps, look changes, reminders) decide who gets reminded again; the very first countdown of a device that has never tapped anything starts in the jar.
+- **Why it is fine now:** Reminders are capped (2 in a row without effect, at least 3 countdowns apart, none after 10 item taps or 3 look changes), the finger only shows and does nothing, and the first jar run happens once per device.
+- **When it could bite:** Someone who simply does not want to tap sees the finger in their first 3 countdowns, and there is no way to switch it off. A person who clears the site data gets the jar and the intro again. People who knew the app before this change see "tap a bit" once until they tap an item. The numbers are guesses and need real tests.
+- **Way out:** Tune the `HINT` constants, show the finger only once per device, or add a small "don't show hints" switch.
+
 ## Resolved
 
 Nothing yet.

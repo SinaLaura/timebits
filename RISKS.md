@@ -33,7 +33,7 @@ New entries are added whenever someone notices one (rule in [CLAUDE.md](CLAUDE.m
 - **Decision:** One item per minute, shown in proportion; the minute fields accept 1 to 999.
 - **When it could bite:** The physics and path themes (jar, hourglass, marbles, ducks, orbit) get slow with several hundred items on a weak phone, and the items become very small even though they use the whole screen. Battery drain grows too, since everything animates continuously.
 - **Seen in ducks:** since the ducklings swim in one long line on a loop again (a wish, so they stay small and calm), several hundred minutes make them tiny (about 10 px at 150 min, about 1 px at 999 min in a small window); only the bigger mother stays visible. The earlier winding-path version (commit 06a740d) kept them bigger.
-- **Seen in goban:** the Go game is planned when the layout is made (once per size, then cached). That takes about 0.1 to 0.2 s at several hundred minutes on a desktop, so it may hitch on an old phone, and the stones become tiny at that size.
+- **Seen in goban:** a captured group of more than 80 stones would not look like a real game any more (the board is half full of one group), so above 80 minutes the picture only starts to change in the last 80 minutes, and a long countdown shows a still picture for a while. The scene itself is made in under 10 ms (cached per size).
 - **Way out:** Lower the maximum, group minutes into bigger items above a limit (e.g. one item per 5 min), or skip the physics for long times. Test the heavy themes with `?m=999` on a real older phone.
 
 ### Playing like an instrument leaves less room to change the look

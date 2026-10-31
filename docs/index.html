@@ -286,6 +286,9 @@
     ice: { top: '#f2f8fc', side: '#b4d8ee', deep: '#4f97c9', rim: '#ffffff' },
   };
 
+  // the Go board: its own greys, so black and white stones both show (like the real-looking penguins, not from the palettes)
+  const GOBAN = { pal: { bg: '#767676', fg: '#141414', dim: '#5c5c5c', text: '#ffffff', dark: true } };
+
   // layout: positions for n items in a w x h box, plus item size d.
   // optional per mode: live (always animating), pos (moving items), item (custom drawing),
   // before/after (extra drawing), step (physics), tap, goneScale/goneDim/goneMs (how past items look)
@@ -356,6 +359,8 @@
     // the same penguins in their real colours, black and white on blue sea water (the user asked for real colours here)
     { name: 'realpenguins', live: true, playable: true, noRing: true, goneScale: 1, goneDim: 0, goneMs: 3200, goneLinear: true, pal: REAL.pal,
       lay: (n, w, h) => Object.assign(penguins(n, w, h), { real: true }), step: penguinStep, pos: penguinPos, item: penguin, tap: penguinTap, before: iceFloe },
+    // a Go board with as many points as minutes: each minute a stone lands on a fresh point, by the rules of Go; its own black and white colours
+    { name: 'goban', goneScale: 1, goneDim: 0, goneMs: 900, pal: GOBAN.pal, lay: goban, item: goStone, before: goBoard },
   ];
   // lab: true = a variant to compare with its original: reachable by ?look=<name> only, never in the random rotation
   // (sorted last, so the numbers of the others stay)
@@ -655,6 +660,179 @@
       pts.push({ x: x0 + bw * (k + 1), y: y0 + r * rs, rx: x0 + ww - bw * (last - k + 1) });
     }
     return { pts, d: bw, abacus: { x0, ww, y0, rows, rs, bh } };
+  }
+
+  // ---- goban: a game of Go, one stone per minute, on a board with exactly as many points as minutes ----
+  // Every minute a stone goes on a point that has not been played yet, by the rules of Go (no suicide, captures).
+  // The game is planned once per size (goPlan), the way a layout is: the stones are the same every time. The stones
+  // alternate, black first. Captures are possible but unattractive to the planner, so there are few; a captured stone
+  // leaves a faint ring and its point stays used (it is never played again, so the count of minutes stays exact, and there is no ko).
+  // Item i is the point of move n - 1 - i (the first minute to pass is the highest item); the board grid has the points in rows, the last row may be short.
+  function goban(n, w, h) {
+    // the shape: as big as fits, but a rectangle that fills exactly (5 x 5 for 25) beats a slightly bigger one with a short last row,
+    // and a stripe (2 x 13) loses to something squarer
+    let cols = 1, d = 0, best = 0;
+    for (let k = 1; k <= n; k++) {
+      const rows = Math.ceil(n / k), dk = Math.min(150, w / (k - 1 + 1.5), h / (rows - 1 + 1.5)), eff = dk * (k * rows === n ? 1 : 0.82) / (1 + 0.06 * (Math.max(k, rows) / Math.min(k, rows) - 1));
+      if (eff > best) { best = eff; cols = k; d = dk; }
+    }
+    const rows = Math.ceil(n / cols), x0 = (w - (cols - 1) * d) / 2, y0 = (h - (rows - 1) * d) / 2;
+    const slots = Array.from({ length: n }, (_, s) => ({ x: x0 + (s % cols) * d, y: y0 + Math.floor(s / cols) * d })), plan = goPlan(n, cols), pts = new Array(n);
+    plan.order.forEach((slot, k) => {
+      const i = n - 1 - k, s = slots[slot], by = plan.takenBy[k];
+      pts[i] = { x: s.x, y: s.y, col: plan.colour[k], cap: by < 0 ? -1 : n - 1 - by };
+    });
+    return { pts, d, board: { slots, cols, links: plan.links } };
+  }
+
+  const goPlans = new Map();
+  function goPlan(n, cols) {
+    const key = n + ':' + cols;
+    if (goPlans.has(key)) return goPlans.get(key);
+    // the neighbours of each point (the last row may be short), and each pair once for the grid lines
+    const nb = Array.from({ length: n }, (_, s) => {
+      const c = s % cols, l = [];
+      if (c > 0) l.push(s - 1);
+      if (c < cols - 1 && s + 1 < n) l.push(s + 1);
+      if (s >= cols) l.push(s - cols);
+      if (s + cols < n) l.push(s + cols);
+      return l;
+    });
+    // several games, the one with the fewest captures (a handful of tries; fewer on a big board)
+    let plan = null, fewest = Infinity;
+    for (let tries = 0, ok = 0; tries < 24 && ok < (n > 300 ? 2 : n > 150 ? 3 : n > 60 ? 5 : 8); tries++) {
+      const g = goPlay(n, cols, nb, seeded(n * 977 + cols * 31 + tries));
+      if (!g) continue;
+      ok++;
+      const lost = g.takenBy.filter(k => k >= 0).length;
+      if (lost < fewest) { fewest = lost; plan = g; }
+    }
+    if (!plan) plan = { order: Array.from({ length: n }, (_, s) => s), colour: Array.from({ length: n }, (_, k) => 1 + k % 2), takenBy: new Array(n).fill(-1) };   // a board of one point (a lone stone has no liberty) or a stuck game: no captures, no checking
+    plan.links = [];
+    for (let s = 0; s < n; s++) for (const t of nb[s]) if (t > s) plan.links.push([s, t]);
+    goPlans.set(key, plan);
+    return plan;
+  }
+
+  // Plays the n moves; null if it gets stuck (no legal point for either colour).
+  function goPlay(n, cols, nb, rnd) {
+    const cells = new Uint8Array(n), free = Array.from({ length: n }, (_, s) => s), at = new Array(n);   // at: place in free
+    free.forEach((s, k) => { at[s] = k; });
+    const order = [], colour = [], takenBy = new Array(n).fill(-1), placed = new Array(n).fill(-1);
+    // a group and its liberties
+    const group = s => {
+      const col = cells[s], stones = [s], libs = new Set(), seen = new Set(stones);
+      for (let k = 0; k < stones.length; k++) for (const j of nb[stones[k]]) {
+        if (!cells[j]) libs.add(j);
+        else if (cells[j] === col && !seen.has(j)) { seen.add(j); stones.push(j); }
+      }
+      return { stones, libs };
+    };
+    // puts a stone down in place; null (and nothing changed) if it is suicide
+    const put = (s, col) => {
+      cells[s] = col;
+      const taken = [];
+      for (const j of nb[s]) if (cells[j] === 3 - col) {
+        const f = group(j);
+        if (!f.libs.size) for (const t of f.stones) { cells[t] = 0; taken.push(t); }
+      }
+      const mine = group(s);
+      if (mine.libs.size) return { taken, libs: mine.libs.size };
+      cells[s] = 0;
+      for (const t of taken) cells[t] = 3 - col;
+      return null;
+    };
+    const undo = (s, col, r) => { cells[s] = 0; for (const t of r.taken) cells[t] = 3 - col; };
+    const dist = (a, b) => Math.hypot(a % cols - b % cols, Math.floor(a / cols) - Math.floor(b / cols));
+    let want = 1, last = -1;
+    for (let k = 0; k < n; k++) {
+      // a handful of the free points, and the free ones next to the last stone (all, once few are left)
+      let cand = free;
+      if (free.length > 40) {
+        const set = new Set(last < 0 ? [] : nb[last].filter(j => !cells[j] && placed[j] < 0));
+        while (set.size < 40) set.add(free[rnd() * free.length | 0]);
+        cand = [...set];
+      }
+      let done = false;
+      for (let pass = 0; pass < 2 && !done; pass++) {
+        for (const col of [want, 3 - want]) {
+          const scored = [];
+          for (const s of cand) {
+            const r = put(s, col);
+            if (!r) continue;
+            // few captures (not none: they happen when there is no better move), no self-atari, local play, the middle first
+            let v = rnd() * 2 - 9 * r.taken.length - (r.libs === 1 ? 7 : r.libs === 2 ? 1.5 : 0) + (nb[s].length - 2) * 0.5;
+            if (last >= 0) v += 3 * Math.exp(-dist(s, last) / 2.2);
+            undo(s, col, r);
+            scored.push({ s, v });
+          }
+          if (!scored.length) continue;
+          scored.sort((a, b) => b.v - a.v);
+          const top = scored.slice(0, 3), wt = top.map(m => Math.exp((m.v - top[0].v) / 1.2));
+          let x = rnd() * wt.reduce((a, b) => a + b, 0), pick = top[0];
+          for (let q = 0; q < top.length; q++) if ((x -= wt[q]) <= 0) { pick = top[q]; break; }
+          const r = put(pick.s, col);
+          order.push(pick.s); colour.push(col); placed[pick.s] = k;
+          for (const t of r.taken) takenBy[placed[t]] = k;
+          const p = at[pick.s], lastFree = free.pop();
+          if (lastFree !== pick.s) { free[p] = lastFree; at[lastFree] = p; }
+          want = 3 - col; last = pick.s; done = true;
+          break;
+        }
+        cand = free;   // nothing legal among the few: look at all of them
+      }
+      if (!done) return null;
+    }
+    return { order, colour, takenBy };
+  }
+
+  // the board: a lighter surface with its lines, stepped where the last row is short
+  function goBoard(X) {
+    const { c, P, d } = X, B = X.geo.board, S = B.slots, n = S.length, cols = B.cols, m = d * 0.55;
+    const left = S[0].x, top = S[0].y, right = S[Math.min(n, cols) - 1].x, bottom = S[n - 1].y, short = n > cols && n % cols;
+    const outline = () => {
+      c.beginPath();
+      c.moveTo(left - m, top - m); c.lineTo(right + m, top - m);
+      if (short) { c.lineTo(right + m, bottom - d + m); c.lineTo(S[n - 1].x + m, bottom - d + m); c.lineTo(S[n - 1].x + m, bottom + m); }
+      else c.lineTo(right + m, bottom + m);
+      c.lineTo(left - m, bottom + m);
+      c.closePath();
+    };
+    c.globalAlpha = X.all;
+    c.fillStyle = mix(P.bg, '#ffffff', 0.14);
+    outline(); c.fill();
+    c.strokeStyle = mix(P.bg, P.fg, 0.8); c.lineWidth = Math.max(1, d * 0.03);
+    c.beginPath();
+    for (const [a, b] of B.links) { c.moveTo(S[a].x, S[a].y); c.lineTo(S[b].x, S[b].y); }
+    c.stroke();
+    c.lineWidth = Math.max(1.5, d * 0.06);
+    outline(); c.stroke();
+    c.globalAlpha = 1;
+  }
+
+  // an unplayed point is a small dot; when its minute passes, the stone lands (a little bigger and fading in); a stone that was captured shrinks to a ring
+  function goStone(X, i, cx, cy, sc, q, p) {
+    const { c, P, d } = X, g = p.g, cap = p.cap >= 0 ? X.geo.pts[p.cap].g : 0, r = d * 0.46;
+    if (g < 1) {
+      c.fillStyle = P.fg;
+      c.beginPath(); c.arc(cx, cy, d * 0.085 * sc * (1 - g), 0, TAU); c.fill();
+    }
+    if (g <= 0) return;
+    const black = p.col === 1, k = (1 - cap) * (1.35 - 0.35 * easeOut(g)), a = clamp(g * 2) * (1 - cap);
+    if (a > 0 && k > 0) {
+      c.globalAlpha = a;
+      c.fillStyle = black ? '#141414' : '#f5f5f5';
+      c.strokeStyle = black ? '#000000' : '#555555'; c.lineWidth = Math.max(1, d * 0.02);
+      c.beginPath(); c.arc(cx, cy, r * k, 0, TAU); c.fill(); c.stroke();
+      c.fillStyle = black ? 'rgba(255,255,255,.22)' : 'rgba(0,0,0,.1)';
+      c.beginPath(); c.arc(cx - r * k * 0.3, cy - r * k * 0.32, r * k * 0.28, 0, TAU); c.fill();
+      c.globalAlpha = 1;
+    }
+    if (cap > 0) {   // a ring is left where it stood
+      c.globalAlpha = cap * 0.5; c.strokeStyle = P.fg; c.lineWidth = Math.max(1, d * 0.03);
+      c.beginPath(); c.arc(cx, cy, d * 0.16, 0, TAU); c.stroke();
+      c.globalAlpha = 1;
+    }
   }
 
   // stars scattered over the sky, chained to their nearest neighbour like a constellation

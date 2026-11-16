@@ -92,6 +92,12 @@ New entries are added whenever someone notices one (rule in [CLAUDE.md](CLAUDE.m
 - **When it could bite:** Someone who simply does not want to tap sees the finger in their first 3 countdowns, and there is no way to switch it off. A person who clears the site data gets the jar and the intro again. People who knew the app before this change see "tap a bit" once until they tap an item. The numbers are guesses and need real tests.
 - **Way out:** Tune the `HINT` constants, show the finger only once per device, or add a small "don't show hints" switch.
 
+### The app never vibrates itself, but the end notification may
+- **Decision:** The app makes no vibration of its own: no `navigator.vibrate` anywhere (taps, body taps, end of a countdown, end of a Pomodoro phase; removed on request, rule in [CLAUDE.md](CLAUDE.md)). The end notification (`notify` for the web, `LocalNotifications` in the store app) does not ask for vibration or silence either, so the phone's own notification settings decide whether it buzzes or rings.
+- **Why it is fine now:** Nothing buzzes while the app is open. In the background, the notification is the only alert, and the user can turn its vibration off in the phone's notification settings for the app.
+- **When it could bite:** Someone wants a buzz at the end while the app is open (for example a timer lying on the desk with the sound off) and gets none. Or someone finds the notification buzz annoying and cannot switch it off inside the app. A phone with vibration off by default (as on the developer's phone) hides all of this, so it was never tested there.
+- **Way out:** A small "vibrate at the end" switch (off by default) that calls `navigator.vibrate` again for the end only. For the notification, `silent: true` (web) or a channel without vibration (store app) would stop its buzz, but also its sound, so it only makes sense together with a sound setting.
+
 ## Resolved
 
 Nothing yet.

@@ -1237,7 +1237,6 @@
     }
     beep();
     notify(pomo % 2 ? 'Focus!' : 'Break!', label ? label + ' · ' + pomoName(pomo + 1) : pomoName(pomo + 1));
-    if (navigator.vibrate) navigator.vibrate([300, 150, 300]);
     const from = end;
     doneTimer = setTimeout(() => {
       doneTimer = 0;
@@ -1415,7 +1414,6 @@
     kick();
     beep();
     notify(text, 'Time is up.');
-    if (navigator.vibrate) navigator.vibrate([300, 150, 300, 150, 600]);
     doneTimer = setTimeout(() => showDone(), wait);
   }
   function showDone(quiet) {
@@ -3611,7 +3609,6 @@
     // a body (mother duck, hedgehog, spider ...) right under the finger wins over the reach into the gaps between items
     let i = hitTest(x, y, true);
     if (i < 0 && !pausedAt && MODES[look.m].bodyTap && MODES[look.m].bodyTap(geo, x, y)) {
-      if (navigator.vibrate) navigator.vibrate(8);
       return kick();
     }
     if (i < 0) i = hitTest(x, y);
@@ -3633,7 +3630,6 @@
         const p = geo.pts[i];
         tapChime(M.snd, M.pitchGrid ? { x: p.cx === undefined ? p.x : p.cx, y: p.cy === undefined ? p.y : p.cy } : null);
       }
-      if (navigator.vibrate) navigator.vibrate(8);
       kick();
     } else if (onLeftover(x, y) || !onDrawing(x, y)) restyle();
   });

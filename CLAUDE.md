@@ -63,6 +63,9 @@ Neue generelle Wünsche des Users hier ergänzen. Theme-Ideen und -Stand stehen 
 - Geheimnis: 10× auf die Done-Seite tippen zeigt das letzte Bild des Looks (alle Minuten weg, z.B. Igel ohne Stacheln); 3 Tipps führen zurück.
 - Im Hintergrund: ein eigener Timer genau aufs Ende, damit ein Browser-Tab im Hintergrund pünktlich endet und klingelt. Ist die Seite nicht im Vordergrund, kommt eine Benachrichtigung (Erlaubnis wird beim ersten Start gefragt; in der App über LocalNotifications). Auf dem Handy schläft eine Webseite im Hintergrund meist, dann hilft nur die App.
 
+## Vibration
+- Die App vibriert nie (kein `navigator.vibrate`, weder beim Tippen noch am Ende). Das gilt auch für künftige Themes.
+
 ## Barrierefreiheit
 - Bei `prefers-reduced-motion` gibt es keine Dauer-Animationen (`still`).
 
